@@ -509,7 +509,7 @@ def test_equality():
 
 
 [[value_object_maths]]
-.Математика сvalue objects
+.Математика с value objects
 ====
 [source,python]
 [role="skip"]
@@ -601,7 +601,7 @@ def test_barry_is_harry():
 
 
 [[equality_on_batches]]
-.Implementing equality operators (model.py)
+.Реализация операторов равенства (model.py)
 ====
 [source,python]
 ----
@@ -620,27 +620,16 @@ class Batch:
 
 ((("magic methods", "&#x5f;&#x5f;eq&#x5f;&#x5f;", secondary-sortas="eq")))
 ((("&#x5f;&#x5f;eq&#x5f;&#x5f;magic method", primary-sortas="eq")))
-Python's +++<code>__eq__</code>+++ magic method
-defines the behavior of the class for the `==` operator.footnote:[The
-+++<code>__eq__</code>+++ method is pronounced "dunder-EQ." By some, at least.]
+Магический метод Python +++ <code> __eq__ </code> +++
+определяет поведение класса для `==` operator.footnote:[+++ <code> __eq__ </code> +++ произносится как "dunder-EQ". По крайней мере, некоторыми.]
 
 ((("magic methods", "&#x5f;&#x5f;hash&#x5f;&#x5f;", secondary-sortas="hash")))
 ((("&#x5f;&#x5f;hash&#x5f;&#x5f; magic method", primary-sortas="hash")))
-For both entity and value objects, it's also worth thinking through how
-+++<code>__hash__</code>+++ will work.  It's the magic method Python uses to control the
-behavior of objects when you add them to sets or use them as dict keys;
-you can find more info https://oreil.ly/YUzg5[in the Python docs].
+И для объектов сущностей, и для объектов значений также стоит подумать о том, как +++ <code> __hash__ </code> +++ будет работать.  Это волшебный метод, который Python использует для управления поведением объектов, когда вы добавляете их в наборы или используете их как ключи dict; вы можете найти дополнительную информацию https://oreil.ly/YUzg5[в документации Python].
 
-For value objects, the hash should be based on all the value attributes,
-and we should ensure that the objects are immutable.  We get this for
-free by specifying `@frozen=True` on the dataclass.
+Для value objects хэш должен основываться на всех атрибутах value, и мы должны гарантировать, что объекты неизменяемы.  Мы получаем это бесплатно, указав `@frozen=True` в классе данных.
 
-For entities, the simplest option is to say that the hash is ++None++, meaning
-that the object is not hashable and cannot, for example, be used in a set.
-If for some reason you decide you really do want to use set or dict operations
-with entities, the hash should be based on the attribute(s), such as
-`.reference`, that defines the entity's unique identity over time. You should
-also try to somehow make _that_ attribute read-only.
+Для сущностей самый простой вариант-сказать, что хэш-это ++None++, что означает, что объект не является хэшируемым и не может, например, использоваться в наборе. Если по какой-то причине вы решите, что действительно хотите использовать операции set или dict с сущностями, хэш должен основываться на атрибуте(атрибутах), таком как `.reference`, который определяет уникальную идентичность сущности с течением времени. Вы должны также попытаться как-то сделать _этот_ атрибут read-only.
 
 WARNING: This is tricky territory; you shouldn't modify +++<code>__hash__</code>+++
     without also modifying +++<code>__eq__</code>+++.  If you're not sure what
