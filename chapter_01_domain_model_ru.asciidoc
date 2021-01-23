@@ -124,7 +124,7 @@ _product_ идентифицируется с помощью _SKU_, произн
 
 Отдел закупок заказывает небольшие партии товара. У _batch (партий)_ заказов есть уникальный идентификатор, называемый _reference (ссылка)_, _SKU_ и _quantity (количество)_.
 
-Нам нужно _allocate (распределить)_ _order lines (позиции заказа)_ по _batches (партиям отгрузки)_. Когда мы выделили строку заказа для партии, мы отправим запас из этой конкретной партии поставки на адрес доставки клиента. Когда мы распределяем _x_ единиц запаса на партию, _available quantity (доступное количество)_ уменьшается на _x_. Например:
+Нам нужно _allocate (распределить)_ _order lines (позиции заказа)_ по _batches (партиям отгрузки)_. Когда мы выделили позицию или строку заказа для партии, мы отправим запас из этой конкретной партии поставки на адрес доставки клиента. Когда мы распределяем _x_ единиц запаса на партию, _available quantity (доступное количество)_ уменьшается на _x_. Например:
 
 - У нас есть партия поставки 20 SMALL-TABLE, и мы выделяем строку заказа для 2 SMALL-TABLE.
 
@@ -219,9 +219,9 @@ class Batch:
 
 <3> Аннотации типов по-прежнему вызывают споры в мире Python. Для моделей предметной области они иногда могут помочь прояснить или задокументировать ожидаемые аргументы, и люди с IDE часто благодарны за них. Вы можете решить, что цена, заплаченная с точки зрения удобочитаемости, слишком высока.     ((("type hints")))
 
-Наша реализация здесь тривиальна: `Batch` просто обертывает целое число `available_quantity`, и мы уменьшаем это значение при выделении. Мы написали кучу кода только для того, чтобы вычесть одно число из другого, но мы надеемся, что моделирование нашего домена точно окупится off.footnote:[Или вы думаете, что кода недостаточно?  Как насчет какой-то проверки того, что SKU в `OrderLine` совпадает с `Batch.sku`?  Мы сохранили некоторые мысли о валидации для <<appendix_validation>>.]
+Наша реализация здесь тривиальна: `Batch` просто декоратор! Берёт целое число `available_quantity`, и уменьшает это значение при резервровании товара в заказе. Мы написали кучу кода только для того, чтобы вычесть одно число из другого, но мы надеемся, что моделирование нашего домена точно окупится off.footnote:[Или вы думаете, что кода недостаточно?  Как насчет какой-то проверки того, что SKU в `OrderLine` совпадает с `Batch.sku`?  Мы сохранили некоторые мысли о валидации для <<appendix_validation>>.]
 
-Давайте напишем несколько новых неудачных тестов:
+Давайте напишем несколько новых failing tests:
 
 
 [[test_can_allocate]]
@@ -255,7 +255,7 @@ def test_cannot_allocate_if_skus_do_not_match():
 ----
 ====
 
-Здесь нет ничего неожиданного. Мы переработали наш набор тестов, чтобы не повторять одни и те же строки кода для создания пакета и строки для одного и того же SKU; и мы написали четыре простых теста для нового метода `can_allocate`. Again, notice that the names we use mirror the language of our domain experts, and the examples we agreed upon are directly written into code.
+Здесь нет ничего неожиданного. Мы переработали наш набор тестов, чтобы не повторять одни и те же строки кода для создания партии товара (Batch) и позиции заказа (OrderLine) для одного и того же SKU; и мы написали четыре простых теста для нового метода `can_allocate`. Again, notice that the names we use mirror the language of our domain experts, and the examples we agreed upon are directly written into code.
 
 Мы также можем реализовать это напрямую, написав `can_allocate`
 метод `Batch`:
@@ -286,7 +286,7 @@ def test_can_only_deallocate_allocated_lines():
 ----
 ====
 
-В этом тесте мы assert-им, что deallocating (освобождение) строки из пакета не имеет никакого эффекта, если только пакет ранее не allocated (резервировал) эту строку. Чтобы это сработало, наша `Batch` должна понять, какие строки были зарезервированы. Давайте посмотрим на реализацию:
+В этом тесте мы assert-им, что deallocating (освобождение) строки из пакета не имеет никакого эффекта, если только пакет ранее не allocated (резервировал) эту позицию . Чтобы это сработало, наша `Batch` должна понять, какие позиции или строки были зарезервированы. Давайте посмотрим на реализацию:
 
 
 [[domain_model_complete]]
@@ -363,7 +363,7 @@ Batch::_allocations o-- OrderLine
 ----
 
 
-Теперь мы кое-чего добились! Пакет теперь отслеживает набор выделенных(allocated) объектов `OrderLine`. Когда мы распределяем (allocate), если у нас достаточно свободного количества(available quantity), мы просто добавляем к набору. Наше `available_quantity` теперь является вычисляемым свойством: купленное количество минус выделенное количество.
+Теперь мы кое-чего добились! Партия товара(Batch) теперь отслеживает набор выделенных(allocated) объектов `OrderLine`. Когда мы распределяем (allocate), если у нас достаточно свободного количества(available quantity), мы просто добавляем к набору. Наше `available_quantity` теперь является вычисляемым свойством: купленное количество минус выделенное количество.
 
 Да, мы могли бы сделать еще много. Немного обескураживает то, что и `allocate()`, и `deallocate()` могут потерпеть неудачу без предупреждения, но основа у нас теперь есть.
 
@@ -385,7 +385,7 @@ def test_allocation_is_idempotent():
 
 На данный момент, вероятно, будет обоснованной критикой сказать, что модель предметной области слишком тривиальна, чтобы беспокоиться о DDD (или даже об объектной ориентации!). В реальной жизни возникает множество бизнес-правил и крайних случаев: клиенты могут запросить доставку в определенные будущие даты, а это означает, что мы можем не захотеть распределять их на самую раннюю партию. Некоторые SKU (артикулы) не выпускаются партиями, а заказываются по требованию непосредственно у поставщиков, поэтому у них другая логика. В зависимости от местоположения клиента мы можем выделить только подмножество складов и отгрузок, которые находятся в его регионе, за исключением некоторых SKU, которые мы с удовольствием доставляем со склада в другом регионе, если у нас нет запасов в домашнем регионе. And so on.  Настоящий бизнес в реальном мире знает, как нагромождать сложности быстрее, чем мы можем показать на странице!
 
-Но взяв эту простую модель предметной области в качестве заменителя чего-то более сложного, мы расширим нашу простую модель предметной области в остальной части книги и подключим её к реальному миру API, баз данных и электронных таблиц. Мы увидим, как строгое следование нашим принципам инкапсуляции и тщательного наслоения поможет нам избежать комка грязи.
+Но взяв эту простую модель предметной области в качестве заменителя чего-то более сложного, мы расширим нашу простую модель предметной области в остальной части книги и подключим её к реальному миру API, баз данных и электронных таблиц. Мы увидим, как строгое следование нашим принципам инкапсуляции и тщательного проанализированного наслоения поможет нам избежать :) "говнокодинга"
 
 
 [role="nobreakinside"]
@@ -393,7 +393,7 @@ def test_allocation_is_idempotent():
 *******************************************************************************
 
 ((("type hints")))
-Если вы действительно хотите отправиться в город с подсказками типа, вы можете зайти так далеко, что обернете примитивные типы с помощью `typing.NewType`:
+Если вы действительно хотите отправиться погулять в город с подсказками типа, вы можете зайти так далеко, что обернете даже примитивные типы с помощью `typing.NewType`:
 
 [[too_many_types]]
 .Просто зашел слишком далеко, Боб
@@ -418,7 +418,7 @@ class Batch:
 ====
 
 
-Это позволило бы нашей проверке типов убедиться, что мы не передаем `Sku`, где ожидается, например, `Reference (Ссылка)`.
+Это позволило бы нашей проверке типов убедиться, что мы не передаем `Sku (артикул)`, где ожидается, например, `Reference (Ссылка)`.
 
 Считаете ли вы это замечательным или ужасным-вопрос спорный.footnote:[Это ужасно.  Пожалуйста, пожалуйста, не делай этого. —Harry]
 
@@ -429,7 +429,7 @@ class Batch:
 ((("value objects", "using dataclasses for")))
 ((("dataclasses", "use for value objects")))
 ((("domain modeling", "unit testing domain models", "dataclasses for value objects")))
-Мы широко использовали `line` в предыдущих листингах кода, но что такое строка? На нашем деловом языке _order_ состоит из нескольких _line_ товаров, где каждая строка имеет SKU и количество. Мы можем представить, что простой файл YAML, содержащий информацию о заказе, может выглядеть так:
+Мы широко использовали `line` в предыдущих листингах кода, но что такое строка? На нашем деловом языке _order_ состоит из нескольких _line_ товаров, где каждая строка имеет SKU и количество. Представм, что простой файл YAML, содержащий информацию о заказе, может выглядеть так:
 
 
 [[yaml_order_example]]
@@ -505,7 +505,7 @@ def test_equality():
 ====
 
 ((("value objects", "math with")))
-Эти ценностные объекты соответствуют нашей реальной интуиции о том, как работают их ценности. Не имеет значения, о какой банкноте в 10 фунтов мы говорим, потому что все они имеют одинаковую ценность. Аналогично, два имени равны, если совпадают имя и фамилия; и две строки эквивалентны, если они имеют один и тот же заказ клиента, код продукта и количество. Однако мы все еще можем иметь сложное поведение на ценностном объекте. На самом деле, обычно поддерживают операции со значениями; например, математические операторы:
+Эти ценностные объекты соответствуют нашему реальнму передставлению о том, как работают их ценности. Не имеет значения, о какой банкноте в 10 фунтов мы говорим, потому что все они имеют одинаковую ценность. Аналогично, два имени равны, если совпадают имя и фамилия; и две строки эквивалентны, если они имеют один и тот же заказ клиента, код продукта и количество. Однако мы все еще можем иметь сложное поведение на ценностном объекте. На самом деле, обычно поддерживают операции со значениями; например, математические операторы:
 
 
 [[value_object_maths]]
@@ -543,7 +543,7 @@ def multiplying_two_money_values_is_an_error():
 
 ((("value objects", "and entities", secondary-sortas="entities")))
 ((("domain modeling", "unit testing domain models", "value objects and entities")))
-Строка заказа однозначно идентифицируется по идентификатору заказа, артикулу и количеству; если мы изменим одно из этих значений, теперь у нас будет новая строка. Это определение value object: любой объект, который идентифицируется только своими данными и не имеет долгоживущей идентичности. А как насчет партии? Это _is_ идентифицировано ссылкой.
+Строка заказа однозначно идентифицируется по идентификатору  заказа (ID), артикулу (SKU) и количеству (quantity); если мы изменим одно из этих значений, теперь у нас будет новая строка. Это определение value object: любой объект, который идентифицируется только своими данными и не имеет долгоживущей идентичности. А как насчет партии товара? Это _is_ идентифицировано ссылкой.
 
 ((("entities", "defined")))
 Мы используем термин _entity_ для описания объекта домена, который имеет долгосрочную идентичность. На предыдущей странице мы представили класс `Name` как объект значения. Если мы возьмем имя Гарри Персиваль и изменим одну букву, у нас будет новый объект `Name`, Барри Персиваль.
@@ -593,7 +593,7 @@ def test_barry_is_harry():
 
 ((("entities", "identity equality")))
 ((("identity equality (entities)")))
-Сущности, в отличие от значений, обладают _identity equality (равенством идентичности)_. Мы можем изменить их ценности, и они по-прежнему узнаваемы. Batches (партии), в нашем примере, являются сущностями. Мы можем выделить строки для партии или изменить дату, когда мы ожидаем, что он прибудет, и это будет все та же сущность.
+Сущности, в отличие от значений, обладают _identity equality (равенством идентичности)_. Мы можем изменить их ценности, и они по-прежнему узнаваемы. Batches (партии), в нашем примере, являются сущностями. Мы можем выделить строки в заказе для партии товара или изменить дату, когда мы ожидаем, что она прибудет, и это будет все та же сущность.
 
 ((("equality operators, implementing on entities")))
 Обычно мы делаем это явно в коде, реализуя операторы равенства для сущностей:
@@ -629,49 +629,34 @@ class Batch:
 
 Для value objects хэш должен основываться на всех атрибутах value, и мы должны гарантировать, что объекты неизменяемы.  Мы получаем это бесплатно, указав `@frozen=True` в классе данных.
 
-Для сущностей самый простой вариант-сказать, что хэш-это ++None++, что означает, что объект не является хэшируемым и не может, например, использоваться в наборе. Если по какой-то причине вы решите, что действительно хотите использовать операции set или dict с сущностями, хэш должен основываться на атрибуте(атрибутах), таком как `.reference`, который определяет уникальную идентичность сущности с течением времени. Вы должны также попытаться как-то сделать _этот_ атрибут read-only.
+Для сущностей самый простой вариант-сказать, что хэш-это ++None++, что означает, что объект не является хэшируемым и не может, например, использоваться в множестве (имеется ввиду set). Если по какой-то причине вы решите, что действительно хотите использовать операции set или dict с сущностями, хэш должен основываться на атрибуте(атрибутах), таком как `.reference`, который определяет уникальную идентичность сущности с течением времени. Вы должны также попытаться как-то сделать _этот_ атрибут read-only.
 
-WARNING: This is tricky territory; you shouldn't modify +++<code>__hash__</code>+++
-    without also modifying +++<code>__eq__</code>+++.  If you're not sure what
-    you're doing, further reading is suggested.
-    https://oreil.ly/vxkgX["Python Hashes and Equality"] by our tech reviewer
-    Hynek Schlawack is a good place to start.
+WARNING: Это сложная территория; вы не должны изменять +++<code>__hash__</code>+++     без изменения +++<code>__eq__</code>+++.  Если вы не уверены в том, что делаете, рекомендуется продолжить разбор почитав  https://oreil.ly/vxkgX["Python Hashes and Equality"] от нашего технического обозревателя Хайнека Шлавака - хорошее место для начала.
     ((("unit testing", "of domain models", startref="ix_UTDM")))
     ((("domain modeling", "unit testing domain models", startref="ix_dommodUT")))
 
 
 
-=== Not Everything Has to Be an Object: A Domain Service Function
+=== Не Все Должно быть Объектом: A Domain Service Function
 
 ((("domain services")))
 ((("domain modeling", "functions for domain services", id="ix_dommodfnc")))
-We've made a model to represent batches, but what we actually need
-to do is allocate order lines against a specific set of batches that
-represent all our stock.
+Мы создали модель для представления партий, но на самом деле нам нужно распределить строки заказа по определенному набору партий, представляющих все наши запасы.
 
 [quote, Eric Evans, Domain-Driven Design]
 ____
-Sometimes, it just isn't a thing.
+Иногда это просто не так.
 ____
 
 ((("service-layer services vs. domain services")))
-Evans discusses the idea of Domain Service
-operations that don't have a natural home in an entity or value
-object.footnote:[Domain services are not the same thing as the services from
-the <<chapter_04_service_layer,service layer>>, although they are
-often closely related. A domain service represents a business concept or
-process, whereas a service-layer service represents a use case for your
-application. Often the service layer will call a domain service.] A
-thing that allocates an order line, given a set of batches, sounds a lot like a
-function, and we can take advantage of the fact that Python is a multiparadigm
-language and just make it a function.
+Эванс обсуждает идею Domain Service operations, которые не имеют естественного дома в entity или value object.footnote:[Domain services это не то же самое, что услуги от <<chapter_04_service_layer,service layer>>, хотя они часто тесно связаны. Доменная служба представляет собой бизнес-концепцию или процесс, в то время как служба уровня сервиса представляет собой вариант использования вашего приложения. Часто уровень сервиса вызывает доменную службу.]То, что выделяет строку заказа для данного набора партий, очень похоже на функцию, и мы можем воспользоваться тем фактом, что Python - это многопарадигмальный язык, и просто сделать его функцией.
 ((("domain services", "function for")))
 
-Let's see how we might test-drive such a function:
+Давайте посмотрим, как мы можем протестировать такую ​​функцию:
 
 
 [[test_allocate]]
-.Testing our domain service (test_allocate.py)
+.Тестирование нашей доменной службы (test_allocate.py)
 ====
 [source,python]
 ----
@@ -709,11 +694,11 @@ def test_returns_allocated_batch_ref():
 ====
 
 ((("functions", "for domain services")))
-And our service might look like this:
+А наш сервис может выглядеть так:
 
 
 [[domain_service]]
-.A standalone function for our domain service (model.py)
+.Автономная функция для нашего доменного сервиса (model.py)
 ====
 [source,python]
 [role="non-head"]
@@ -727,20 +712,18 @@ def allocate(line: OrderLine, batches: List[Batch]) -> str:
 ----
 ====
 
-==== Python's Magic Methods Let Us Use Our Models with Idiomatic Python
+==== Магические методы Python позволяют нам использовать наши модели с идиоматическим Python
 
 ((("&#x5f;&#x5f;gt&#x5f;&#x5f; magic method", primary-sortas="gt")))
 ((("magic methods", "allowing use of domain model with idiomatic Python")))
-You may or may not like the use of `next()` in the preceding code, but we're pretty
-sure you'll agree that being able to use `sorted()` on our list of
-batches is nice, idiomatic Python.
+Вам может понравиться или не понравиться использование `next()` в предыдущем коде, но мы почти уверены, что вы согласитесь с тем, что возможность использовать `sorted()` в нашем списке пакетов-это хороший идиоматический Python.
 
-To make it work, we implement +++<code>__gt__</code>+++ on our domain model:
+Чтобы заставить его работать, мы реализуем +++<code>__gt__</code>+++ на нашей доменной модели:
 
 
 
 [[dunder_gt]]
-.Magic methods can express domain semantics (model.py)
+.Магические методы могут выражать семантику предметной области (model.py)
 ====
 [source,python]
 ----
@@ -756,21 +739,18 @@ class Batch:
 ----
 ====
 
-That's lovely.
+Это прекрасно.
 
 
-==== Exceptions Can Express Domain Concepts Too
+==== Исключения тоже могут выражать концепции предметной области
 
 ((("domain exceptions")))
 ((("exceptions", "expressing domain concepts")))
-We have one final concept to cover: exceptions can be used to express domain
-concepts too. In our conversations with domain experts, we've learned about the
-possibility that an order cannot be allocated because we are _out of stock_,
-and we can capture that by using a _domain exception_:
+У нас есть еще одна последняя концепция, которую нужно охватить: исключения также могут использоваться для выражения концепций предметной области. В наших беседах с экспертами в предметной области мы узнали о возможности того, что заказ не может быть размещен, потому что у нас _out of stock (нет запасов)_, и мы можем зафиксировать это, используя _domain exception_:
 
 
 [[test_out_of_stock]]
-.Testing out-of-stock exception (test_allocate.py)
+.Проверка исключения отсутствия на складе (test_allocate.py)
 ====
 [source,python]
 ----
@@ -785,48 +765,35 @@ def test_raises_out_of_stock_exception_if_cannot_allocate():
 
 
 [role="nobreakinside"]
-.Domain Modeling Recap
+.Краткое описание Моделирования предметной области
 *****************************************************************
 Domain modeling::
-    This is the part of your code that is closest to the business,
-    the most likely to change, and the place where you deliver the
-    most value to the business. Make it easy to understand and modify.
+    Это та часть вашего кода, которая наиболее близка к бизнесу, наиболее подвержена изменениям и является местом, где вы приносите наибольшую пользу бизнесу. Сделайте его легким для понимания и модификации.
     ((("domain modeling", startref="ix_dommod")))
 
-Distinguish entities from value objects::
-    A value object is defined by its attributes. It's usually best
-    implemented as an immutable type. If you change an attribute on
-    a Value Object, it represents a different object. In contrast,
-    an entity has attributes that may vary over time and it will still be the
-    same entity. It's important to define what _does_ uniquely identify
-    an entity (usually some sort of name or reference field).
+Отличия entities от value objects::
+    value objects определяется его атрибутами. Обычно он лучше всего реализуется как неизменяемый тип. Если вы измените атрибут Value Objects, он будет представлять другой объект. Напротив, у entities есть атрибуты, которые могут меняться с течением времени, и она все равно останется той же сущностью. Важно определить, что _does_ однозначно идентифицирует сущность (обычно это какое-то имя или ссылочное поле).
     ((("entities", "value objects versus")))
     ((("value objects", "entities versus")))
 
-Not everything has to be an object::
-    Python is a multiparadigm language, so let the "verbs" in your
-    code be functions. For every `FooManager`, `BarBuilder`, or `BazFactory`,
-    there's often a more expressive and readable `manage_foo()`, `build_bar()`,
-    or `get_baz()` waiting to happen.
+Не все должно быть объектом:
+    Python - это многопарадигмальный язык, поэтому пусть «глаголы» в вашем коде будут функциями. Для каждого `FooManager`, `BarBuilder`, или `BazFactory`, часто бывает более выразительно и читабельно `manage_foo()`, `build_bar()`,     или `get_baz()` , ожидающие своей очереди.
     ((("functions")))
 
-This is the time to apply your best OO design principles::
-    Revisit the SOLID principles and all the other good heuristics like "has a versus is-a,"
-    "prefer composition over inheritance," and so on.
+Сейчас самое время применить свои лучшие принципы проектирования ОО::
+	Вернитесь к принципам SOLID и всем остальным хорошим эвристикам, таким как «has вместо is-a», «предпочитать композицию наследованию» и так далее.
     ((("object-oriented design principles")))
 
-You'll also want to think about consistency boundaries and aggregates::
-    But that's a topic for <<chapter_07_aggregate>>.
+Вы также захотите подумать о границах согласованности и агрегатах::
+    Но это тема для <<chapter_07_aggregate>>.
 
 *****************************************************************
 
-We won't bore you too much with the implementation, but the main thing
-to note is that we take care in naming our exceptions in the ubiquitous
-language, just as we do our entities, value objects, and services:
+Мы не будем слишком утомлять вас реализацией, но главное, что следует отметить, - это то, что мы тщательно называем наши исключения на ubiquitous language, так же как и наши сущности, объекты ценности и службы:
 
 
 [[out_of_stock]]
-.Raising a domain exception (model.py)
+.Вызов исключения домена (model.py)
 ====
 [source,python]
 ----
@@ -839,17 +806,16 @@ def allocate(line: OrderLine, batches: List[Batch]) -> str:
         batch = next(
         ...
     except StopIteration:
-        raise OutOfStock(f'Out of stock for sku {line.sku}')
+        raise OutOfStock(f'Нет в наличии для артикула {line.sku}')
 ----
 ====
 
 
-<<maps_chapter_01_withtext>> is a visual representation of where we've ended up.
+<<maps_chapter_01_withtext>> это визуальное представление того, где мы оказались.
 
 [[maps_chapter_01_withtext]]
 .Our domain model at the end of the chapter
 image::images/apwp_0104.png[]
 
 ((("domain modeling", "functions for domain services", startref="ix_dommodfnc")))
-That'll probably do for now! We have a domain service that we can use for our
-first use case. But first we'll need a database...
+Пожалуй, на сегодня хватит! У нас есть доменная служба, которую мы можем использовать для нашего первого варианта использования. Но сначала нам понадобится база данных...
