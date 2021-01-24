@@ -23,7 +23,7 @@ chapter_02_repository branch https://oreil.ly/6STDu[on GitHub].
 git clone https://github.com/cosmicpython/code.git
 cd code
 git checkout chapter_02_repository
-# or to code along, checkout the previous chapter:
+# или чтобы писать код вместе с нами, ознакомьтесь с предыдущей главой:
 git checkout chapter_01_domain_model
 ----
 ====
@@ -32,32 +32,19 @@ git checkout chapter_01_domain_model
 === Persisting Our Domain Model
 
 ((("domain model", "persisting")))
-In <<chapter_01_domain_model>> we built a simple domain model that can allocate orders
-to batches of stock. It's easy for us to write tests against this code because
-there aren't any dependencies or infrastructure to set up. If we needed to run
-a database or an API and create test data, our tests would be harder to write
-and maintain.
+В <<chapter_01_domain_model>> мы построили простую модель домена, которая может распределять заказы по партиям запасов. Нам легко писать тесты для этого кода, потому что нет никаких зависимостей или инфраструктуры для настройки. Если бы нам нужно было запустить базу данных или API и создать тестовые данные, наши тесты было бы сложнее писать и поддерживать.
 
-Sadly, at some point we'll need to put our perfect little model in the hands of
-users and contend with the real world of spreadsheets and web
-browsers and race conditions. For the next few chapters we're going to look at
-how we can connect our idealized domain model to external state.
+К сожалению, в какой-то момент нам придется передать нашу идеальную маленькую модель в руки пользователей и бороться с реальным миром электронных таблиц, веб-браузеров и условий гонки. В следующих нескольких главах мы рассмотрим, как связать нашу идеализированную модель предметной области с внешним состоянием.
 
 ((("minimum viable product")))
-We expect to be working in an agile manner, so our priority is to get to a
-minimum viable product as quickly as possible. In our case, that's going to be
-a web API. In a real project, you might dive straight in with some end-to-end
-tests and start plugging in a web framework, test-driving things outside-in.
+Мы ожидаем, что будем работать гибко, поэтому наш приоритет - как можно быстрее получить минимально жизнеспособный продукт. В нашем случае это будет веб-API. В реальном проекте вы можете сразу погрузиться в несколько сквозных (end-to-end) тестов и начать подключать веб-фреймворк, тестируя функционал извне.
 
-But we know that, no matter what, we're going to need some form of persistent
-storage, and this is a textbook, so we can allow ourselves a tiny bit more
-bottom-up development and start to think about storage and databases.
+Но мы знаем, что, несмотря ни на что, нам понадобится какая-то форма постоянного хранения, и это учебник, поэтому мы можем позволить себе немного больше развития снизу вверх и начать думать о хранении и базах данных.
 
 
-=== Some Pseudocode: What Are We Going to Need?
+=== Некий Псевдокод: Что Нам Понадобится?
 
-When we build our first API endpoint, we know we're going to have
-some code that looks more or less like the following.
+Когда мы создаём нашу первый API endpoint, мы знаем, что у нас будет некоторый код, который выглядит более или менее следующим образом.
 
 [[api_endpoint_pseudocode]]
 .What our first API endpoint will look like
@@ -67,59 +54,45 @@ some code that looks more or less like the following.
 ----
 @flask.route.gubbins
 def allocate_endpoint():
-    # extract order line from request
+    # извлечь строку заказа из запроса
     line = OrderLine(request.params, ...)
-    # load all batches from the DB
+    # загрузить все партии из БД
     batches = ...
-    # call our domain service
+    # передать в domain service
     allocate(line, batches)
-    # then save the allocation back to the database somehow
+    # затем сохраните выделеные позици обратно в базу данных
     return 201
 ----
 ====
 
-NOTE: We've used Flask because it's lightweight, but you don't need
-    to be a Flask user to understand this book. In fact, we'll show you how
-    to make your choice of framework a minor detail.
+NOTE: Мы использовали Flask, потому что он достаточно легкий, но вам не нужно быть пользователем Flask, чтобы понять эту книгу. На самом деле, мы покажем вам, как сделать ваш выбор фреймворка незначительной деталью.
     ((("Flask framework")))
 
-We'll need a way to retrieve batch info from the database and instantiate our domain
-model objects from it, and we'll also need a way of saving them back to the
-database.
+Нам понадобится способ извлечения пакетной информации из базы данных и создания из нее экземпляров объектов модели домена, а также способ сохранения их обратно в базу данных.
 
-_What? Oh, "gubbins" is a British word for "stuff." You can just ignore that. It's pseudocode, OK?_
+_Какого...? Ух-х-х, «gubbins» - это британское слово, означающее «фигня». Вы можете просто забить на это. Это псевдокод, понятно?_
 
 
 === Applying the DIP to Data Access
 
 ((("layered architecture")))
 ((("data access, applying dependency inversion principle to")))
-As mentioned in the <<introduction, introduction>>, a layered architecture is a common
- approach to structuring a system that has a UI, some logic, and a database (see
+Как уже упоминалось в <<введение, введение>>, многоуровневая архитектура -- это общий подход к структурированию системы, которая имеет пользовательский интерфейс, некоторую логику и базу данных (см.
 <<layered_architecture2>>).
 
 [role="width-75"]
 [[layered_architecture2]]
-.Layered architecture
+.Многослойная архитектура
 image::images/apwp_0202.png[]
 
 
-Django's Model-View-Template structure is closely related, as is
-Model-View-Controller (MVC). In any case, the aim is to keep the layers
-separate (which is a good thing), and to have each layer depend only on the one
-below it.
+Структура Django Model-View-Template тесно связана, как и Model-View-Controller (MVC). В любом случае цель состоит в том, чтобы слои были разделены (что хорошо), и чтобы каждый слой зависел только от того, который находится под ним.
 
 ((("dependencies", "none in domain model")))
-But we want our domain model to have __no dependencies whatsoever__.footnote:[
-I suppose we mean "no stateful dependencies." Depending on a helper library is
-fine; depending on an ORM or a web framework is not.]
-We don't want infrastructure concerns bleeding over into our domain model and
-slowing our unit tests or our ability to make changes.
+Надо, чтобы в нашей модели предметной области не было __ никаких зависимостей __.footnote:[ Полагаю, мы имеем в виду «отсутствие зависимостей с отслеживанием состояния». В зависимости от вспомогательной библиотеки это нормально; в зависимости от ORM или веб-фреймворка -- нет.] Не надо, чтобы проблемы с инфраструктурой проникли в нашу модель предметной области и замедлили наши модульные тесты или нашу способность вносить изменения.
 
 ((("onion architecture")))
-Instead, as discussed in the introduction, we'll think of our model as being on the
-"inside," and dependencies flowing inward to it; this is what people sometimes call
-_onion architecture_ (see <<onion_architecture>>).
+Вместо этого, как обсуждалось во введении, мы будем думать, что наша модель находится "inside (внутри)", и зависимости текут внутрь неё; это то, что умные люди иногда называют _onion (луковая) architecture_ (см. <<onion_architecture>>).
 
 [role="width-75"]
 [[onion_architecture]]
@@ -144,73 +117,57 @@ image::images/apwp_0203.png[]
 ----
 
 [role="nobreakinside less_space"]
-.Is This Ports and Adapters?
+.Это Порты и Адаптеры?
 ****
-If you've been reading about architectural patterns, you may be asking
-yourself questions like this:
+Если вы читали об архитектурных паттернах, вы можете задавать себе такие вопросы:
 
 ____
-_Is this ports and adapters? Or is it hexagonal architecture? Is that the same as onion architecture? What about the clean architecture? What's a port, and what's an adapter? Why do you people have so many words for the same thing?_
+_Это порты и адаптеры? Или это гексогональная архитектура? Это то же самое, что и луковая архитектура? А как насчет чистой архитектуры? Что такое порт и что такое адаптер? Почему у вас, яйцеголовых, так много слов для одного и того же?_
 ____
 
 ((("dependency inversion principle")))
 ((("Seemann, Mark, blog post")))
-Although some people like to nitpick over the differences, all these are
-pretty much names for the same thing, and they all boil down to the
-dependency inversion principle: high-level modules (the domain) should
-not depend on low-level ones (the infrastructure).footnote:[Mark Seemann has
+Хотя некоторые умники любят придираться к различиям, все это в значительной степени названия одного и того же, и все они сводятся к принципу инверсии зависимостей: модули высокого уровня (домен) не должны зависеть от модулей низкого уровня (инфраструктура).footnote:[Mark Seemann has
 https://oreil.ly/LpFS9[an excellent blog post] on the topic.]
 
-We'll get into some of the nitty-gritty around "depending on abstractions,"
-and whether there is a Pythonic equivalent of interfaces,
-<<depend_on_abstractions,later in the book>>. See also <<what_is_a_port_and_what_is_an_adapter>>.
+Мы рассмотрим некоторые мелочи, касающиеся «зависимости от абстракций», и того, существует ли Pythonic-эквивалент интерфейсов,
+<<depend_on_abstractions,later in the book>>. Смотрите также <<what_is_a_port_and_what_is_an_adapter>>.
 ****
 
 
-=== Reminder: Our Model
+=== Напоминание: Наша модель
 
 ((("domain model", id="ix_domod")))
-Let's remind ourselves of our domain model (see <<model_diagram_reminder>>):
-an allocation is the concept of linking an `OrderLine` to a `Batch`.  We're
-storing the allocations as a collection on our `Batch` object.
+Давайте вспомним нашу модель предметной области (см. <<model_diagram_reminder>>):
+Распределение - это концепция связывания `OrderLine` с `Batch`. Мы сохраняем выделенные позиици как коллекцию в нашем объекте `Batch`.
 
 [[model_diagram_reminder]]
-.Our model
+.Наша модель
 image::images/apwp_0103.png[]
 // see chapter_01_domain_model for diagram source
 
-Let's see how we might translate this to a relational database.
+Давайте посмотрим, как мы можем перевести это в реляционную базу данных.
 
 
-==== The "Normal" ORM Way: Model Depends on ORM
+==== "Нормальный" способ это ORM: Модель зависит от ORM
 
 ((("SQL", "generating for domain model objects")))
 ((("domain model", "translating to relational database", "normal ORM way, model depends on ORM")))
-These days, it's unlikely that your team members are hand-rolling their own SQL queries.
-Instead, you're almost certainly using some kind of framework to generate
-SQL for you based on your model objects.
+В наши дни маловероятно, что члены вашей команды вручную создают свои собственные SQL-запросы. Вместо этого вы почти наверняка используете какой-то фреймворк для генерации SQL для вас на основе ваших объектов модели.
 
 ((("object-relational mappers (ORMs)")))
-These frameworks are called _object-relational mappers_ (ORMs) because they exist to
-bridge the conceptual gap between the world of objects and domain modeling and
-the world of databases and relational algebra.
+Эти структуры называются объектно-реляционными картографами _object-relational mappers_ (ОРМ), поскольку они существуют для преодоления концептуального разрыва между миром объектов и моделирования предметной области и миром баз данных и реляционной алгебры.
 
 ((("persistence ignorance")))
-The most important thing an ORM gives us is _persistence ignorance_: the idea
-that our fancy domain model doesn't need to know anything about how data is
-loaded or persisted. This helps keep our domain clean of direct dependencies
-on particular database technologies.footnote:[In this sense, using an ORM is
-already an example of the DIP. Instead of depending on hardcoded SQL, we depend
-on an abstraction, the ORM. But that's not enough for us—not in this book!]
+Самая важная вещь, которую дает нам ORM, - это забить на персистентность _persistence ignorance_: идея о том, что наша модельная доменная модель не должна ничего знать о том, как данные загружаются или сохраняются. Это помогает сохранить наш домен чистым от прямых зависимостей от конкретных технологий баз данных.footnote:[В этом смысле использование ORM уже является примером DIP. Вместо того чтобы полагаться на жестко запрограммированный SQL, мы зависим от абстракции, ORM. Но нам этого мало -- не в этой книге!]
 
 ((("object-relational mappers (ORMs)", "SQLAlchemy, model depends on ORM")))
 ((("SQLAlchemy", "declarative syntax, model depends on ORM")))
-But if you follow the typical SQLAlchemy tutorial, you'll end up with something
-like this:
+Но если вы будете следовать типичному учебнику SQLAlchemy, то в итоге получите что-то вроде этого:
 
 
 [[typical_sqlalchemy_example]]
-.SQLAlchemy "declarative" syntax, model depends on ORM (orm.py)
+.SQLAlchemy "декларативный" синтаксис, модель зависит от ORM (orm.py)
 ====
 [role="skip"]
 [source,python]
@@ -236,23 +193,18 @@ class Allocation(Base):
 ----
 ====
 
-You don't need to understand SQLAlchemy to see that our pristine model is now
-full of dependencies on the ORM and is starting to look ugly as hell besides.
-Can we really say this model is ignorant of the database? How can it be
-separate from storage concerns when our model properties are directly coupled
-to database columns?
+Вам не нужно разбираться в SQLAlchemy, чтобы увидеть, что наша изначальная модель теперь полна зависимостей от ORM и к тому же начинает выглядеть чертовски уродливо. Можно ли сказать, что эта модель игнорирует базу данных? Как это можно отделить от проблем с хранением, когда свойства нашей модели напрямую связаны со столбцами базы данных?
 
 [role="nobreakinside less_space"]
-.Django's ORM Is Essentially the Same, but More Restrictive
+.ORM Django, по сути, тот же, но более ограничительный
 ****
 
 ((("Django", "ORM example")))
 ((("object-relational mappers (ORMs)", "Django ORM example")))
-If you're more used to Django, the preceding "declarative" SQLAlchemy snippet
-translates to something like this:
+Если вы больше привыкли к Django, предыдущий «декларативный» фрагмент SQLAlchemy можно перевести примерно так:
 
 [[django_orm_example]]
-.Django ORM example
+.Django ORM пример
 ====
 [source,python]
 [role="skip"]
@@ -270,19 +222,15 @@ class Allocation(models.Model):
 ----
 ====
 
-The point is the same--our model classes inherit directly from ORM
-classes, so our model depends on the ORM.  We want it to be the other
-way around.
+Дело в том же - наши классы моделей наследуются напрямую от классов ORM, поэтому наша модель зависит от ORM. Мы хотим, чтобы все было наоборот.
 
-Django doesn't provide an equivalent for SQLAlchemy's classical mapper,
-but see <<appendix_django>> for examples of how to apply dependency
-inversion and the Repository pattern to Django.
+Django не предоставляет эквивалента классическому мапперу SQLAlchemy, но примеры применения инверсии зависимостей и шаблона репозитория к Django см. в разделе <<appendix_django>>.
 
 ****
 
 
 
-==== Inverting the Dependency: ORM Depends on Model
+==== Инвертирование зависимости: ORM зависит от модели
 
 ((("mappers")))
 ((("classical mapping")))
@@ -290,14 +238,12 @@ inversion and the Repository pattern to Django.
 ((("dependency inversion principle", "ORM depends on the data model")))
 ((("domain model", "translating to relational database", "ORM depends on the model")))
 ((("object-relational mappers (ORMs)", "ORM depends on the data model")))
-Well, thankfully, that's not the only way to use SQLAlchemy.  The alternative is
-to define your schema separately, and to define an explicit _mapper_ for how to convert
-between the schema and our domain model, what SQLAlchemy calls a
+К счастью, это не единственный способ использовать SQLAlchemy. Альтернативой является определение вашей схемы отдельно и определение явного _mapper_ для преобразования между схемой и нашей моделью предметной области, что SQLAlchemy называет
 https://oreil.ly/ZucTG[classical mapping]:
 
 [role="nobreakinside less_space"]
 [[sqlalchemy_classical_mapper]]
-.Explicit ORM mapping with SQLAlchemy Table objects (orm.py)
+.Явное сопоставление ORM с объектами таблицы SQLAlchemy (orm.py)
 ====
 [source,python]
 ----
@@ -323,37 +269,25 @@ def start_mappers():
 ----
 ====
 
-<1> The ORM imports (or "depends on" or "knows about") the domain model, and
-    not the other way around.
+<1> ORM импортирует (или "зависит от" или "знает о") модель предметной области, а не наоборот.
 
-<2> We define our database tables and columns by using SQLAlchemy's
-    abstractions.footnote:[Even in projects where we don't use an ORM, we
-    often use SQLAlchemy alongside Alembic to declaratively create
-    schemas in Python and to manage migrations, connections,
-    and sessions.]
+<2> Мы определяем таблицы и столбцы нашей базы данных с помощью абстракций SQLAlchemy.footnote:[Даже в проектах, где мы не используем ORM, мы часто используем SQLAlchemy вместе с Alembic для декларативного создания схем в Python и управления миграциями, соединениями и сеансами.]
 
-<3> When we call the `mapper` function, SQLAlchemy does its magic to bind
-    our domain model classes to the various tables we've defined.
+<3> Когда мы вызываем функцию `mapper`, SQLAlchemy творит чудеса, связывая классы нашей модели предметной области с различными таблицами, которые мы определили.
 
-The end result will be that, if we call `start_mappers`, we will be able to
-easily load and save domain model instances from and to the database. But if
-we never call that function, our domain model classes stay blissfully
-unaware of the database.
+Конечным результатом будет то, что, если мы вызовем `start_mappers`, мы сможем легко загружать и сохранять экземпляры модели домена из базы данных и в нее. Но если мы никогда не вызываем эту функцию, наши классы доменных моделей остаются в блаженном неведении о базе данных.
 
 // IDEA: add a note about mapper being maybe-deprecated, but link to
 // the mailing list post where mike shows how to reimplement it manually.
 
-This gives us all the benefits of SQLAlchemy, including the ability to use
-`alembic` for migrations, and the ability to transparently query using our
-domain classes, as we'll see.
+Это дает нам все преимущества SQLAlchemy, включая возможность использовать `alembic` для миграций и возможность прозрачного запроса с использованием наших классов домена, как мы увидим.
 
 ((("object-relational mappers (ORMs)", "ORM depends on the data model", "testing the ORM")))
-When you're first trying to build your ORM config, it can be useful to write
-tests for it, as in the following example:
+Когда вы впервые пытаетесь создать свою конфигурацию ORM, может быть полезно написать для неё тесты, как в следующем примере:
 
 
 [[orm_tests]]
-.Testing the ORM directly (throwaway tests) (test_orm.py)
+.Тестирование ОРМ напрямую (одноразовые тесты) (test_orm.py)
 ====
 [source,python]
 ----
@@ -382,50 +316,27 @@ def test_orderline_mapper_can_save_lines(session):
 ----
 ====
 
-<1> If you haven't used pytest, the `session` argument to this test needs
-    explaining. You don't need to worry about the details of pytest or its
-    fixtures for the purposes of this book, but the short explanation is that
-    you can define common dependencies for your tests as "fixtures," and
-    pytest will inject them to the tests that need them by looking at their
-    function arguments. In this case, it's a SQLAlchemy database session.
+<1> Если вы не использовали pytest, то аргумент `session` для этого теста нуждается в объяснении. Вам не нужно беспокоиться о деталях pytest или его фикстурах для целей этой книги, но краткое объяснение состоит в том, что вы можете определить общие зависимости для ваших тестов как "fixtures", и pytest введет их в тесты, которые нуждаются в них, посмотрев на их аргументы функций. В данном случае это сеанс базы данных SQLAlchemy.
     ((("pytest", "session argument")))
 
 ////
-[SG] I set up the conftest to have a session, and could only get the tests to
-work if I dropped the (frozen=True) on the OrderLine dataclass, otherwise I
-would get dataclasses.FrozenInstanceError: cannot assign to field
-'_sa_instance_state' I feel I am having to work quite hard to follow along ;-(.
+[SG] Я настроил conftest на сеанс и мог заставить тесты работать только в том случае, если я сбросил (frozen=True) на dataclass OrderLine, иначе я получил бы dataclasses.FrozenInstanceError: не могу назначить поле '_sa_instance_state', я чувствую, что мне приходится довольно много работать, чтобы следовать за ним ;-(.
 
-Is not spelling everything out a deliberate tactic to make the reader learn?
+Не является ли изложение всего намеренной тактикой, чтобы заставить читателя учиться?
 ////
 
-You probably wouldn't keep these tests around--as you'll see shortly, once
-you've taken the step of inverting the dependency of ORM and domain model, it's
-only a small additional step to implement another abstraction called the
-Repository pattern, which will be easier to write tests against and will
-provide a simple interface for faking out later in tests.
+Вероятно, вы бы не стали хранить эти тесты -- как вы вскоре увидите, после того, как вы сделаете шаг по инверсии зависимости ORM и модели предметной области, это всего лишь небольшой дополнительный шаг для реализации другой абстракции, называемой шаблоном репозитория, против которого будет легче писать тесты, и он предоставит простой интерфейс для , скажем так -- обмана, позже в тестах.
 
-But we've already achieved our objective of inverting the traditional
-dependency: the domain model stays "pure" and free from infrastructure
-concerns. We could throw away SQLAlchemy and use a different ORM, or a totally
-different persistence system, and the domain model doesn't need to change at
-all.
+Но мы уже достигли нашей цели инвертировать традиционную зависимость: модель предметной области остается «чистой» и свободной от инфраструктурных проблем. Мы могли бы выбросить SQLAlchemy и использовать другую ORM или совершенно другую систему сохранения, и модель предметной области вообще не нуждалась бы в изменении.
 
 
-Depending on what you're doing in your domain model, and especially if you
-stray far from the OO paradigm, you may find it increasingly hard to get the
-ORM to produce the exact behavior you need, and you may need to modify your
-domain model.footnote:[Shout-out to the amazingly helpful SQLAlchemy
-maintainers, and to Mike Bayer in particular.] As so often happens with
-architectural decisions, you'll need to consider a trade-off. As the
-Zen of Python says, "Practicality beats purity!"
+В зависимости от того, что вы делаете в своей модели предметной области, и особенно если вы отходите далеко от парадигмы объектно-ориентированного программирования, вам может оказаться все труднее заставить ORM обеспечить точное поведение, которое вам нужно, и вам может потребоваться изменить модель предметной области.footnote: [Привет чрезвычайно полезным специалистам по сопровождению SQLAlchemy и, в частности, Майку Байеру.] Как это часто бывает с архитектурными решениями, вам нужно будет найти компромисс. Как говорит дзэн Python: «Практичность лучше чистоты!»
 
 ((("SQLAlchemy", "using directly in API endpoint")))
-At this point, though, our API endpoint might look something like
-the following, and we could get it to work just fine:
+На данный момент, однако, наша конечная точка API может выглядеть примерно так, и мы могли бы заставить ее работать просто отлично:
 
 [[api_endpoint_with_session]]
-.Using SQLAlchemy directly in our API endpoint
+.Использование SQLAlchemy непосредственно в нашей конечной точке API
 ====
 [role="skip"]
 [source,python]
@@ -434,20 +345,20 @@ the following, and we could get it to work just fine:
 def allocate_endpoint():
     session = start_session()
 
-    # extract order line from request
+    # извлечение строки заказа из запроса
     line = OrderLine(
         request.json['orderid'],
         request.json['sku'],
         request.json['qty'],
     )
 
-    # load all batches from the DB
+    # загрузите все пакеты из БД
     batches = session.query(Batch).all()
 
     # call our domain service
     allocate(line, batches)
 
-    # save the allocation back to the database
+    # сохраните распределения обратно в базу данных
     session.commit()
 
     return 201
@@ -455,24 +366,19 @@ def allocate_endpoint():
 ====
 
 ////
-[SG] from what I remember of the previous code if none of the batches can_allocate then this
-allocate(line, batches) will raise OutOfStock.  Is it OK to let this bubble up?  Should you
-add a try finally to close the session
+[SG] из того, что я помню из предыдущего кода, если ни один из пакетов не can_allocate, тогда этот allocate(line, batches) вызовет OutOfStock.  Это нормально позволить этому пузырю подняться?  Если вы добавите попытку, наконец, закрыть сеанс
 ////
 
-=== Introducing the Repository Pattern
+=== Знакомство с шаблоном репозитория
 
 ((("Repository pattern", id="ix_Repo")))
 ((("domain model", startref="ix_domod")))
-The _Repository_ pattern is an abstraction over persistent storage. It hides the
-boring details of data access by pretending that all of our data is in memory.
+Шаблон _Repository_ -- это абстракция над постоянным хранилищем. Он скрывает скучные детали доступа к данным, делая вид, что все наши данные находятся в памяти.
 
-If we had infinite memory in our laptops, we'd have no need for clumsy databases.
-Instead, we could just use our objects whenever we liked. What would that look
-like?
+Если бы у нас была бесконечная память в наших ноутбуках, у нас не было бы необходимости в неуклюжих базах данных. Вместо этого мы могли просто использовать наши объекты, когда нам заблагорассудится. Как это будет выглядеть?
 
 [[all_my_data]]
-.You have to get your data from somewhere
+.Вы должны откуда-то брать данные
 ====
 [role="skip"]
 [source,python]
@@ -491,31 +397,21 @@ def modify_a_batch(batch_id, new_quantity):
 ====
 
 
-Even though our objects are in memory, we need to put them _somewhere_ so we can
-find them again. Our in-memory data would let us add new objects, just like a
-list or a set. Because the objects are in memory, we never need to call a
-`.save()` method; we just fetch the object we care about and modify it in memory.
+Несмотря на то, что наши объекты находятся в памяти, нам нужно поместить их где-нибудь, чтобы снова найти их. Наши данные в памяти позволят нам добавлять новые объекты, как список или множество. Поскольку объекты находятся в памяти, нам никогда не нужно вызывать метод `.save ()`; мы просто получаем объект, который нам нужен, и модифицируем его в памяти.
 
 
 ==== The Repository in the Abstract
 
 ((("Repository pattern", "simplest possible repository")))
 ((("Unit of Work pattern")))
-The simplest repository has just two methods: `add()` to put a new item in the
-repository, and `get()` to return a previously added item.footnote:[
-You may be thinking, "What about `list` or `delete` or `update`?" However, in an
-ideal world, we modify our model objects one at a time, and delete is
-usually handled as a soft-delete—i.e., `batch.cancel()`. Finally, update is
-taken care of by the Unit of Work pattern, as you'll see in <<chapter_06_uow>>.]
-We stick rigidly to using these methods for data access in our domain and our
-service layer. This self-imposed simplicity stops us from coupling our domain
-model to the database.
+В простейшем репозитории всего два метода: add () для добавления нового элемента в репозиторий и get() для возврата ранее добавленного элемента.footnote:[ Вы можете подумать: «А как насчет `list`, `delete` или `update`?" Однако в идеальном мире мы модифицируем объекты нашей модели по одному, а удаление обычно обрабатывается как мягкое удаление, то есть `batch.cancel ()`. Наконец, об обновлении позаботится шаблон Unit of Work, как вы увидите в <<chapter_06_uow>>.]
+Мы твердо придерживаемся использования этих методов для доступа к данным в нашем домене и на уровне сервиса. Эта добровольная простота не позволяет нам связать нашу модель предметной области с базой данных.
 
 ((("abstract base classes (ABCs)", "ABC for the repository")))
-Here's what an abstract base class (ABC) for our repository would look like:
+Вот как будет выглядеть абстрактный базовый класс (ABC) для нашего репозитория:
 
 [[abstract_repo]]
-.The simplest possible repository (repository.py)
+.Самый простой из возможных репозиториев (repository.py)
 ====
 [source,python]
 ----
@@ -532,49 +428,35 @@ class AbstractRepository(abc.ABC):
 ====
 
 
-<1> Python tip: `@abc.abstractmethod` is one of the only things that makes
-    ABCs actually "work" in Python. Python will refuse to let you instantiate
-    a class that does not implement all the `abstractmethods` defined in its
-    parent class.footnote:[To really reap the benefits of ABCs (such as they
-    may be), be running helpers like `pylint` and `mypy`.]
+<1> Python tip: `@abc.abstractmethod` -- это одна из немногих вещей, которая заставляет ABCs действительно "работать" в Python. Python не позволит вам создать экземпляр класса, который не реализует все "абстрактные методы", определенные в его родительском классе.footnote:[Чтобы действительно воспользоваться преимуществами ABC (какими бы они ни были), запустите помощники, такие как `pylint` и `mypy`.]
     ((("@abc.abstractmethod")))
     ((("abstract methods")))
 
-<2> `raise NotImplementedError` is nice, but it's neither necessary nor sufficient. In fact, your abstract methods can have real behavior that subclasses
-    can call out to, if you really want.
+<2> `raise NotImplementedError` -- это хорошо, но это не обязательно и не достаточно. На самом деле, ваши абстрактные методы могут иметь реальное поведение, которое подклассы могут вызвать, если вы действительно хотите.
 
 [role="pagebreak-before less_space"]
-.Abstract Base Classes, Duck Typing, and Protocols
+.Абстрактные базовые классы, Утиная типизация и Протоколы
 *******************************************************************************
 
 ((("abstract base classes (ABCs)", "using duck typing and protocols instead of")))
 ((("protocols, abstract base classes, duck typing, and")))
-We're using abstract base classes in this book for didactic reasons: we hope
-they help explain what the interface of the repository abstraction is.
+Мы используем абстрактные базовые классы в этой книге по дидактическим соображениям: мы надеемся, что они помогут объяснить, что такое интерфейс абстракции репозитория.
 
 ((("duck typing")))
-In real life, we've sometimes found ourselves deleting ABCs from our production
-code, because Python makes it too easy to ignore them, and they end up
-unmaintained and, at worst, misleading. In practice we often just rely on
-Python's duck typing to enable abstractions. To a Pythonista, a repository is
-_any_ object that has pass:[<code>add(<em>thing</em>)</code>] and pass:[<code>get(<em>id</em>)</code>] methods.
+В реальной жизни мы иногда обнаруживаем, что удаляем ABC из нашего продакшен кода, потому что Python слишком упрощает их игнорирование, и они в конечном итоге не обслуживаются и, в худшем случае, вводят в заблуждение. На практике мы часто просто полагаемся на утиную типизацию Python для включения абстракций. Для Pythonista репозиторий -- это _ любой_ объект, имеющий pass:[<code>add(<em>thing</em>)</code>] and pass:[<code>get(<em>id</em>)</code>] methods.
 
 ((("PEP 544 protocols")))
-An alternative to look into is https://oreil.ly/q9EPC[PEP 544 protocols].
-These give you typing without the possibility of inheritance, which "prefer
-composition over inheritance" fans will particularly like.
+Альтернативой для изучения является https://oreil.ly/q9EPC [протоколы PEP 544]. Это дает вам возможность печатать без возможности наследования, что особенно понравится фанатам "предпочитать композицию наследованию".
 
 *******************************************************************************
 
 
-==== What Is the Trade-Off?
+==== Что такое компромисс?
 
 
-[quote, Rich Hickey]
+[цитата, Рич Хикки]
 ____
-You know they say economists know the price of everything and the value of
-nothing?  Well, programmers know the benefits of everything and the trade-offs
-of nothing.
+Вы знаете, они говорят, что экономисты знают цену всему и ничего не ценят? Ну, программисты знают о преимуществах и ничего о компромисах.
 ____
 
 ((("Repository pattern", "trade-offs")))
