@@ -19,7 +19,7 @@ include::part1_ru.asciidoc[]
 
 include::chapter_01_domain_model_ru.asciidoc[]
 
-include::chapter_02_repository.asciidoc[]
+include::chapter_02_repository_ru.asciidoc[]
 
 include::chapter_03_abstractions.asciidoc[]
 
