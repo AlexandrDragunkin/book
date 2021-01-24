@@ -325,7 +325,7 @@ def test_orderline_mapper_can_save_lines(session):
 Не является ли изложение всего намеренной тактикой, чтобы заставить читателя учиться?
 ////
 
-Вероятно, вы бы не стали хранить эти тесты -- как вы вскоре увидите, после того, как вы сделаете шаг по инверсии зависимости ORM и модели предметной области, это всего лишь небольшой дополнительный шаг для реализации другой абстракции, называемой шаблоном репозитория, против которого будет легче писать тесты, и он предоставит простой интерфейс для , скажем так -- обмана, позже в тестах.
+Вероятно, вы бы не стали хранить эти тесты -- как вы вскоре увидите, после того, как поближе познакомитесь с инверсией зависимости ORM и модели предметной области, это всего лишь небольшой дополнительный шаг для реализации другой абстракции, называемой шаблоном репозитория, для которого будет легче писать тесты, и он предоставит простой интерфейс для , скажем так -- обмана, позже в тестах.
 
 Но мы уже достигли нашей цели инвертировать традиционную зависимость: модель предметной области остается «чистой» и свободной от инфраструктурных проблем. Мы могли бы выбросить SQLAlchemy и использовать другую ORM или совершенно другую систему сохранения, и модель предметной области вообще не нуждалась бы в изменении.
 
@@ -460,30 +460,16 @@ ____
 ____
 
 ((("Repository pattern", "trade-offs")))
-Whenever we introduce an architectural pattern in this book, we'll always
-ask, "What do we get for this?  And what does it cost us?"
+Всякий раз, когда мы представляем архитектурный паттерн в этой книге, мы всегда задаёмся в опроосом: «Что мы за это получим? И чего нам это стоит?»
 
-Usually, at the very least, we'll be introducing an extra layer of abstraction,
-and although we may hope it will reduce complexity overall, it does add
-complexity locally, and it has a cost in terms of the raw numbers of moving parts and
-ongoing maintenance.
+Обычно,  мы вводим дополнительный уровень абстракции, и хотя надеемся на то, что он снизит сложность в целом, всё это действительно добавляет сложность локально и имеет свою стоимость с точки зрения необработанного количества перемещений и текущего обслуживания.
 
-The Repository pattern is probably one of the easiest choices in the book, though,
-if you're already heading down the DDD and dependency inversion route.  As far
-as our code is concerned, we're really just swapping the SQLAlchemy abstraction
-(`session.query(Batch)`) for a different one (`batches_repo.get`) that we
-designed.
+Шаблон репозитория, вероятно, является одним из самых простых вариантов в книге, если вы уже идете по пути DDD и инверсии зависимостей. Что касается нашего кода, на самом деле мы просто меняем абстракцию SQLAlchemy (`session.query (Batch)`) на другую (`batches_repo.get`), которую мы разработали.
 
-We will have to write a few lines of code in our repository class each time we
-add a new domain object that we want to retrieve, but in return we get a
-simple abstraction over our storage layer, which we control. The Repository pattern would make
-it easy to make fundamental changes to the way we store things (see
-<<appendix_csvs>>), and as we'll see, it is easy to fake out for unit tests.
+Нам придется писать несколько строк кода в нашем классе репозитория каждый раз, когда мы добавляем новый объект домена, который мы хотим получить, но взамен мы получаем простую абстракцию над нашим уровнем хранения, который мы контролируем. Шаблон репозитория позволит легко вносить фундаментальные изменения в то, как мы храним вещи (см. <<appendix_csvs>>), и, как мы увидим, его легко подделать для модульных тестов.
 
 ((("domain driven design (DDD)", "Repository pattern and")))
-In addition, the Repository pattern is so common in the DDD world that, if you
-do collaborate with programmers who have come to Python from the Java and C#
-worlds, they're likely to recognize it. <<repository_pattern_diagram>> illustrates the pattern.
+Кроме того, шаблон репозитория настолько распространен в мире DDD, что, если вы сотрудничаете с программистами, пришедшими в Python из мира Java и C#, они, скорее всего, узнают его. <<repository_pattern_diagram>> иллюстрирует этот паттерн.
 
 [role="width-60"]
 [[repository_pattern_diagram]]
@@ -514,18 +500,13 @@ image::images/apwp_0205.png[]
 
 ((("Repository pattern", "testing the  repository with saving an object")))
 ((("SQL", "repository test for saving an object")))
-As always, we start with a test. This would probably be classified as an
-integration test, since we're checking that our code (the repository) is
-correctly integrated with the database; hence, the tests tend to mix
-raw SQL with calls and assertions on our own code.
+Как всегда, мы начинаем с теста. Это, вероятно, было бы классифицировано как интеграционный тест, поскольку мы проверяем, что наш код (репозиторий) правильно интегрирован с базой данных; следовательно, тесты, как правило, смешивают необработанный SQL с вызовами и ассертами в нашем собственном коде.
 
-TIP: Unlike the ORM tests from earlier, these tests are good candidates for
-    staying part of your codebase longer term, particularly if any parts of
-    your domain model mean the object-relational map is nontrivial.
+TIP: В отличие от предыдущих тестов ORM, эти тесты являются хорошими кандидатами на то, чтобы оставаться частью вашей кодовой базы в долгосрочной перспективе, особенно если какие-либо части вашей модели предметной области означают, что объектно-реляционная карта нетривиальна.
 
 
 [[repo_test_save]]
-.Repository test for saving an object (test_repository.py)
+.Тест репозитория для сохранения объекта (test_repository.py)
 ====
 [source,python]
 ----
@@ -543,23 +524,19 @@ def test_repository_can_save_a_batch(session):
 ----
 ====
 
-<1> `repo.add()` is the method under test here.
+<1> `repo.add()` это тестируемый здесь метод.
 
-<2> We keep the `.commit()` outside of the repository and make
-    it the responsibility of the caller. There are pros and cons for
-    this; some of our reasons will become clearer when we get to
-    <<chapter_06_uow>>.
+<2> Мы храним `.commit ()` вне репозитория и возлагаем ответственность за это на вызывающего. У этого есть свои плюсы и минусы; некоторые из наших причин станут яснее, когда мы доберемся до <<chapter_06_uow>>.
 
-<3> We use the raw SQL to verify that the right data has been saved.
+<3> Мы используем необработанный SQL, чтобы убедиться, что правильные данные были сохранены.
 
 ((("SQL", "repository test for retrieving complex object")))
 ((("Repository pattern", "testing the repository with retrieving a complex object")))
-The next test involves retrieving batches and allocations, so it's more
-complex:
+Следующий тест включает в себя извлечение пакетов и распределений, поэтому он более сложный:
 
 
 [[repo_test_retrieve]]
-.Repository test for retrieving a complex object (test_repository.py)
+.Тест репозитория для извлечения сложного объекта (test_repository.py)
 ====
 [source,python]
 ----
@@ -597,34 +574,24 @@ def test_repository_can_retrieve_a_batch_with_allocations(session):
 ====
 
 
-<1> This tests the read side, so the raw SQL is preparing data to be read
-    by the `repo.get()`.
+<1> Это проверяет сторону чтения, поэтому необработанный SQL готовит данные для чтения `repo.get()`.
 
-<2> We'll spare you the details of `insert_batch` and `insert_allocation`;
-    the point is to create a couple of batches, and, for the
-    batch we're interested in, to have one existing order line allocated to it.
+<2> Мы избавим вас от деталей `insert_batch` и` insert_allocation`; Дело в том, чтобы создать пару партий, и для интересующей нас партии выделить одну существующую строку заказа.
 
-<3> And that's what we verify here. The first `assert ==` checks that the
-    types match, and that the reference is the same (because, as you remember,
-    `Batch` is an entity, and we have a custom ++__eq__++ for it).
+<3> И вот что мы здесь проверяем. Первый `assert ==` проверяет соответствие типов и совпадение ссылок (потому что, как вы помните, `Batch` -- это сущность, и для нее у нас есть собственный ++ __ eq __ ++).
 
-<4> So we also explicitly check on its major attributes, including
-    `._allocations`, which is a Python set of `OrderLine` value objects.
+<4> Поэтому мы также явно проверяем его основные атрибуты, в том числе
+    `._allocations`, который представляет собой набор Python объектов значений `OrderLine`.
 
 ((("Repository pattern", "typical repository")))
-Whether or not you painstakingly write tests for every model is a judgment
-call. Once you have one class tested for create/modify/save, you might be
-happy to go on and do the others with a minimal round-trip test, or even nothing
-at all, if they all follow a similar pattern. In our case, the ORM config
-that sets up the `._allocations` set is a little complex, so it merited a
-specific test.
+Нужно ли вам кропотливо писать тесты для каждой модели. После того, как у вас будет протестирован один класс на создание / изменение / сохранение, вы можете продолжить и выполнить другие с минимальным тестом на обратную связь или вообще ничего, если все они следуют схожему шаблону. В нашем случае конфигурация ORM, которая устанавливает набор `._allocations`, немного сложна, поэтому заслуживает особого тестирования.
 
 
-You end up with something like this:
+Вы получите что-то вроде этого:
 
 
 [[batch_repository]]
-.A typical repository (repository.py)
+.Типичный репозиторий (repository.py)
 ====
 [source,python]
 ----
@@ -648,10 +615,10 @@ class SqlAlchemyRepository(AbstractRepository):
 ((("Flask framework", "API endpoint")))
 ((("Repository pattern", "using repository directly in API endpoint")))
 ((("APIs", "using repository directly in API endpoint")))
-And now our Flask endpoint might look something like the following:
+И теперь наша конечная точка Flask может выглядеть примерно так:
 
 [[api_endpoint_with_repo]]
-.Using our repository directly in our API endpoint
+.Использование нашего репозитория непосредственно в нашей конечной точке API
 ====
 [role="skip"]
 [source,python]
@@ -670,33 +637,28 @@ def allocate_endpoint():
 ====
 
 [role="nobreakinside less_space"]
-.Exercise for the Reader
+.Упражнение для читателя
 ******************************************************************************
 
 ((("SQL", "ORM and Repository pattern as abstractions in front of")))
 ((("Repository pattern", "ORMs and")))
 ((("object-relational mappers (ORMs)", "Repository pattern and")))
-We bumped into a friend at a DDD conference the other day who said, "I haven't
-used an ORM in 10 years." The Repository pattern and an ORM both act as abstractions
-in front of raw SQL, so using one behind the other isn't really necessary.  Why
-not have a go at implementing our repository without using the ORM? You'll find the code https://github.com/cosmicpython/code/tree/chapter_02_repository_exercise[on GitHub].
+На днях мы столкнулись с другом на конференции DDD, который сказал: "Я не использовал ORM в течение 10 лет." Шаблон репозитория и ORM действуют как абстракции перед необработанным SQL, поэтому использование одного за другим на самом деле не является необходимым.  Почему бы не попробовать реализовать наш репозиторий без использования ORM? Вы найдете код https://github.com/cosmicpython/code/tree/chapter_02_repository_exercise[на GitHub].
 
-We've left the repository tests, but figuring out what SQL to write is up
-to you. Perhaps it'll be harder than you think; perhaps it'll be easier.
-But the nice thing is, the rest of your application just doesn't care.
+Мы оставили тесты репозитория, но решать, какой SQL писать, решать вам. Возможно, это будет труднее, чем вы думаете; возможно будет легче. Но хорошо то, что остальной части вашего приложения это до лмпочки.
 
 ******************************************************************************
 
 
-=== Building a Fake Repository for Tests Is Now Trivial!
+=== Создание поддельного репозитория для тестов теперь тривиально!
 
 ((("Repository pattern", "building fake repository for tests")))
 ((("set, fake repository as wrapper around")))
-Here's one of the biggest benefits of the Repository pattern:
+Вот одно из самых больших преимуществ шаблона репозиторий:
 
 
 [[fake_repository]]
-.A simple fake repository using a set (repository.py)
+.Простой фейковый репозиторий с использованием набора (repository.py)
 ====
 [role="skip"]
 [source,python]
@@ -717,13 +679,12 @@ class FakeRepository(AbstractRepository):
 ----
 ====
 
-Because it's a simple wrapper around a `set`, all the methods are one-liners.
+Поскольку это простая оболочка для `set`, все методы являются однострочными.
 
-Using a fake repo in tests is really easy, and we have a simple
-abstraction that's easy to use and reason about:
+Использовать фальшивое репо в тестах действительно просто, и у нас есть простая абстракция, которую легко использовать и о чем:
 
 [[fake_repository_example]]
-.Example usage of fake repository (test_api.py)
+.Пример использования поддельного репозитория (test_api.py)
 ====
 [role="skip"]
 [source,python]
@@ -732,57 +693,38 @@ fake_repo = FakeRepository([batch1, batch2, batch3])
 ----
 ====
 
-You'll see this fake in action in the next chapter.
+Вы увидите эту подделку в действии в следующей главе.
 
 
-TIP: Building fakes for your abstractions is an excellent way to get design
-    feedback: if it's hard to fake, the abstraction is probably too
-    complicated.
+TIP: Создание подделок для ваших абстракций - отличный способ получить обратную связь от дизайна: если подделать сложно, значит, абстракция слишком сложна.
 
 
 [[what_is_a_port_and_what_is_an_adapter]]
-=== What Is a Port and What Is an Adapter, in Python?
+=== Что такое порт и что такое адаптер в Python?
 
 ((("ports", "defined")))
 ((("adapters", "defined")))
-We don't want to dwell on the terminology too much here because the main thing
-we want to focus on is dependency inversion, and the specifics of the
-technique you use don't matter too much. Also, we're aware that different
-people use slightly different definitions.
+Мы не хотим слишком подробно останавливаться здесь на терминологии, потому что главное, на чем мы хотим сосредоточиться, - это инверсия зависимостей, а специфика используемой вами техники не имеет большого значения. Кроме того, мы знаем, что разные люди используют несколько разные определения.
 
-Ports and adapters came out of the OO world, and the definition we hold onto
-is that the _port_ is the _interface_ between our application and whatever
-it is we wish to abstract away, and the _adapter_ is the _implementation_
-behind that interface or abstraction.
+Порты и адаптеры вышли из мира OO, и определение, которое мы придерживаемся, состоит в том, что _port_ -- это _interface_ между нашим приложением и тем, что мы хотим абстрагировать, а _adapter_ -- это _implementation_ за этим интерфейсом или абстракцией.
 
 ((("interfaces, Python and")))
 ((("duck typing", "for ports")))
 ((("abstract base classes (ABCs)", "using for ports")))
-Now Python doesn't have interfaces per se, so although it's usually easy to
-identify an adapter, defining the port can be harder. If you're using an
-abstract base class, that's the port. If not, the port is just the duck type
-that your adapters conform to and that your core application expects—the
-function and method names in use, and their argument names and types.
+Теперь Python не имеет интерфейсов как таковых, поэтому, хотя обычно легко идентифицировать адаптер, определение порта может быть сложнее. Если вы используете абстрактный базовый класс, это порт. Если нет, то порт—это просто duck type, которому соответствуют ваши адаптеры и который ожидает ваше основное приложение -- имена используемых функций и методов, а также имена и типы их аргументов.
 
-Concretely, in this chapter, `AbstractRepository` is the port, and
-`SqlAlchemyRepository` and `FakeRepository` are the adapters.
+Конкретно, в этой главе, `AbstractRepository` это порт, a
+`SqlAlchemyRepository " и `FakeRepository` - это адаптеры.
 
 
 
-=== Wrap-Up
+=== Заключение
 
 ((("Repository pattern", "and persistence ignorance, trade-offs")))
 ((("persistence ignorance", "trade-offs")))
-Bearing the Rich Hickey quote in mind, in each chapter we
-summarize the costs and benefits of each architectural pattern we introduce.
-We want to be clear that we're not saying every single application needs
-to be built this way; only sometimes does the complexity of the app and domain
-make it worth investing the time and effort in adding these extra layers of
-indirection. 
+Помня цитату Рича Хики, в каждой главе мы суммируем затраты и преимущества каждого представленного архитектурного шаблона. Мы хотим прояснить, что мы помалкиваем о том , что каждое приложение должно быть построено таким образом; только иногда сложность приложения и домена делает целесообразным потратить время и усилия на добавление этих дополнительных слоев косвенности. 
 
-With that in mind, <<chapter_02_repository_tradeoffs>> shows
-some of the pros and cons of the Repository pattern and our persistence-ignorant
-model.
+Имея это в виду, <<chapter_02_repository_tradeoffs>> показывает некоторые плюсы и минусы шаблона репозитория и нашей настойчивости - незнания про model.
 
 ////
 [SG] is it worth mentioning that the repository is specifically intended for add and get
@@ -792,94 +734,62 @@ which you might call a DAO. Repository is more close to the business domain.
 
 [[chapter_02_repository_tradeoffs]]
 [options="header"]
-.Repository pattern and persistence ignorance: the trade-offs
+.Шаблон репозитория и персистентности незнания: the trade-offs
 |===
 |Pros|Cons
 a|
-* We have a simple interface between persistent storage and our domain model.
+* У нас есть простой интерфейс между постоянным хранилищем и нашей доменной моделью.
 
-* It's easy to make a fake version of the repository for unit testing, or to
-  swap out different storage solutions, because we've fully decoupled the model
-  from infrastructure concerns.
+* Легко создать поддельную версию репозитория для модульного тестирования или заменить другие решения для хранения, потому что мы полностью отделили модель от проблем инфраструктуры.
 
-* Writing the domain model before thinking about persistence helps us focus on
-  the business problem at hand. If we ever want to radically change our approach,
-  we can do that in our model, without needing to worry about foreign keys
-  or migrations until later.
+* Написание модели предметной области, прежде чем думать о персистентности, помогает нам сосредоточиться на текущей бизнес-проблеме. Если мы когда-нибудь захотим радикально изменить наш подход, мы можем сделать это в нашей модели, не беспокоясь о внешних ключах или миграциях до более позднего времени.
 
-* Our database schema is really simple because we have complete control over
-  how we map our objects to tables.
+* Наша схема базы данных очень проста, потому что у нас есть полный контроль над тем, как мы сопоставляем наши объекты с таблицами.
 
 a|
-* An ORM already buys you some decoupling. Changing foreign keys might be hard,
-  but it should be pretty easy to swap between MySQL and Postgres if you
-  ever need to.
+* ORM уже окупает вам затраты. Смена внешних ключей может создать сложности, но при необходимости будет довольно легко переключаться между MySQL и Postgres.
 
 ////
-[KP] I always found this benefit of ORMs rather weak. In the rare cases when I
-actually had to switch DB engines, the payoff was high enough to justify some
-additional work. Also, if you are using "interesting" DB features (say: special
-Postgres fields) you usually lose the portability.
+[КП] Я всегда считал это преимуществом платформы слабоват. В тех редких случаях, когда мне действительно приходилось переключать двигатели БД, выигрыш был достаточно высок, чтобы оправдать некоторую дополнительную работу. Кроме того, если вы используете "интересные" функции БД (скажем, специальные поля Postgres), вы обычно теряете переносимость.
 ////
 
 
-* Maintaining ORM mappings by hand requires extra work and extra code.
+* Ведение сопоставлений ORM вручную требует дополнительной работы и дополнительного кода.
 
-* Any extra layer of indirection always increases maintenance costs and
-  adds a "WTF factor" for Python programmers who've never seen the Repository pattern
-  before.
+* Любой дополнительный уровень косвенности всегда увеличивает затраты на обслуживание и добавляет "фактор WTF" для программистов Python, которые никогда раньше не видели шаблон репозитория.
 |===
 
-<<domain_model_tradeoffs_diagram>> shows the basic thesis: yes, for simple
-cases, a decoupled domain model is harder work than a simple ORM/ActiveRecord
-pattern.footnote:[Diagram inspired by a post called
-https://oreil.ly/fQXkP["Global Complexity, Local Simplicity"] by Rob Vens.]
+<<domain_model_tradeoffs_diagram>> демонстрирует основной тезис: да, для простых случаев развязанная модель предметной области является более сложной работой, чем простой шаблон ORM/ActiveRecord.footnote:[Диаграмма вдохновлена ​​публикацией под названием
+https://oreil.ly/fQXkP[ «Глобальная сложность, локальная простота»] Роба Венса.]
 
-TIP: If your app is just a simple CRUD (create-read-update-delete) wrapper
-    around a database, then you don't need a domain model or a repository.
+TIP: Если ваше приложение представляет собой простую оболочку CRUD (создание-чтение-обновление-удаление) вокруг базы данных, вам не нужна модель предметной области или репозиторий.
 
 ((("domain model", "trade-offs as a diagram")))
 ((("Vens, Rob")))
 ((("&quot;Global Complexity, Local Simplicity&quot; post", primary-sortas="Global")))
-But the more complex the domain, the more an investment in freeing
-yourself from infrastructure concerns will pay off in terms of the ease of
-making changes.
+Но чем сложнее домен, тем больше окупаются инвестиции в избавление от проблем с инфраструктурой с точки зрения простоты внесения изменений.
 
 
 [[domain_model_tradeoffs_diagram]]
-.Domain model trade-offs as a diagram
+.Компромиссы модели предметной области в виде диаграммы
 image::images/apwp_0206.png[]
 
 
-Our example code isn't complex enough to give more than a hint of what
-the right-hand side of the graph looks like, but the hints are there.
-Imagine, for example, if we decide one day that we want to change allocations
-to live on the `OrderLine` instead of on the `Batch` object: if we were using
-Django, say, we'd have to define and think through the database migration
-before we could run any tests. As it is, because our model is just plain
-old Python objects, we can change a `set()` to being a new attribute, without
-needing to think about the database until later.
+Наш пример кода не настолько сложен, чтобы дать больше, чем намек на то, как выглядит правая часть графика, но намеки есть. Представьте себе, например, что однажды мы решим, что хотим изменить распределение, чтобы жить на "OrderLine", а не на "Batch" объекте: если бы мы использовали, скажем, Django, нам пришлось бы определить и продумать миграцию базы данных, прежде чем мы могли бы запустить какие-либо тесты. Как бы то ни было, поскольку наша модель-это просто старые объекты Python, мы можем изменить `set()` на новый атрибут, не думая о базе данных до более подходящего момента.
 
 [role="nobreakinside"]
-.Repository Pattern Recap
+.Резюме шаблона репозитория
 *****************************************************************
-Apply dependency inversion to your ORM::
-    Our domain model should be free of infrastructure concerns,
-    so your ORM should import your model, and not the other way
-    around.
+Применение инверсии зависимости в ORM::
+    Наша модель предметной области должна быть свободна от проблем с инфраструктурой, поэтому ваш ORM должен импортировать вашу модель, а не наоборот.
     ((("Repository pattern", "recap of important points")))
 
-The Repository pattern is a simple abstraction around permanent storage::
-    The repository gives you the illusion of a collection of in-memory
-    objects. It makes it easy to create a `FakeRepository` for
-    testing and to swap fundamental details of your
-    infrastructure without disrupting your core application. See
-    <<appendix_csvs>> for an example.
+Шаблон репозитория -- это простая абстракция вокруг постоянного хранилища::
+    Репозиторий дает вам иллюзию коллекции объектов в памяти. Это позволяет легко создать "FakeRepository" для тестирования и поменять местами основные детали вашей инфраструктуры, не нарушая работу вашего основного приложения. Смотрите
+    <<appendix_csvs>> для примера.
 *****************************************************************
 
-You'll be wondering, how do we instantiate these repositories, fake or
-real? What will our Flask app actually look like? You'll find out in the next
-exciting installment, <<chapter_04_service_layer,the Service Layer pattern>>.
+Вам будет интересно, как мы создаем экземпляры этих хранилищ, поддельные или настоящие? Как на самом деле будет выглядеть наше приложение Flask? Вы узнаете об этом в следующей захватывающей части, <<chapter_04_service_layer,the Service Layer pattern>>.
 
-But first, a brief digression.
+Но сначала небольшое отступление.
 ((("Repository pattern", startref="ix_Repo")))
