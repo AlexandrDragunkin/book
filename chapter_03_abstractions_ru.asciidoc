@@ -106,7 +106,7 @@ def hash_file(path):
 ----
 ====
 
-Теперь нам нужно чуть дописать, часть принятия решения о том, что делать -- Бизнес-логику, если хотите.
+Теперь нам нужно чуть дописать, часть принятия решения "что делать" -- Бизнес-логику, если хотите.
 
 Когда нам нужно решить проблему основываясь на первичных принципах, мы обычно пытаемся написать простую реализацию, а затем заняться рефакторингом в сторону лучшего дизайна. Мы будем использовать этот подход на протяжении всей книги, потому что именно так мы пишем код в реальном мире: начните с решения самой маленькой части проблемы, а затем итеративно делайте решение более продвинутым и лучше разработанным.
 
@@ -468,7 +468,7 @@ TIP: Хотя мы используем инъекцию зависимосте�
 // IDEA [KP] Again, one could mention PEP544 protocols here. For some reason, I like them.
 
 [[bob_tests]]
-.Tests using DI
+.Тесты с использованием DI
 ====
 [source,python]
 [role="skip"]
@@ -508,173 +508,111 @@ def test_when_a_file_has_been_renamed_in_the_source():
 ----
 ====
 
-<1> Bob _loves_ using lists to build simple test doubles, even though his
-    coworkers get mad. It means we can write tests like
-    ++assert 'foo' not in database++.
+<1> Боб _обожает_ использовать списки для создания простых тестовых двойников, даже если это бесит его коллег. Это означает, что мы можем писать тесты вроде ++assert 'foo' not in database++.
     ((("test doubles", "using lists to build")))
 
-<2> Each method in our `FakeFileSystem` just appends something to the list so we
-    can inspect it later. This is an example of a spy object.
+<2> Каждый метод в нашей `FakeFileSystem` просто добавляет что-то в список, чтобы мы могли проверить это позже. Это пример spy object.
     ((("spy objects")))
 
 
-The advantage of this approach is that our tests act on the exact same function
-that's used by our production code. The disadvantage is that we have to make
-our stateful components explicit and pass them around.
-David Heinemeier Hansson, the creator of Ruby on Rails, famously described this
-as "test-induced design damage."
+Преимущество этого подхода заключается в том, что наши тесты работают с той же функцией, которая используется нашим production кодом. Недостатком является то, что мы должны сделать наши компоненты с отслеживанием состояния явными и передавать их по кругу. Дэвид Хайнемайер Ханссон, создатель Ruby on Rails, как известно, описал это как "вызванное тестом повреждение конструкции."
 
 ((("edge-to-edge testing", startref="ix_edgetst")))
 ((("testing", "after implementing chosen abstraction", "edge-to-edge testing with fakes and dependency injection", startref="ix_tstaftabsedge")))
 ((("dependencies", "edge-to-edge testing with dependency injection", startref="ix_depinj")))
 ((("abstractions", "after implementing chosen abstraction", "edge-to-edge testing with fakes and dependency injection", startref="ix_absimpltstfdi")))
-In either case, we can now work on fixing all the bugs in our implementation;
-enumerating tests for all the edge cases is now much easier.
+В любом случае, теперь мы можем работать над исправлением всех ошибок в нашей реализации;
+Перечисление тестов для всех крайних случаев стало намного проще.
 
 
-==== Why Not Just Patch It Out?
+==== Почему бы просто не запатчить это?
 
 ((("mock.patch method")))
 ((("mocking", "avoiding use of mock.patch")))
 ((("abstractions", "implementing chosen abstraction", "not using mock.patch for testing")))
 ((("testing", "after implementing chosen abstraction", "avoiding use of mock.patch", id="ix_tstaftabsmck")))
-At this point you may be scratching your head and thinking,
-"Why don't you just use `mock.patch` and save yourself the effort?"
+В этот момент вы можете почесать затылок и подумать: "Почему бы просто не использовать 'mock.patch' и не сэкономить свои усилия?"
 
-We avoid using mocks in this book and in our production code too. We're not
-going to enter into a Holy War, but our instinct is that mocking frameworks,
-particularly monkeypatching, are a code smell.
+Мы избегаем использования моков в этой книге и в нашем production коде. Мы не собираемся устраивать ХолиВар по этому поводу, но инстинкт подсказывает, что mocking frameworks, особенно monkeypatching, - это дурнопахнущий код.
 
-Instead, we like to clearly identify the responsibilities in our codebase, and to
-separate those responsibilities into small, focused objects that are easy to
-replace with a test double.
+Вместо этого мы предпочитаем четко определять обязанности в нашей кодовой базе и разделять эти обязанности на небольшие, сфокусированные объекты, которые легко заменить тестовым дублёром.
 
-NOTE: You can see an example in <<chapter_08_events_and_message_bus>>,
-    where we `mock.patch()` out an email-sending module, but eventually we
-    replace that with an explicit bit of dependency injection in
+NOTE: Вы можете увидеть пример в <<chapter_08_events_and_message_bus>>, где мы `mock.patch()`-ем выводим модуль отправки электронной почты, но в конечном итоге заменяем его явным небольшим кодом внедрения зависимостей в
     <<chapter_13_dependency_injection>>.
 
-We have three closely related reasons for our preference:
+У нас есть три тесно связанных причины нашего предпочтения:
 
-* Patching out the dependency you're using makes it possible to unit test the
-  code, but it does nothing to improve the design. Using `mock.patch` won't let your
-  code work with a `--dry-run` flag, nor will it help you run against an FTP
-  server. For that, you'll need to introduce abstractions.
+* Исправление зависимости, которую вы используете, позволяет модульно протестировать код, но это никак не улучшает дизайн. Использование `mock.patch` не позволит вашему коду работать с флагом `--dry-run` и не поможет вам работать с FTP-сервером. Для этого вам нужно будет ввести абстракции.
 
-* Tests that use mocks _tend_ to be more coupled to the implementation details
-  of the codebase. That's because mock tests verify the interactions between
-  things: did we call `shutil.copy` with the right arguments? This coupling between
-  code and test _tends_ to make tests more brittle, in our experience.
+* Тесты, которые используют mocks _стремятся_  быть более связанными с деталями реализации кодовой базы. Это потому, что имитационные тесты проверяют взаимодействие между объектами: вызывали ли мы `shutil.copy` с правильными аргументами? По нашему опыту, эта связь между кодом и тестом _стремится_ сделать тесты более хрупкими.
   ((("coupling", "in tests that use mocks")))
 
-* Overuse of mocks leads to complicated test suites that fail to explain the
-  code.
+* Чрезмерное использование моков приводит к созданию сложных наборов тестов, которые не могут объяснить код.
 
-NOTE: Designing for testability really means designing for
-    extensibility. We trade off a little more complexity for a cleaner design
-    that admits novel use cases.
+NOTE: Проектирование для тестируемости на самом деле означает проектирование для расширяемости. Мы обмениваем немного большую сложность на более чистый дизайн, который допускает новые варианты использования.
 
 [role="nobreakinside less_space"]
-.Mocks Versus Fakes; Classic-Style Versus London-School TDD
+.Моки против фейков; Классический стиль  в сравнении с TDD Лондонской школыfootnote:["Лондонская школа", которая больше ориентирована на тестирование взаимодействия, mocking и end-to-end TDD, с особым упором на дизайн, основанный на ответственности, и подход «Говори, не спрашивай» к объектно-ориентированному дизайну, недавно повторно популяризированному Стивом Фриманом и Нэтом Прайсом, в потрясающей книге Growing Object Oriented Software Guided By Tests.  http://codemanship.co.uk/parlezuml/blog/?postid=987]
 *******************************************************************************
 
 ((("test doubles", "mocks versus fakes")))
 ((("mocking", "mocks versus fakes")))
 ((("faking", "fakes versus mocks")))
-Here's a short and somewhat simplistic definition of the difference between
-mocks and fakes:
+Вот краткое и несколько упрощенное определение разницы между моком и фейком:
 
-* Mocks are used to verify _how_ something gets used;  they have methods
-  like `assert_called_once_with()`. They're associated with London-school
-  TDD.
+* Моки используются для проверки _как_ что-то используется; у них есть такие методы, как `assert_called_once_with()`. Они связаны с TDD лондонской школы.
 
-* Fakes are working implementations of the thing they're replacing, but
-  they're designed for use only in tests. They wouldn't work "in real life";
-our in-memory repository is a good example. But you can use them to make assertions about
-  the end state of a system rather than the behaviors along the way, so
-  they're associated with classic-style TDD.
+* Фейки-это рабочие реализации того, что они заменяют, но они предназначены для использования только в тестах. Они не будут работать "в реальной жизни"; наш репозиторий in-memory -- хороший пример. Но вы можете использовать их, чтобы выполнить assert о конечном состоянии системы, а не о поведении на пути к этому состоянию, поэтому они связаны с классическим стилем TDD.
 
 ((("Fowler, Martin")))
 ((("stubbing, mocks and stubs")))
 ((("&quot;Mocks Aren&#x27;t Stubs&quot; (Fowler)", primary-sortas="Mocks")))
-We're slightly conflating mocks with spies and fakes with stubs here, and you
-can read the long, correct answer in Martin Fowler's classic essay on the subject
-called https://oreil.ly/yYjBN["Mocks Aren't Stubs"].
+Здесь мы слегка смешиваем насмешки (mocks) со шпионами(spies) и фальшивки(fakes) с заглушками(stubs), однако вы можете прочитать длинный, правильный опус в классическом эссе Мартина Фаулера на эту тему под названием  https://oreil.ly/yYjBN["Mocks Aren't Stubs"].
 
 ((("MagicMock objects")))
 ((("unittest.mock function")))
 ((("test doubles", "mocks versus stubs")))
-It also probably doesn't help that the `MagicMock` objects provided by
-`unittest.mock` aren't, strictly speaking, mocks; they're spies, if anything.
-But they're also often used as stubs or dummies. There, we promise we're done with
-the test double terminology nitpicks now.
+Также, вероятно, не помогает то, что объекты `MagicMock`, предоставляемые `unittest.mock`, строго говоря, не являются mocks; они шпионы(spies), если уж на то пошло. Но их также часто используют как заглушки(stubs) или пустышки(dummies). Ну вот, мы обещаем, что теперь покончим с  придирками двойной терминологии тестирования.
 
-//IDEA (hynek) you could mention Alex Gaynor's `pretend` which gives you
-// stubs without mocks error-prone magic.
+//IDEA (hynek) you could mention Alex Gaynor's `pretend` which gives you Alex Gaynor's stubs without mocks error-prone magic.
 
 ((("London-school versus classic-style TDD")))
 ((("test-driven development (TDD)", "classic versus London-school")))
 ((("Software Engineering Stack Exchange site")))
-What about London-school versus classic-style TDD? You can read more about those
-two in Martin Fowler's article that we just cited, as well as on the
-https://oreil.ly/H2im_[Software Engineering Stack Exchange site],
-but in this book we're pretty firmly in the classicist camp.  We like to
-build our tests around state both in setup and in assertions, and we like
-to work at the highest level of abstraction possible rather than doing
-checks on the behavior of intermediary collaborators.footnote:[Which is not to
-say that we think the London school people are wrong. Some insanely smart
-people work that way. It's just not what we're used to.]
+А как насчет лондонской школы по сравнению с TDD в классическом стиле? Вы можете прочитать больше об этих двух подходах в статье Мартина Фаулера, которую мы только что процитировали, а также на https://oreil.ly/H2im_[Software Engineering Stack Exchange site], но в этой книге мы довольно твердо придерживаемся классицизма.  Нам нравится строить наши тесты вокруг состояния как в сетапах, так и в ассертах, и нам нравится работать на самом высоком уровне абстракции, а не проверять поведение промежуточных участников.footnote:[Это не значит, что мы считаем, что люди из лондонской школы ошибаются. Некоторые безумно умные люди работают именно так. Просто это не то, к чему мы привыкли.]
 
-Read more on this in <<kinds_of_tests>>.
+Подробнее об этом читайте в <<kinds_of_tests>>.
 *******************************************************************************
 
-We view TDD as a design practice first and a testing practice second. The tests
-act as a record of our design choices and serve to explain the system to us
-when we return to the code after a long absence.
+Мы рассматриваем TDD в первую очередь как практику проектирования, а затем как практику тестирования. Тесты выполняют функцию хранения наших вариантов проектирования и служат для объяснения системы, когда мы возвращаемся к коду после долгого отсутствия.
 
 ((("mocking", "overmocked tests, pitfalls of")))
-Tests that use too many mocks get overwhelmed with setup code that hides the
-story we care about.
+Тесты, использующие слишком много mocks, перегружаются установочным кодом, который скрывает интересующую нас историю.
 
 ((("&quot;Test-Driven Development: That&#x27;s Not What We Meant&quot;", primary-sortas="Test-Driven Development")))
 ((("Freeman, Steve")))
 ((("PyCon talk on Mocking Pitfalls")))
 ((("Jung, Ed")))
-Steve Freeman has a great example of overmocked tests in his talk
-https://oreil.ly/jAmtr["Test-Driven Development"].
-You should also check out this PyCon talk, https://oreil.ly/s3e05["Mocking and Patching Pitfalls"],
-by our esteemed tech reviewer, Ed Jung, which also addresses mocking and its
-alternatives. And while we're recommending talks, don't miss Brandon Rhodes talking about
-https://oreil.ly/oiXJM["Hoisting Your I/O"],
-which really nicely covers the issues we're talking about, using another simple example.
+В своем выступлении Стив Фриман приводит отличный пример чрезмерно замкнутых тестов. https://oreil.ly/jAmtr["Test-Driven Development"]. Вам также следует ознакомиться с этим выступлением PyCon, https://oreil.ly/s3e05["Mocking and Patching Pitfalls"], от нашего уважаемого технического обозревателя Эда Юнга, который также рассматривает mocking и их альтернативы. 
+И в то время как мы рекомендуем доклады, не пропустите Брэндона Родса, говорящего о https://oreil.ly/oiXJM["Hoisting Your I/O"], который действительно хорошо охватывает проблемы, о которых мы говорим, используя еще один простой пример.
 ((("hoisting I/O")))
 ((("Rhodes, Brandon")))
 
 
-TIP: In this chapter, we've spent a lot of time replacing end-to-end tests with
-    unit tests. That doesn't mean we think you should never use E2E tests!
-    In this book we're showing techniques to get you to a decent test
-    pyramid with as many unit tests as possible, and with the minimum number of E2E
-    tests you need to feel confident. Read on to <<types_of_test_rules_of_thumb>>
-    for more details.
+TIP: В этой главе мы потратили много времени, заменяя сквозные тесты модульными. Это не значит, что мы считаем, что вы никогда не должны использовать тесты E2E!     В этой книге мы показываем методы, которые помогут вам составить достойную пирамиду тестов с максимально возможным количеством модульных тестов и с минимальным количеством тестов E2E, необходимых для уверенности. Прочтите <<types_of_test_rules_of_thumb>> для получения более подробной информации.
     ((("unit testing", "unit tests replacing end-to-end tests")))
     ((("end-to-end tests", "replacement with unit tests")))
 
 
-.So Which Do We Use In This Book? Functional or Object-Oriented Composition?
+.Так Что Же Мы Используем В Этой Книге? Функциональную или Объектно-ориентированную композицию?
 ******************************************************************************
 ((("object-oriented composition")))
-Both. Our domain model is entirely free of dependencies and side effects,
-so that's our functional core. The service layer that we build around it
-(in <<chapter_04_service_layer>>) allows us to drive the system edge to edge,
-and we use dependency injection to provide those services with stateful
-components, so we can still unit test them.
+Оба. Наша доменная модель полностью свободна от зависимостей и побочных эффектов, так что это наше функциональное ядро. Уровень сервиса, который мы строим вокруг него (в <<chapter_04_service_layer>>) позволяет нам управлять системой на перефирии, и мы используя инъекцию зависимостей, можем предоставить этим службам компоненты с отслеживанием состояния, так что мы все еще можем их модульно тестировать.
 
-See <<chapter_13_dependency_injection>> for more exploration of making our
-dependency injection more explicit and centralized.
+См. <<chapter_13_dependency_injection>> для более подробного изучения того, как сделать нашу инъекцию зависимостей более явной и централизованной.
 ******************************************************************************
 
-=== Wrap-Up
+=== Подведение итогов
 
 ((("abstractions", "implementing chosen abstraction", startref="ix_absimpl")))
 ((("abstractions", "simplifying interface between business logic and I/O")))
@@ -683,24 +621,17 @@ dependency injection more explicit and centralized.
 ((("testing", "after implementing chosen abstraction", "avoiding use of mock.patch", startref="ix_tstaftabsmck")))
 ((("filesystems", "writing code to synchronize source and target directories", "implementing chosen abstraction", startref="ix_filesyncimp")))
 ((("I/O", "simplifying interface with business logic using abstractions")))
-We'll see this idea come up again and again in the book: we can make our
-systems easier to test and maintain by simplifying the interface between our
-business logic and messy I/O. Finding the right abstraction is tricky, but here are
-a few heuristics and questions to ask yourself:
+Мы будем видеть эту идею в книге снова и снова: мы можем упростить тестирование и обслуживание наших систем, упростив интерфейс между нашей бизнес-логикой и беспорядочным вводом-выводом. Найти правильную абстракцию сложно, но вот несколько эвристик и вопросов, которые нужно задать себе:
 
 
-* Can I choose a familiar Python data structure to represent the state of the
-  messy system and then try to imagine a single function that can return that
-  state?
+* Могу ли я выбрать знакомую структуру данных Python для представления состояния беспорядочной системы, а затем попытаться представить себе единственную функцию, которая может вернуть это состояние?
 
-* Where can I draw a line between my systems, where can I carve out a
-  https://oreil.ly/zNUGG[seam] to stick that abstraction in?
+* Где я могу провести границу между моими системами, где я смогу использовать https://oreil.ly/zNUGG[шов] чтобы вставить эту абстракцию?
   ((("seams")))
 
-* What is a sensible way of dividing things into components with different
-  responsibilities?  What implicit concepts can I make explicit?
+* Что такое разумный способ разделения объектов на компоненты с различными обязанностями?  Какие неявные понятия я могу сделать явными?
 
-* What are the dependencies, and what is the core business logic?
+* Что же такое зависимость, и каковы основные бизнес-логики?
 
 ((("abstractions", startref="ix_abs")))
-Practice makes less imperfect! And now back to our regular programming...
+Практика делает его менее несовершенным! А теперь вернемся к [.line-through]#нашим баранам# нашему обычному  программированию...
