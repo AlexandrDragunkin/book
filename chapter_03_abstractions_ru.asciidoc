@@ -1,0 +1,706 @@
+[[chapter_03_abstractions]]
+== Краткая интерлюдия: О Связях [.keep-together]#и Абстракции#
+
+((("abstractions", id="ix_abs")))
+Позвольте нам, дорогой читатель, сделать небольшое отступление от темы абстракций. Мы довольно много говорили об _абстракциях_. Например, шаблон репозитория-это абстракция над складом. Но что делает хорошую абстракцию?  Чего мы хотим от абстракций?  И как они связаны с тестированием?
+
+
+[TIP]
+====
+Код для этой главы находится в
+ветке chapter_03_abstractions https://oreil.ly/k6MmV[on GitHub]:
+
+----
+git clone https://github.com/cosmicpython/code.git
+git checkout chapter_03_abstractions
+----
+====
+
+
+((("katas")))
+Ключевая тема этой книги, скрытая среди причудливых хитроплетений, заключается в том, что мы можем использовать простые абстракции, чтобы скрыть беспорядочные детали. Когда мы пишем код для удовольствия или в ката,footnote:[code kata - это концепция, предлагающая оттачивать навыки программиста делая небольшие проблемы много раз, пытаясь улучшить код на каждой итерации. Название происходит от аналогии с Ката боевых искусств , где формы (aka kata) - это практика, выполняемая над и в результате улучшений. code kata - это небольшая, содержательная задача программирования, часто используемая для практики TDD. См. https://oreil.ly/vhjju["Kata—The Only Way to Learn TDD"] автор: Питер Провост.] мы можем свободно упражняться с идеями, вычленяя сущности и агрессивно рефакторингуя. Однако, в крупномасштабной системе, наши решения становимся ограниченными, другими решениями, принятыми в других частях системы.
+
+((("coupling")))
+((("cohesion, high, between coupled elements")))
+Когда мы не можем изменить компонент A из опасения сломать компонент B, мы говорим, что компоненты стали _связанными_ или _сцепленными_   (_coupled_). Локальное сцепление -- это хорошо: это признак того, что наш код работает дружно "всем коллективом", каждый компонент поддерживает другие, все они подходят друг к другу, как колёсики в часах. Говоря на жаргоне будет сказано как то так: это работает, когда существуют жесткие _связи_ между связанными элементами.
+
+((("Ball of Mud pattern")))
+((("coupling", "disadvantages of")))
+Вот в глобальном масштабе жёстка связанность (сцепление) -- это неприятность: Увеличивается риск и стоимость внесения изменений нашего кода, иногда до такой степени, что мы чувствуем себя неспособными внести какие-либо изменения вообще. Это проблема на рисунке Шара грязи может быть описана так: по мере роста приложения, в случае если мы не можем предотвратить жесткую связанность между элементами, которые не связаны друг с другом, эта взаимосвязь будет прогрессировать сверхлинейно, до тех пор пока мы больше не сможем эффективно вносить изменения в наши системы.
+
+((("abstractions", "using to reduce coupling")))
+((("coupling", "reducing by abstracting away details")))
+Мы можем уменьшить степень сцепления внутри системы
+(<<coupling_illustration1>>) абстрагируясь от деталей
+(<<coupling_illustration2>>).
+
+[role="width-50"]
+[[coupling_illustration1]]
+.Много жёстких связей
+image::images/apwp_0301.png[]
+[role="image-source"]
+----
+[ditaa, apwp_0301]
++--------+      +--------+
+| System | ---> | System |
+|   A    | ---> |   B    |
+|        | ---> |        |
+|        | ---> |        |
+|        | ---> |        |
++--------+      +--------+
+----
+
+[role="width-90"]
+[[coupling_illustration2]]
+.Меньше жёстких связей
+image::images/apwp_0302.png[]
+[role="image-source"]
+----
+[ditaa, apwp_0302]
++--------+                           +--------+
+| System |      /-------------\      | System |
+|   A    | ---> |             | ---> |   B    |
+|        | ---> | Abstraction | ---> |        |
+|        |      |             | ---> |        |
+|        |      \-------------/      |        |
++--------+                           +--------+
+----
+
+
+
+На обеих диаграммах у нас есть пара подсистем, одна из которых зависит от другой.В <<coupling_illustration1>> между ними существует высокая степень связаности; количество стрелок указывает на множество видов зависимостей между ними. Если нам нужно изменить систему B, есть большая вероятность, что это изменение отразится на системе A.
+
+Однако в <<coupling_illustration2>> мы уменьшили степень связаности, вставив новую, более простую абстракцию. Поскольку она проще, система А имеет меньше видов зависимостей от абстракции. Абстракция служит для защиты нас от изменений, скрывая сложные детали того, что делает система B - мы можем изменить стрелки справа, не меняя стрелки слева.
+
+[role="pagebreak-before less_space"]
+=== Абстрагирование от Состояния Улучшает Тестируемость
+
+((("abstractions", "abstracting state to aid testability", id="ix_absstate")))
+((("testing", "abstracting state to aid testability", id="ix_tstabs")))
+((("state", "abstracting to aid testability", id="ix_stateabs")))
+((("filesystems", "writing code to synchronize source and target directories", id="ix_filesync")))
+Давайте рассмотрим пример. Представьте, что мы хотим написать код для синхронизации двух файловых каталогов, которые назовем _source_ и _destination_:
+
+* Если файл существует в источнике, но не в месте назначения, скопируйте его.
+* Если файл существует в источнике, но имеет другое имя, отличное от имеющегося в папке назначения, переименуйте его в соответствующее.
+* Если файл существует в папке назначения, но отсутствует в источнике, удалите его.
+
+((("hashing a file")))
+Первое и третье требования достаточно просты: мы можем просто сравнить два списка путей. Но, вот, со вторым сложнее. Чтобы выявить необходимость переименования, нам придется проверить содержимое файлов. Для этого мы можем использовать функцию хеширования, такую ​​как MD5 или SHA-1. Код для генерации хэша SHA-1 из файла достаточно прост:
+
+[[hash_file]]
+.Хеширование файла (sync.py)
+====
+[source,python]
+----
+BLOCKSIZE = 65536
+
+def hash_file(path):
+    hasher = hashlib.sha1()
+    with path.open("rb") as file:
+        buf = file.read(BLOCKSIZE)
+        while buf:
+            hasher.update(buf)
+            buf = file.read(BLOCKSIZE)
+    return hasher.hexdigest()
+----
+====
+
+Теперь нам нужно чуть дописать, часть принятия решения о том, что делать -- Бизнес-логику, если хотите.
+
+Когда нам нужно решить проблему основываясь на первичных принципах, мы обычно пытаемся написать простую реализацию, а затем заняться рефакторингом в сторону лучшего дизайна. Мы будем использовать этот подход на протяжении всей книги, потому что именно так мы пишем код в реальном мире: начните с решения самой маленькой части проблемы, а затем итеративно делайте решение более продвинутым и лучше разработанным.
+
+////
+[SG] this may just be my lack of Python experience but it would have helped me to see from pathlib import Path before this code snippet so that I might be able to guess the type of object "path" in hash_file(path)  - I guess a type hint would be too much to ask..
+////
+
+Наш первый подход выглядит примерно так:
+
+[[sync_first_cut]]
+.Базовый алгоритм синхронизации (sync.py)
+====
+[source,python]
+[role="non-head"]
+----
+import hashlib
+import os
+import shutil
+from pathlib import Path
+
+def sync(source, dest):
+    # Пройдите по исходной папке и создайте список имен файлов и их хэшей
+    source_hashes = {}
+    for folder, _, files in os.walk(source):
+        for fn in files:
+            source_hashes[hash_file(Path(folder) / fn)] = fn
+
+    seen = set()  # Следите за файлами, которые мы нашли в целевой папке
+
+    # Пройдитесь по целевой папке и получите имена файлов и их хэши
+    for folder, _, files in os.walk(dest):
+        for fn in files:
+            dest_path = Path(folder) / fn
+            dest_hash = hash_file(dest_path)
+            seen.add(dest_hash)
+
+            # если в целевой папке есть файл, которого нет в исходной, 
+			#  удалите его
+			if dest_hash not in source_hashes:
+                dest_path.remove()
+
+            # если в target есть файл, который имеет другой путь в source,
+            # переместите его на правильный путь
+            elif dest_hash in source_hashes and fn != source_hashes[dest_hash]:
+                shutil.move(dest_path, Path(folder) / source_hashes[dest_hash])
+
+    # для каждого файла, который появляется в исходной папке, 
+	# но не в целевой, скопируйте его в целевую
+    for src_hash, fn in source_hashes.items():
+        if src_hash not in seen:
+            shutil.copy(Path(source) / fn, Path(dest) / fn)
+----
+====
+
+Фантастика! У нас есть какой-то код, и он _выглядит_ нормально, но прежде чем мы запустим его на жестком диске, может быть, нам стоит его протестировать. Как мы будем тестировать такие штуковины?
+
+
+[[ugly_sync_tests]]
+.Парочка сквозных тестов (test_sync.py)
+====
+[source,python]
+[role="non-head"]
+----
+def test_when_a_file_exists_in_the_source_but_not_the_destination():
+    try:
+        source = tempfile.mkdtemp()
+        dest = tempfile.mkdtemp()
+
+        content = "Я очень полезный файл"
+        (Path(source) / 'my-file').write_text(content)
+
+        sync(source, dest)
+
+        expected_path = Path(dest) /  'my-file'
+        assert expected_path.exists()
+        assert expected_path.read_text() == content
+
+    finally:
+        shutil.rmtree(source)
+        shutil.rmtree(dest)
+
+
+def test_when_a_file_has_been_renamed_in_the_source():
+    try:
+        source = tempfile.mkdtemp()
+        dest = tempfile.mkdtemp()
+
+        content = "Я файл, который был переименован"
+        source_path = Path(source) / 'source-filename'
+        old_dest_path = Path(dest) / 'dest-filename'
+        expected_dest_path = Path(dest) / 'source-filename'
+        source_path.write_text(content)
+        old_dest_path.write_text(content)
+
+        sync(source, dest)
+
+        assert old_dest_path.exists() is False
+        assert expected_dest_path.read_text() == content
+
+
+    finally:
+        shutil.rmtree(source)
+        shutil.rmtree(dest)
+----
+====
+
+((("coupling", "domain logic coupled with I/O")))
+((("I/O", "domain logic tightly coupled to")))
+Строго говоря, тут многовато установок для двух простых случаев! Проблема в том, что логика нашей предметной области «выяснение разницы между двумя каталогами» тесно связана с I/O кодом. Мы не можем запустить наш алгоритм поиска различий без вызова модулей `pathlib`, `shutil` и `hashlib`.
+
+Только вот беда в том, что даже с нашими текущими требованиями мы не написали достаточно тестов: текущая реализация имеет несколько ошибок (например, `shutil.move()` неверен).  Чтобы получить достойное покрытие и выявить эти ошибки, нужно написать больше тестов, но если все они будут такими же громоздкими, как предыдущие, это быстро станет очень геморно.
+
+Вдобавок наш код не очень расширяемый. Представьте, что вы пытаетесь реализовать флаг `--dry-run`, который заставляет наш код просто распечатать то, что он собирается делать, а не выполнять это на самом деле.  А что, если мы хотим синхронизироваться с удаленным сервером или с облачным хранилищем?
+
+((("abstractions", "abstracting state to aid testability", startref="ix_absstate")))
+((("testing", "abstracting state to aid testability", startref="ix_tstabs")))
+((("state", "abstracting to aid testability", startref="ix_stateabs")))
+((("filesystems", "writing code to synchronize source and target directories", startref="ix_filesync")))
+((("pytest", "fixtures")))
+Наш высокоуровневый код связан с низкоуровневыми деталями, и это усложняет жизнь. По мере усложнения рассматриваемых сценариев наши тесты будут становиться все более громоздкими. Мы определенно можем провести рефакторинг этих тестов (например, некоторая очистка может быть перенесена в фикстуры pytest), но пока мы выполняем операции с файловой системой, они будут медленными, их будет трудно читать и писать.
+
+[role="pagebreak-before less_space"]
+=== Выбор правильной Абстракции(-й)
+
+((("abstractions", "choosing right abstraction", id="ix_abscho")))
+((("filesystems", "writing code to synchronize source and target directories", "choosing right abstraction", id="ix_filesyncabs")))
+Что мы можем сделать, чтобы переписать наш код и сделать его более тестируемым?
+
+((("responsibilities of code")))
+Во-первых, нам нужно подумать о том, что нужно нашему коду от файловой системы. Разбирая код, мы видим три различных момента. Воспримем их как три различных _обязанности_, которые выполняет код:
+
+1. Мы опрашиваем файловую систему с помощью `os.walk` и определяем хэши для ряда путей. Это похоже как для  исходного, так и конечного случая.
+
+2. Мы решаем, является ли файл новым, переименованным или лишним.
+
+3. Мы копируем, перемещаем или удаляем файлы в соответствии с источником.
+
+
+((("simplifying abstractions")))
+Помните, что мы хотим найти _упрощающие абстракции_ для каждой из этих обязанностей. Это позволит нам скрыть беспорядочные детали, чтобы мы могли сосредоточиться на интересующей нас логике.footnote:[Если вы привыкли мыслить терминами интерфейсов, то мы пытаемся дать определение именно этому. Прим переводчика: https://habr.com/ru/post/30444/]
+
+NOTE: В этой главе мы отрефакторим слегка корявый код в более проверяемую структуру, 
+      определяя отдельные задачи, которые необходимо выполнить, и предоставляя каждую задачу четко 
+	  определенному субъекту, аналогично <<ddg_example, пример `duckduckgo`>>.
+
+((("dictionaries", "for filesystem operations")))
+((("hashing a file", "dictionary of hashes to paths")))
+Для шагов 1 и 2 мы уже интуитивно начали использовать абстракцию, словарь хэшей для путей. Возможно, вы уже думали: «Почему бы не создать словарь для целевой папки, а также для источника, а затем мы просто сравним два словаря?» Это похоже на хороший способ абстрагироваться от текущего состояния файловой системы:
+
+    source_files = {'hash1': 'path1', 'hash2': 'path2'}
+    dest_files = {'hash1': 'path1', 'hash2': 'pathX'}
+
+А как насчет перехода от пункта 2 к пункту 3? Как мы можем абстрагироваться от фактического взаимодействия файловой системы перемещения/копирования/удаления?
+
+((("coupling", "separating what you want to do from how to do it")))
+Мы применим здесь трюк, который будем применять позже в этой книге достаточно широко. Мы собираемся отделить то, _что_ мы хотим сделать, от того, _как_ это сделать. Мы собираемся сделать так, чтобы наша программа выводила список команд, которые выглядят следующим образом:
+
+    ("COPY", "sourcepath", "destpath"),
+    ("MOVE", "old", "new"),
+
+((("commands", "program output as list of commands")))
+Теперь мы могли бы написать тесты, которые просто используют два дикта файловой системы в качестве входных данных, и мы ожидали бы списки кортежей строк, представляющих действия в качестве выходных данных.
+
+Вместо того чтобы сказать: "Учитывая фактическую файловую систему при запуске своей функции, проверить, какие действия произошли", мы говорим: "Учитывая _абстрацию_ файловой системы, какое _абстрактное_ действие файловой системы произойдет?"
+
+
+[[better_tests]]
+.Упрощенные входы и выходы в наших тестах (test_sync.py)
+====
+[source,python]
+[role="skip"]
+----
+    def test_when_a_file_exists_in_the_source_but_not_the_destination():
+        src_hashes = {'hash1': 'fn1'}
+        dst_hashes = {}
+        expected_actions = [('COPY', '/src/fn1', '/dst/fn1')]
+        ...
+
+    def test_when_a_file_has_been_renamed_in_the_source():
+        src_hashes = {'hash1': 'fn1'}
+        dst_hashes = {'hash1': 'fn2'}
+        expected_actions == [('MOVE', '/dst/fn2', '/dst/fn1')]
+        ...
+----
+====
+
+
+=== Реализация Выбранных Нами Абстракций
+
+((("abstractions", "implementing chosen abstraction", id="ix_absimpl")))
+((("abstractions", "choosing right abstraction", startref="ix_abscho")))
+((("filesystems", "writing code to synchronize source and target directories", "choosing right abstraction", startref="ix_filesyncabs")))
+((("filesystems", "writing code to synchronize source and target directories", "implementing chosen abstraction", id="ix_filesyncimp")))
+Это все очень хорошо, но как нам _на самом деле_ написать эти новые тесты и как изменить нашу реализацию, чтобы все это работало?
+
+((("Functional Core, Imperative Shell (FCIS)")))
+((("Bernhardt, Gary")))
+((("testing", "after implementing chosen abstraction", id="ix_tstaftabs")))
+Наша цель состоит в том, чтобы изолировать умную часть нашей системы и иметь возможность тщательно протестировать её без необходимости создавать реальную файловую систему. Мы создадим "ядро" кода, которое не имеет зависимостей от внешнего состояния, а затем посмотрим, как оно реагирует, когда мы даем ему входные данные из внешнего мира (такой подход был охарактеризован Гэри Бернхардтом как
+https://oreil.ly/wnad4[Functional
+Core, Imperative Shell], или FCIS).
+
+((("I/O", "disentangling details from program logic")))
+((("state", "splitting off from logic in the program")))
+((("business logic", "separating from state in code")))
+Давайте начнем с разделения кода, чтобы отделить части с состоянием от логики.
+
+И наша функция верхнего уровня не будет содержать почти никакой логики вообще; это просто обязательная серия шагов: собрать входные данные, вызвать нашу логику, применить результаты:
+
+[[three_parts]]
+.Разделим наш код на три  (sync.py)
+====
+[source,python]
+----
+def sync(source, dest):
+    # imperative shell Шаг 1, собрать входные данные
+    source_hashes = read_paths_and_hashes(source)  #<1>
+    dest_hashes = read_paths_and_hashes(dest)  #<1>
+
+    # Шаг 2: вызов функционального ядра
+    actions = determine_actions(source_hashes, dest_hashes, source, dest)  #<2>
+
+    # imperative shell Шаг 3, применить результаты
+    for action, *paths in actions:
+        if action == 'copy':
+            shutil.copyfile(*paths)
+        if action == 'move':
+            shutil.move(*paths)
+        if action == 'delete':
+            os.remove(paths[0])
+----
+====
+<1> Первая функция, которую мы учитываем, `read_paths_and_hashes()`, которая изолирует часть ввода-вывода нашего приложения.
+
+<2> Именно здесь мы вырежем функциональное ядро, бизнес-логику.
+
+
+((("dictionaries", "dictionary of hashes to paths")))
+Код для создания словаря путей и хешей теперь написать тривиально просто:
+
+[[read_paths_and_hashes]]
+.Функция, которая просто выполняет ввод/вывод (sync.py)
+====
+[source,python]
+----
+def read_paths_and_hashes(root):
+    hashes = {}
+    for folder, _, files in os.walk(root):
+        for fn in files:
+            hashes[hash_file(Path(folder) / fn)] = fn
+    return hashes
+----
+====
+
+Функция `define_actions()` будет ядром нашей бизнес-логики, которая выясняет: «Учитывая эти два набора хэшей и имен файлов, что мы должны копировать/перемещать/удалять?». Она принимает простые структуры данных и возвращает простые структуры данных:
+
+[[determine_actions]]
+.Функция, которая просто выполняет бизнес-логику (sync.py)
+====
+[source,python]
+----
+def determine_actions(src_hashes, dst_hashes, src_folder, dst_folder):
+    for sha, filename in src_hashes.items():
+        if sha not in dst_hashes:
+            sourcepath = Path(src_folder) / filename
+            destpath = Path(dst_folder) / filename
+            yield 'copy', sourcepath, destpath
+
+        elif dst_hashes[sha] != filename:
+            olddestpath = Path(dst_folder) / dst_hashes[sha]
+            newdestpath = Path(dst_folder) / filename
+            yield 'move', olddestpath, newdestpath
+
+    for sha, filename in dst_hashes.items():
+        if sha not in src_hashes:
+            yield 'delete', dst_folder / filename
+----
+====
+
+Теперь наши тесты действуют непосредственно на функцию `determine_actions()`:
+
+
+[[harry_tests]]
+.Более приятные на вид тесты (test_sync.py)
+====
+[source,python]
+----
+def test_when_a_file_exists_in_the_source_but_not_the_destination():
+    src_hashes = {'hash1': 'fn1'}
+    dst_hashes = {}
+    actions = determine_actions(src_hashes, dst_hashes, Path('/src'), Path('/dst'))
+    assert list(actions) == [('copy', Path('/src/fn1'), Path('/dst/fn1'))]
+
+def test_when_a_file_has_been_renamed_in_the_source():
+    src_hashes = {'hash1': 'fn1'}
+    dst_hashes = {'hash1': 'fn2'}
+    actions = determine_actions(src_hashes, dst_hashes, Path('/src'), Path('/dst'))
+    assert list(actions) == [('move', Path('/dst/fn2'), Path('/dst/fn1'))]
+----
+====
+
+
+Поскольку мы отделили логику нашей программы -- код для идентификации изменений -- от низкоуровневых деталей ввода-вывода, мы можем легко протестировать ядро нашего кода.
+
+((("edge-to-edge testing", id="ix_edgetst")))
+При таком подходе мы перешли от тестирования нашей основной функции точки входа `sync()` к тестированию функции более низкого уровня  `determine_actions()`. Вы можете решить, что это нормально, потому что `sync()` теперь выполняется так просто. Или вы можете решить провести несколько интеграционных/приемочных тестов, чтобы проверить эту `sync()`. Но есть еще один вариант, который заключается в изменении функции `sync()`, чтобы её можно было тестировать модульно и тестировать от начала до конца; это подход, который Боб называет _edge-to-edge testing_.
+
+
+==== Тестирование Edge to Edge с Fakes и Dependency Injection
+
+((("dependencies", "edge-to-edge testing with dependency injection", id="ix_depinj")))
+((("testing", "after implementing chosen abstraction", "edge-to-edge testing with fakes and dependency injection", id="ix_tstaftabsedge")))
+((("abstractions", "implementing chosen abstraction", "edge-to-edge testing with fakes and dependency injection", id="ix_absimpltstfdi")))
+Когда мы начинаем писать новую систему, мы часто сначала фокусируемся на основной логике, управляя ею с помощью прямых модульных тестов. Однако в какой-то момент мы хотим протестировать совместное использование большой части системы.
+
+((("faking", "faking I/O in edge-to-edge test")))
+Мы бы _могли_ вернуться к нашим сквозным тестам, но они все еще так же сложны в написании и обслуживании, как и раньше. Вместо этого мы часто пишем тесты, которые вызывают целую систему вместе, но подделывают ввод-вывод, своего рода _edge to edge_:
+
+
+[[di_version]]
+.Явные зависимости (sync.py)
+====
+[source,python]
+[role="skip"]
+----
+def sync(reader, filesystem, source_root, dest_root): #<1>
+
+    source_hashes = reader(source_root) #<2>
+    dest_hashes = reader(dest_root)
+
+    for sha, filename in src_hashes.items():
+        if sha not in dest_hashes:
+            sourcepath = source_root / filename
+            destpath = dest_root / filename
+            filesystem.copy(destpath, sourcepath) #<3>
+
+        elif dest_hashes[sha] != filename:
+            olddestpath = dest_root / dest_hashes[sha]
+            newdestpath = dest_root / filename
+            filesystem.move(olddestpath, newdestpath)
+
+    for sha, filename in dst_hashes.items():
+        if sha not in source_hashes:
+            filesystem.delete(dest_root/filename)
+----
+====
+
+<1> Наша функция верхнего уровня теперь предоставляет две новые зависимости: `reader` и `filesystem`.
+
+<2> Мы вызываем `reader` для создания наших файлов dict.
+
+<3> Мы вызываем `filesystem`, чтобы применить обнаруженные нами изменения.
+
+TIP: Хотя мы используем инъекцию зависимостей, нет необходимости
+	определять абстрактный базовый класс или какой-либо явный интерфейс.
+	В этой книге мы часто показываем ABC, потому что надеемся, что этот модуль поможет вам понять, что такое абстракция, но в этом нет 
+	необходимости. Динамический характер Python означает, что мы всегда можем положиться на утиную типизациюfootnote:[PEP 544 -- Protocols: Structural subtyping (static duck typing) https://www.python.org/dev/peps/pep-0544/].
+
+// IDEA [KP] Again, one could mention PEP544 protocols here. For some reason, I like them.
+
+[[bob_tests]]
+.Tests using DI
+====
+[source,python]
+[role="skip"]
+----
+class FakeFileSystem(list): #<1>
+
+    def copy(self, src, dest): #<2>
+        self.append(('COPY', src, dest))
+
+    def move(self, src, dest):
+        self.append(('MOVE', src, dest))
+
+    def delete(self, dest):
+        self.append(('DELETE', dest))
+
+
+def test_when_a_file_exists_in_the_source_but_not_the_destination():
+    source = {"sha1": "my-file" }
+    dest = {}
+    filesystem = FakeFileSystem()
+
+    reader = {"/source": source, "/dest": dest}
+    sync(reader.pop, filesystem, "/source", "/dest")
+
+    assert filesystem == [("COPY", "/source/my-file", "/dest/my-file")]
+
+
+def test_when_a_file_has_been_renamed_in_the_source():
+    source = {"sha1": "renamed-file" }
+    dest = {"sha1": "original-file" }
+    filesystem = FakeFileSystem()
+
+    reader = {"/source": source, "/dest": dest}
+    sync(reader.pop, filesystem, "/source", "/dest")
+
+    assert filesystem == [("MOVE", "/dest/original-file", "/dest/renamed-file")]
+----
+====
+
+<1> Bob _loves_ using lists to build simple test doubles, even though his
+    coworkers get mad. It means we can write tests like
+    ++assert 'foo' not in database++.
+    ((("test doubles", "using lists to build")))
+
+<2> Each method in our `FakeFileSystem` just appends something to the list so we
+    can inspect it later. This is an example of a spy object.
+    ((("spy objects")))
+
+
+The advantage of this approach is that our tests act on the exact same function
+that's used by our production code. The disadvantage is that we have to make
+our stateful components explicit and pass them around.
+David Heinemeier Hansson, the creator of Ruby on Rails, famously described this
+as "test-induced design damage."
+
+((("edge-to-edge testing", startref="ix_edgetst")))
+((("testing", "after implementing chosen abstraction", "edge-to-edge testing with fakes and dependency injection", startref="ix_tstaftabsedge")))
+((("dependencies", "edge-to-edge testing with dependency injection", startref="ix_depinj")))
+((("abstractions", "after implementing chosen abstraction", "edge-to-edge testing with fakes and dependency injection", startref="ix_absimpltstfdi")))
+In either case, we can now work on fixing all the bugs in our implementation;
+enumerating tests for all the edge cases is now much easier.
+
+
+==== Why Not Just Patch It Out?
+
+((("mock.patch method")))
+((("mocking", "avoiding use of mock.patch")))
+((("abstractions", "implementing chosen abstraction", "not using mock.patch for testing")))
+((("testing", "after implementing chosen abstraction", "avoiding use of mock.patch", id="ix_tstaftabsmck")))
+At this point you may be scratching your head and thinking,
+"Why don't you just use `mock.patch` and save yourself the effort?"
+
+We avoid using mocks in this book and in our production code too. We're not
+going to enter into a Holy War, but our instinct is that mocking frameworks,
+particularly monkeypatching, are a code smell.
+
+Instead, we like to clearly identify the responsibilities in our codebase, and to
+separate those responsibilities into small, focused objects that are easy to
+replace with a test double.
+
+NOTE: You can see an example in <<chapter_08_events_and_message_bus>>,
+    where we `mock.patch()` out an email-sending module, but eventually we
+    replace that with an explicit bit of dependency injection in
+    <<chapter_13_dependency_injection>>.
+
+We have three closely related reasons for our preference:
+
+* Patching out the dependency you're using makes it possible to unit test the
+  code, but it does nothing to improve the design. Using `mock.patch` won't let your
+  code work with a `--dry-run` flag, nor will it help you run against an FTP
+  server. For that, you'll need to introduce abstractions.
+
+* Tests that use mocks _tend_ to be more coupled to the implementation details
+  of the codebase. That's because mock tests verify the interactions between
+  things: did we call `shutil.copy` with the right arguments? This coupling between
+  code and test _tends_ to make tests more brittle, in our experience.
+  ((("coupling", "in tests that use mocks")))
+
+* Overuse of mocks leads to complicated test suites that fail to explain the
+  code.
+
+NOTE: Designing for testability really means designing for
+    extensibility. We trade off a little more complexity for a cleaner design
+    that admits novel use cases.
+
+[role="nobreakinside less_space"]
+.Mocks Versus Fakes; Classic-Style Versus London-School TDD
+*******************************************************************************
+
+((("test doubles", "mocks versus fakes")))
+((("mocking", "mocks versus fakes")))
+((("faking", "fakes versus mocks")))
+Here's a short and somewhat simplistic definition of the difference between
+mocks and fakes:
+
+* Mocks are used to verify _how_ something gets used;  they have methods
+  like `assert_called_once_with()`. They're associated with London-school
+  TDD.
+
+* Fakes are working implementations of the thing they're replacing, but
+  they're designed for use only in tests. They wouldn't work "in real life";
+our in-memory repository is a good example. But you can use them to make assertions about
+  the end state of a system rather than the behaviors along the way, so
+  they're associated with classic-style TDD.
+
+((("Fowler, Martin")))
+((("stubbing, mocks and stubs")))
+((("&quot;Mocks Aren&#x27;t Stubs&quot; (Fowler)", primary-sortas="Mocks")))
+We're slightly conflating mocks with spies and fakes with stubs here, and you
+can read the long, correct answer in Martin Fowler's classic essay on the subject
+called https://oreil.ly/yYjBN["Mocks Aren't Stubs"].
+
+((("MagicMock objects")))
+((("unittest.mock function")))
+((("test doubles", "mocks versus stubs")))
+It also probably doesn't help that the `MagicMock` objects provided by
+`unittest.mock` aren't, strictly speaking, mocks; they're spies, if anything.
+But they're also often used as stubs or dummies. There, we promise we're done with
+the test double terminology nitpicks now.
+
+//IDEA (hynek) you could mention Alex Gaynor's `pretend` which gives you
+// stubs without mocks error-prone magic.
+
+((("London-school versus classic-style TDD")))
+((("test-driven development (TDD)", "classic versus London-school")))
+((("Software Engineering Stack Exchange site")))
+What about London-school versus classic-style TDD? You can read more about those
+two in Martin Fowler's article that we just cited, as well as on the
+https://oreil.ly/H2im_[Software Engineering Stack Exchange site],
+but in this book we're pretty firmly in the classicist camp.  We like to
+build our tests around state both in setup and in assertions, and we like
+to work at the highest level of abstraction possible rather than doing
+checks on the behavior of intermediary collaborators.footnote:[Which is not to
+say that we think the London school people are wrong. Some insanely smart
+people work that way. It's just not what we're used to.]
+
+Read more on this in <<kinds_of_tests>>.
+*******************************************************************************
+
+We view TDD as a design practice first and a testing practice second. The tests
+act as a record of our design choices and serve to explain the system to us
+when we return to the code after a long absence.
+
+((("mocking", "overmocked tests, pitfalls of")))
+Tests that use too many mocks get overwhelmed with setup code that hides the
+story we care about.
+
+((("&quot;Test-Driven Development: That&#x27;s Not What We Meant&quot;", primary-sortas="Test-Driven Development")))
+((("Freeman, Steve")))
+((("PyCon talk on Mocking Pitfalls")))
+((("Jung, Ed")))
+Steve Freeman has a great example of overmocked tests in his talk
+https://oreil.ly/jAmtr["Test-Driven Development"].
+You should also check out this PyCon talk, https://oreil.ly/s3e05["Mocking and Patching Pitfalls"],
+by our esteemed tech reviewer, Ed Jung, which also addresses mocking and its
+alternatives. And while we're recommending talks, don't miss Brandon Rhodes talking about
+https://oreil.ly/oiXJM["Hoisting Your I/O"],
+which really nicely covers the issues we're talking about, using another simple example.
+((("hoisting I/O")))
+((("Rhodes, Brandon")))
+
+
+TIP: In this chapter, we've spent a lot of time replacing end-to-end tests with
+    unit tests. That doesn't mean we think you should never use E2E tests!
+    In this book we're showing techniques to get you to a decent test
+    pyramid with as many unit tests as possible, and with the minimum number of E2E
+    tests you need to feel confident. Read on to <<types_of_test_rules_of_thumb>>
+    for more details.
+    ((("unit testing", "unit tests replacing end-to-end tests")))
+    ((("end-to-end tests", "replacement with unit tests")))
+
+
+.So Which Do We Use In This Book? Functional or Object-Oriented Composition?
+******************************************************************************
+((("object-oriented composition")))
+Both. Our domain model is entirely free of dependencies and side effects,
+so that's our functional core. The service layer that we build around it
+(in <<chapter_04_service_layer>>) allows us to drive the system edge to edge,
+and we use dependency injection to provide those services with stateful
+components, so we can still unit test them.
+
+See <<chapter_13_dependency_injection>> for more exploration of making our
+dependency injection more explicit and centralized.
+******************************************************************************
+
+=== Wrap-Up
+
+((("abstractions", "implementing chosen abstraction", startref="ix_absimpl")))
+((("abstractions", "simplifying interface between business logic and I/O")))
+((("business logic", "abstractions simplifying interface with messy I/O")))
+((("testing", "after implementing chosen abstraction", startref="ix_tstaftabs")))
+((("testing", "after implementing chosen abstraction", "avoiding use of mock.patch", startref="ix_tstaftabsmck")))
+((("filesystems", "writing code to synchronize source and target directories", "implementing chosen abstraction", startref="ix_filesyncimp")))
+((("I/O", "simplifying interface with business logic using abstractions")))
+We'll see this idea come up again and again in the book: we can make our
+systems easier to test and maintain by simplifying the interface between our
+business logic and messy I/O. Finding the right abstraction is tricky, but here are
+a few heuristics and questions to ask yourself:
+
+
+* Can I choose a familiar Python data structure to represent the state of the
+  messy system and then try to imagine a single function that can return that
+  state?
+
+* Where can I draw a line between my systems, where can I carve out a
+  https://oreil.ly/zNUGG[seam] to stick that abstraction in?
+  ((("seams")))
+
+* What is a sensible way of dividing things into components with different
+  responsibilities?  What implicit concepts can I make explicit?
+
+* What are the dependencies, and what is the core business logic?
+
+((("abstractions", startref="ix_abs")))
+Practice makes less imperfect! And now back to our regular programming...

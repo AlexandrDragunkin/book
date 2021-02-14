@@ -21,7 +21,7 @@ include::chapter_01_domain_model_ru.asciidoc[]
 
 include::chapter_02_repository_ru.asciidoc[]
 
-include::chapter_03_abstractions.asciidoc[]
+include::chapter_03_abstractions_ru.asciidoc[]
 
 
 include::chapter_04_service_layer.asciidoc[]
