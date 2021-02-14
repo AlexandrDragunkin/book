@@ -3,11 +3,11 @@
 
 ((("service layer", id="ix_serlay")))
 ((("Flask framework", "Flask API and service layer", id="ix_Flskapp")))
-Вернемся к нашему проекту распределения товаров! <<maps_service_layer_before>> показывает точку, которую мы достигли в конце <<chapter_02_repository>>, который включает в себя шаблон репозитория.
+Вернемся к нашему исходному проекту! Схема <<maps_service_layer_before>> показывает точку, которую мы достигли в конце <<chapter_02_repository>>, которая включает в себя шаблон репозитория.
 
 [role="width-75"]
 [[maps_service_layer_before]]
-.До: Управляем приложением, общаясь с репозиторием и моделью домена
+.Управляем приложением, общаясь с репозиторием и моделью домена
 image::images/apwp_0401.png[]
 
 
@@ -63,16 +63,14 @@ git checkout chapter_02_repository
 ((("APIs", "end-to-end test of allocate API")))
 ((("end-to-end tests", "of allocate API")))
 ((("Flask framework", "Flask API and service layer", "first API end-to-end test", id="ix_Flskappe2e")))
-No one is interested in getting into a long terminology debate about what counts as an end-to-end (E2E) test versus a functional test versus an acceptance test versus an integration test versus a unit test. Different projects need different combinations of tests, and we've seen perfectly successful projects just split things into "fast tests" and "slow tests."
+Никто не заинтересован в долгих терминологических дебатах о том, что считается сквозным тестом (E2E) по сравнению с функциональным тестом по сравнению с приемочным тестом по сравнению с интеграционным тестом по сравнению с модульным тестом. Различные проекты нуждаются в различных комбинациях тестов, и мы видели, как совершенно успешные проекты просто делят вещи на "быстрые тесты" и "медленные тесты"."
 
-For now, we want to write one or maybe two tests that are going to exercise
-a "real" API endpoint (using HTTP) and talk to a real database. Let's call
-them _end-to-end tests_ because it's one of the most self-explanatory names.
+На данный момент мы хотим написать один или, может быть, два теста, которые будут использовать "реальную" конечную точку API (используя HTTP) и общаться с реальной базой данных. Давайте назовем их _сквозные тесты_, потому что это одно из самых понятных названий.
 
-The following shows a first cut:
+Ниже показан первый разрез:
 
 [[first_api_test]]
-.A first API test (test_api.py)
+.Первый тест API (test_api.py)
 ====
 [source,python]
 [role="non-head"]
@@ -96,29 +94,23 @@ def test_api_returns_allocation(add_stock):
 ----
 ====
 
-<1> `random_sku()`, `random_batchref()`, and so on are little helper functions that
-    generate randomized characters by using the `uuid` module. Because
-    we're running against an actual database now, this is one way to prevent
-    various tests and runs from interfering with each other.
+<1> `random_sku()`, `random_batchref ()` и так далее -- это небольшие вспомогательные функции, которые генерируют случайные символы с помощью модуля `uuid`. Поскольку сейчас мы работаем с реальной базой данных, это один из способов предотвратить взаимное влияние различных тестов и прогонов.
 
-<2> `add_stock` is a helper fixture that just hides away the details of
-    manually inserting rows into the database using SQL. We'll show a nicer
-    way of doing this later in the chapter.
+<2> `add_stock` -- это вспомогательная фикстура, инструмент, который просто скрывает детали ручной вставки строк в базу данных с помощью SQL. В конце этой главы мы покажем способ получше.
 
-<3> _config.py_ is a module in which we keep configuration information.
+
+<3> _config.py_ это модуль, в котором мы храним информацию о конфигурации.
 
 ((("Flask framework", "Flask API and service layer", "first API end-to-end test", startref="ix_Flskappe2e")))
-Everyone solves these problems in different ways, but you're going to need some
-way of spinning up Flask, possibly in a container, and of talking to a
-Postgres database. If you want to see how we did it, check out
+Все решают эти проблемы по-разному, но вам понадобится какой-то способ развернуть Flask, возможно, в контейнере, и поговорить с базой данных Postgres. Если вы хотите увидеть, как мы это сделали, проверьте
 <<appendix_project_structure>>.
 
 
-=== The Straightforward Implementation
+=== Простая Реализация
 
 ((("service layer", "first cut of Flask app", id="ix_serlay1Flapp")))
 ((("Flask framework", "Flask API and service layer", "first cut of the app", id="ix_Flskapp1st")))
-Implementing things in the most obvious way, you might get something like this:
+Реализуя вещи самым очевидным образом, вы можете получить что-то вроде этого:
 
 
 [[first_cut_flask_app]]
@@ -159,15 +151,11 @@ def allocate_endpoint():
 
 //IDEA (hynek) pretty sure you can drop the jsonify call
 
-So far, so good. No need for too much more of your "architecture astronaut"
-nonsense, Bob and Harry, you may be thinking.
+Пока всё слишком хорошо. Боб и Гарри, вы наверное думаете, что вам больше не нужно говорить про "архитектурных астронавтов".
+
 
 ((("databases", "testing allocations persisted to database")))
-But hang on a minute--there's no commit. We're not actually saving our
-allocation to the database. Now we need a second test, either one that will
-inspect the database state after (not very black-boxy), or maybe one that
-checks that we can't allocate a second line if a first should have already
-depleted the batch:
+Но подождите минутку -- никаких обязательств. На самом деле мы не сохраняем наше распределение в базе данных. Теперь нам нужен второй тест, либо тот, который проверит состояние базы данных после (не очень черный ящик), или, может быть, тот, который проверяет, что мы не можем выделить вторую строку, если первая уже должна была исчерпать пакет:
 
 [[second_api_test]]
 .Test allocations are persisted (test_api.py)
