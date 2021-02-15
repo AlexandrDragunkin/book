@@ -11,7 +11,7 @@
 image::images/apwp_0401.png[]
 
 
-В этой главе мы обсудим различие между логическим построением, бизнес - логикой и кодом интерфейса, а также введем модель  _Service Layer_ для координации наших бизнес - процессов и определения вариантов использования системы.
+В этой главе мы обсудим различие между Orchestration logic, business logic и interfacing code, а также введем модель  _Service Layer_ для координации наших бизнес - процессов и определения вариантов использования системы.
 
 
 Мы также обсудим тестирование: объединив уровень сервиса с нашей абстракцией репозитория над базой данных, мы можем писать быстрые тесты не только нашей модели предметной области, но и всего рабочего процесса для конкретного случая использования.
@@ -158,7 +158,7 @@ def allocate_endpoint():
 Но подождите минутку -- никаких обязательств. На самом деле мы не сохраняем наше распределение в базе данных. Теперь нам нужен второй тест, либо тот, который проверит состояние базы данных после (не очень black-boxy-ик), или, может быть, тот, который проверяет, что мы не можем выделить вторую строку, если первая уже должна была исчерпать пакет:
 
 [[second_api_test]]
-.Test allocations are persisted (test_api.py)
+.Тест распределения с сохранением (test_api.py)
 ====
 [source,python]
 [role="non-head"]
@@ -190,27 +190,23 @@ def test_allocations_are_persisted(add_stock):
 
 ((("Flask framework", "Flask API and service layer", "first cut of the app", startref="ix_Flskapp1st")))
 ((("service layer", "first cut of Flask app", startref="ix_serlay1Flapp")))
-Not quite so lovely, but that will force us to add the commit.
+Не совсем так красиво, но это заставит нас добавить коммит.
 
 
 
-=== Error Conditions That Require Database Checks
+=== Ошибочные условия требуют проверки базы данных
 
 ((("service layer", "error conditions requiring database checks in Flask app")))
 ((("Flask framework", "Flask API and service layer", "error conditions requiring database checks")))
-If we keep going like this, though, things are going to get uglier and uglier.
+Если мы будем продолжать в том же духе, все станет ещё хуже и хуже.
 
-Suppose we want to add a bit of error handling. What if the domain raises an
-error, for a SKU that's out of stock?  Or what about a SKU that doesn't even
-exist? That's not something the domain even knows about, nor should it. It's
-more of a sanity check that we should implement at the database layer, before
-we even invoke the domain service.
+Предположим, что мы добавим несколько обработок ошибок. Что делать, если домен вызывает ошибку для SKU, которого нет в наличии?  Или как насчет SKU, которого даже не существует? Об этом домен даже не знает, да и не должен знать. Это скорее проверка на вменяемость, которую мы должны применить на уровне базы данных, прежде чем мы даже вызовем службу домена.
 
-Now we're looking at two more end-to-end tests:
+Теперь мы рассмотрим еще пару сквозных теста:
 
 
 [[test_error_cases]]
-.Yet more tests at the E2E layer (test_api.py)
+.Еще больше тестов на уровне E2E (test_api.py)
 ====
 [source,python]
 [role="non-head"]
@@ -239,16 +235,15 @@ def test_400_message_for_invalid_sku():  #<2>
 ----
 ====
 
-<1> In the first test, we're trying to allocate more units than we have in stock.
+<1> В первом тесте мы пытаемся выделить больше единиц, чем есть на складе.
 
-<2> In the second, the SKU just doesn't exist (because we never called `add_stock`),
-    so it's invalid as far as our app is concerned.
+<2> Во втором случае SKU просто не существует (потому что мы никогда не вызывали `add_stock`), поэтому он недействителен для нашего приложения.
 
 
-And sure, we could implement it in the Flask app too:
+И конечно, мы могли бы реализовать его и в приложении Flask:
 
 [[flask_error_handling]]
-.Flask app starting to get crufty (flask_app.py)
+.Приложение Flask начинает становиться крутым (flask_app.py)
 ====
 [source,python]
 [role="non-head"]
@@ -279,9 +274,7 @@ def allocate_endpoint():
 ----
 ====
 
-But our Flask app is starting to look a bit unwieldy.  And our number of
-E2E tests is starting to get out of control, and soon we'll end up with an
-inverted test pyramid (or "ice-cream cone model," as Bob likes to call it).
+Но наше приложение Flask начинает выглядеть слегка громоздким.  И наше количество тестов E2E начинает выходить из-под контроля, и вскоре мы получим перевернутую тестовую пирамиду (или "модель рожка мороженого", как любит называть ее Боб).
 
 
 === Introducing a Service Layer, and Using FakeRepository to Unit Test It
@@ -289,13 +282,7 @@ inverted test pyramid (or "ice-cream cone model," as Bob likes to call it).
 ((("service layer", "introducing and using FakeRepository to unit test it", id="ix_serlayintr")))
 ((("orchestration")))
 ((("Flask framework", "Flask API and service layer", "introducing service layer and fake repo to unit test it", id="ix_Flskappserly")))
-If we look at what our Flask app is doing, there's quite a lot of what we
-might call __orchestration__—fetching stuff out of our repository, validating
-our input against database state, handling errors, and committing in the
-happy path. Most of these things don't have anything to do with having a
-web API endpoint (you'd need them if you were building a CLI, for example; see
-<<appendix_csvs>>), and they're not really things that need to be tested by
-end-to-end tests.
+Если мы посмотрим на то, что делает наше приложение Flask, то увидим довольно много того, что мы могли бы назвать __orchestration__ —- извлечение материала из нашего репозитория, проверка наших входных данных на соответствие состоянию базы данных, обработка ошибок и фиксация в happy path. Большинство из этих вещей не имеют ничего общего с наличием web API endpoint (они понадобились бы вам, если бы вы создавали, например CLI; см. <<appendix_csvs>>), и на самом деле это не те вещи, которые нужно тестировать сквозными тестами.
 
 ((("orchestration layer", see="service layer")))
 ((("use-case layer", see="service layer")))
@@ -303,7 +290,7 @@ It often makes sense to split out a service layer, sometimes called an
 _orchestration layer_ or a _use-case layer_.
 
 ((("faking", "FakeRepository")))
-Do you remember the `FakeRepository` that we prepared in <<chapter_03_abstractions>>?
+Вы помните "FakeRepository", который мы подготовили в <<chapter_03_abstractions>>?
 
 [[fake_repo]]
 .Our fake repository, an in-memory collection of batches (test_services.py)
@@ -329,12 +316,11 @@ class FakeRepository(repository.AbstractRepository):
 ((("testing", "unit testing with fakes at service layer")))
 ((("unit testing", seealso="test-driven development; testing")))
 ((("faking", "FakeRepository", "using to unit test the service layer")))
-Here's where it will come in useful; it lets us test our service layer with
-nice, fast unit tests:
+Вот где он будет полезен; он позволяет нам тестировать наш уровень обслуживания с помощью хороших, быстрых модульных тестов:
 
 
 [[first_services_tests]]
-.Unit testing with fakes at the service layer (test_services.py)
+.Модульное тестирование с фейками на уровне сервиса (test_services.py)
 ====
 [source,python]
 [role="non-head"]
@@ -359,17 +345,12 @@ def test_error_for_invalid_sku():
 ====
 
 
-<1> `FakeRepository` holds the `Batch` objects that will be used by our test.
+<1> `FakeRepository` содержит объекты `Batch`, которые будут использоваться в нашем тесте.
 
-<2> Our services module (_services.py_) will define an `allocate()`
-    service-layer function. It will sit between our `allocate_endpoint()`
-    function in the API layer and the `allocate()` domain service function from
-    our domain model.footnote:[Service-layer services and domain services do have
-    confusingly similar names. We tackle this topic later in
+<2> Наш сервисный модуль (_services.py_) определит функцию сервисного уровня `allocate()`. Он будет находиться между нашей функцией `allocate_endpoint()` на уровне API и функцией доменной службы `allocate()` из нашей модели домена.footnote:[Службы сервисного уровня и доменные службы имеют до смешного похожие имена. Мы обсудим эту тему позже.
     <<why_is_everything_a_service>>.]
 
-<3> We also need a `FakeSession` to fake out the database session, as shown in
-    the following code snippet.
+<3> Нам также нужен "FakeSession", чтобы подделать сеанс базы данных, как показано в следующем фрагменте кода.
     ((("faking", "FakeSession, using to unit test the service layer")))
     ((("testing", "fake database session at service layer")))
 
@@ -387,9 +368,7 @@ class FakeSession():
 ----
 ====
 
-This fake session is only a temporary solution.  We'll get rid of it and make
-things even nicer soon, in <<chapter_06_uow>>. But in the meantime
-the fake `.commit()` lets us migrate a third test from the E2E layer:
+Эта фальшивая сессия - лишь временное решение.  Мы скоро избавимся от него и сделаем все еще лучше. <<chapter_06_uow>>. Но в то же время поддельный `.commit()` позволяет нам перенести третий тест со слоя E2E:
 
 
 [[second_services_test]]
