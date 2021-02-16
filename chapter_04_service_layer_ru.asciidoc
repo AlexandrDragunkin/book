@@ -368,11 +368,11 @@ class FakeSession():
 ----
 ====
 
-Эта фальшивая сессия - лишь временное решение.  Мы скоро избавимся от него и сделаем все еще лучше. <<chapter_06_uow>>. Но в то же время поддельный `.commit()` позволяет нам перенести третий тест со слоя E2E:
+Эта фальшивая сессия - лишь временное решение.  Мы скоро избавимся от него и сделаем все лучше. <<chapter_06_uow>>. Но в то же время фейковый `.commit()` позволяет нам перенести третий тест со слоя E2E:
 
 
 [[second_services_test]]
-.A second test at the service layer (test_services.py)
+.Второй тест на сервисном уровне (test_services.py)
 ====
 [source,python]
 [role="non-head"]
@@ -389,7 +389,7 @@ def test_commits():
 ====
 
 
-==== A Typical Service Function
+==== Типичная Service Function
 
 ((("functions", "service layer")))
 ((("service layer", "typical service function")))
@@ -398,7 +398,7 @@ def test_commits():
 We'll write a service function that looks something like this:
 
 [[service_function]]
-.Basic allocation service (services.py)
+.Базовая служба распределения (services.py)
 ====
 [source,python]
 [role="non-head"]
@@ -420,26 +420,23 @@ def allocate(line: OrderLine, repo: AbstractRepository, session) -> str:
 ----
 ====
 
-Typical service-layer functions have similar steps:
+Типичные функции сервисного уровня имеют сходные этапы:
 
-<1> We fetch some objects from the repository.
+<1> Извлекаем  некоторые объекты из репозитория.
 
-<2> We make some checks or assertions about the request against
-    the current state of the world.
+<2> Мы делаем несколько подтверждений или опровергаем требования о текущем состоянии мира.
 
-<3> We call a domain service.
+<3> Мы вызываем доменную службу.
 
-<4> If all is well, we save/update any state we've changed.
+<4> Если все хорошо, то мы сохраняем/обновляем любое состояние, которое мы изменили.
 
-That last step is a little unsatisfactory at the moment, as our service
-layer is tightly coupled to our database layer. We'll improve
-that in <<chapter_06_uow>> with the Unit of Work pattern.
+Этот последний шаг на данный момент несовсем удовлетворителен, поскольку наш сервисный уровень тесно связан с нашим уровнем базы данных. Мы улучшим это в <<chapter_06_uow>> с помощью шаблона Unit of Work.
 
 [role="nobreakinside less_space"]
 [[depend_on_abstractions]]
 .Depend on Abstractions
 *******************************************************************************
-Notice one more thing about our service-layer function:
+Обратите внимание на еще одну особенность нашей функции уровня сервиса:
 
 [source,python]
 [role="skip"]
@@ -449,35 +446,26 @@ def allocate(line: OrderLine, repo: AbstractRepository, session) -> str:
 
 ((("abstractions", "AbstractRepository, service function depending on")))
 ((("repositories", "service layer function depending on abstract repository")))
-It depends on a repository.  We've chosen to make the dependency explicit,
-and we've used the type hint to say that we depend on `AbstractRepository`.
-This means it'll work both when the tests give it a `FakeRepository` and
-when the Flask app gives it a `SqlAlchemyRepository`.
+Это зависит от репозитория.  Мы решили сделать зависимость явной и использовали подсказку типа, чтобы сказать, что мы зависим от `AbstractRepository`. Это означает, что он будет работать и тогда, когда тесты предоставят ему `FakeRepository`, и когда приложение Flask предоставит ему `SqlAlchemyRepository`.
 
 ((("dependencies", "depending on abstractions")))
-If you remember <<dip>>,
-this is what we mean when we say we should "depend on abstractions." Our
-_high-level module_, the service layer, depends on the repository abstraction.
-And the _details_ of the implementation for our specific choice of persistent
-storage also depend on that same abstraction. See
-<<service_layer_diagram_abstract_dependencies>> and
+Если вы помните <<dip>>,
+это то, что мы имеем в виду, когда говорим, что должны «зависеть от абстракций». Наш  _high-level module_,  уровень обслуживания, зависит от абстракции репозитория. И _детали_ реализации для нашего конкретного выбора постоянного хранилища также зависят от той же абстракции. См.
+<<service_layer_diagram_abstract_dependencies>> и
 <<service_layer_diagram_test_dependencies>>.
 
-See also in <<appendix_csvs>> a worked example of swapping out the
-_details_ of which persistent storage system to use while leaving the
-abstractions intact.
+См. также в <<appendix_csvs>> отработаемый пример замены _деталей_, которые постоянно используется системой хранения данных, оставляя абстракции нетронутыми.
 
 *******************************************************************************
 
 
 ((("service layer", "Flask app delegating to")))
 ((("Flask framework", "Flask API and service layer", "app delegating to service layer")))
-But the essentials of the service layer are there, and our Flask
-app now looks a lot cleaner:
+Но самое необходимое для уровня сервиса уже есть, и наше приложение Flask теперь выглядит намного чище:
 
 
 [[flask_app_using_service_layer]]
-.Flask app delegating to service layer (flask_app.py)
+.Делегирование приложения Flask на уровень сервиса (flask_app.py)
 ====
 [source,python]
 [role="non-head"]
@@ -500,24 +488,19 @@ def allocate_endpoint():
 ----
 ====
 
-<1> We instantiate a database session and some repository objects.
-<2> We extract the user's commands from the web request and pass them
-    to a domain service.
-<3> We return some JSON responses with the appropriate status codes.
+<1> Инстанцируем сеанс работы с базой данных и некоторые объекты репозитория.
+<2> Извлекаем команды пользователя из веб-запроса и передаем их службе домена.
+<3> Возвращаем несколько ответов JSON с соответствующими кодами состояния.
 
-The responsibilities of the Flask app are just standard web stuff: per-request
-session management, parsing information out of POST parameters, response status
-codes, and JSON. All the orchestration logic is in the use case/service layer,
-and the domain logic stays in the domain.
+Обязанности приложения Flask - это обычные веб-вещи: управление сеансами по каждому запросу, анализ информации из параметров POST, коды состояния ответа и JSON. Вся логика оркестрации находится на уровне использования case/service, а логика домена остается в домене.
 
 ((("Flask framework", "Flask API and service layer", "end-to-end tests for happy and unhappy paths")))
 ((("service layer", "end-to-end test of allocate API, testing happy and unhappy paths")))
-Finally, we can confidently strip down our E2E tests to just two, one for
-the happy path and one for the unhappy path:
+Наконец, мы можем уверенно разделить наши тесты E2E всего на два: один для пути удачных решений и один для неверного выбора:
 
 
 [[fewer_e2e_tests]]
-.E2E tests only happy and unhappy paths (test_api.py)
+.E2E тесты только для happy и unhappy paths (test_api.py)
 ====
 [source,python]
 [role="non-head"]
@@ -551,21 +534,15 @@ def test_unhappy_path_returns_400_and_error_message():
 ----
 ====
 
-We've successfully split our tests into two broad categories: tests about web
-stuff, which we implement end to end; and tests about orchestration stuff, which
-we can test against the service layer in memory.
+Мы успешно разделили наши тесты на две большие категории: тесты на веб-материалы, которые мы реализуем от начала до конца; и тесты, связанные с оркестровкой, которые мы можем протестировать на уровне сервиса в памяти.
 
 [role="nobreakinside less_space"]
-.Exercise for the Reader
+.Упражнение для читателя
 ******************************************************************************
 ((("deallocate service, building (exerise)")))
-Now that we have an allocate service, why not build out a service for
-`deallocate`? We've added https://github.com/cosmicpython/code/tree/chapter_04_service_layer_exercise[an E2E test and a few stub service-layer tests] for
-you to get started on GitHub.
+Теперь, когда у нас есть служба распределения, почему бы не создать службу для `освобождения`? Мы добавили https://github.com/cosmicpython/code/tree/chapter_04_service_layer_exercise[тест E2E и несколько тестов stub для уровня сервиса] для вас, чтобы начать работу на GitHub.
 
-If that's not enough, continue into the E2E tests and _flask_app.py_, and
-refactor the Flask adapter to be more RESTful. Notice how doing so doesn't
-require any change to our service layer or domain layer!
+Если этого недостаточно, переходите к тестам E2E и _flask_app.py_ и отрефакторите адаптер Flask, чтобы он был более RESTful. Обратите внимание, что это не требует каких-либо изменений в нашем сервисном или доменном слое!
 
 TIP: If you decide you want to build a read-only endpoint for retrieving allocation
     info, just do "the simplest thing that can possibly work," which is
