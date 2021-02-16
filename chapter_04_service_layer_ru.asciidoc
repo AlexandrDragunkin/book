@@ -544,62 +544,46 @@ def test_unhappy_path_returns_400_and_error_message():
 
 Если этого недостаточно, переходите к тестам E2E и _flask_app.py_ и отрефакторите адаптер Flask, чтобы он был более RESTful. Обратите внимание, что это не требует каких-либо изменений в нашем сервисном или доменном слое!
 
-TIP: If you decide you want to build a read-only endpoint for retrieving allocation
-    info, just do "the simplest thing that can possibly work," which is
-    `repo.get()` right in the Flask handler. We'll talk more about reads versus
-    writes in <<chapter_12_cqrs>>.
+TIP: Если вы решили, что хотите создать конечную точку read-only для получения информации о выделении, просто сделайте «простейшую вещь, которая может сработать», а именно `repo.get()` прямо в обработчике Flask. Мы поговорим больше о чтении и записи в <<chapter_12_cqrs>>.
 
 ******************************************************************************
 
 [[why_is_everything_a_service]]
-=== Why Is Everything Called a Service?
+=== Почему все называется сервисом?
 
 ((("services", "application service and domain service")))
 ((("service layer", "difference between domain service and")))
 ((("service layer", "introducing and using FakeRepository to unit test it", startref="ix_serlayintr")))
 ((("Flask framework", "Flask API and service layer", "different types of services")))
-Some of you are probably scratching your heads at this point trying to figure
-out exactly what the difference is between a domain service and a service layer.
+Некоторые из вас, вероятно, сейчас ломают голову, пытаясь точно понять, в чем разница между доменным сервисом и уровнем сервиса.
 
 ((("application services")))
-We're sorry—we didn't choose the names, or we'd have much cooler and friendlier
-ways to talk about this stuff.
+К сожалению, не мы выбрали имена, иначе у нас были бы более разумные и дружелюбные способы поговорить об этом.
 
 ((("orchestration", "using application service")))
-We're using two things called a _service_ in this chapter. The first is an
-_application service_ (our service layer). Its job is to handle requests from the
-outside world and to _orchestrate_ an operation. What we mean is that the
-service layer _drives_ the application by following a bunch of simple steps:
+В этой главе мы используем две вещи, называемые _service_. Первый-это _application service_ (наш уровень обслуживания). Его работа заключается в обработке запросов из внешнего мира и в _orchestrate _ операции. Мы имеем в виду, что уровень сервиса управляет приложением, следуя нескольким простым шагам:
 
-* Get some data from the database
-* Update the domain model
-* Persist any changes
+* Получить некоторые данные из базы данных
+* Обновить модели домена
+* Сохранить любые изменения
 
-This is the kind of boring work that has to happen for every operation in your
-system, and keeping it separate from business logic helps to keep things tidy.
+Это рутина, которая должна выполняться для каждой операции в вашей системе, и отделение ее от бизнес-логики помогает поддерживать порядок.
 
 ((("domain services")))
-The second type of service is a _domain service_. This is the name for a piece of
-logic that belongs in the domain model but doesn't sit naturally inside a
-stateful entity or value object. For example, if you were building a shopping
-cart application, you might choose to build taxation rules as a domain service.
-Calculating tax is a separate job from updating the cart, and it's an important
-part of the model, but it doesn't seem right to have a persisted entity for
-the job. Instead a stateless TaxCalculator class or a `calculate_tax` function
-can do the job.
+Второй тип сервиса-это _domain service_. Это имя для части логики, которая принадлежит модели предметной области, но не находится естественным образом внутри состояния сущности или value object. Например, если вы создаете приложение для корзины покупок, вы можете выбрать создание правил налогообложения в качестве доменной службы. Расчет налога-это отдельная работа от обновления корзины, и это важная часть модели, но не кажется правильным иметь постоянную сущность для этой работы. Вместо этого эту работу может выполнять класс TaxCalculator или функция `calculate_tax`.
 
 
-=== Putting Things in Folders to See Where It All Belongs
+=== Разложим всё по папкам, чтобы увидеть, чему всё это принадлежит
 
 ((("directory structure, putting project into folders")))
 ((("projects", "organizing into folders")))
 ((("service layer", "putting project in folders")))
 ((("Flask framework", "Flask API and service layer", "putting project into folders")))
-As our application gets bigger, we'll need to keep tidying our directory
-structure. The layout of our project gives us useful hints about what kinds of
-object we'll find in each file.
+По мере того, как приложения становятся все больше и больше, нам необходимо постоянно обновлять структуру каталогов. Компоновка проекта предоставляет полезные советы о том, что в каком файле находится.
 
-Here's one way we could organize things:
+
+Мы можем организовать все так:
+
 
 [[nested_folder_tree]]
 .Some subfolders
