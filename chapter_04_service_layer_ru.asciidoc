@@ -1,5 +1,5 @@
 [[chapter_04_service_layer]]
-== Пример номер раз: [.keep-together]#Flask API и Service Layer#
+== Наш первый Use Case или пример использования: [.keep-together]#Flask API и Service Layer#
 
 ((("service layer", id="ix_serlay")))
 ((("Flask framework", "Flask API and service layer", id="ix_Flskapp")))
@@ -155,7 +155,7 @@ def allocate_endpoint():
 
 
 ((("databases", "testing allocations persisted to database")))
-Но подождите минутку -- никаких обязательств. На самом деле мы не сохраняем наше распределение в базе данных. Теперь нам нужен второй тест, либо тот, который проверит состояние базы данных после (не очень black-boxy-ик), или, может быть, тот, который проверяет, что мы не можем выделить вторую строку, если первая уже должна была исчерпать пакет:
+Но подождите минутку -- никаких обязательств. На самом деле мы не сохраняем наше распределение в базе данных. Теперь нам нужен второй тест, либо тот, который проверит состояние базы данных после (не очень black-boxy _чёрного ящика_), или, может быть, тот, который проверяет, что мы не можем выделить вторую строку, если первая уже должна была исчерпать пакет:
 
 [[second_api_test]]
 .Тест распределения с сохранением (test_api.py)
@@ -176,12 +176,12 @@ def test_allocations_are_persisted(add_stock):
     line2 = {'orderid': order2, 'sku': sku, 'qty': 10}
     url = config.get_api_url()
 
-    # first order uses up all stock in batch 1
+    # первый заказ использует все запасы в партии 1
     r = requests.post(f'{url}/allocate', json=line1)
     assert r.status_code == 201
     assert r.json()['batchref'] == batch1
 
-    # second order should go to batch 2
+    # второй заказ должен перейти в партию 2
     r = requests.post(f'{url}/allocate', json=line2)
     assert r.status_code == 201
     assert r.json()['batchref'] == batch2
@@ -277,7 +277,7 @@ def allocate_endpoint():
 Но наше приложение Flask начинает выглядеть слегка громоздким.  И наше количество тестов E2E начинает выходить из-под контроля, и вскоре мы получим перевернутую тестовую пирамиду (или "модель рожка мороженого", как любит называть ее Боб).
 
 
-=== Introducing a Service Layer, and Using FakeRepository to Unit Test It
+=== Представляем сервисный слой и используем FakeRepository для его модульного тестирования
 
 ((("service layer", "introducing and using FakeRepository to unit test it", id="ix_serlayintr")))
 ((("orchestration")))
@@ -286,8 +286,7 @@ def allocate_endpoint():
 
 ((("orchestration layer", see="service layer")))
 ((("use-case layer", see="service layer")))
-It often makes sense to split out a service layer, sometimes called an
-_orchestration layer_ or a _use-case layer_.
+Часто имеет смысл разделить service layer, иногда называемый _orchestration layer_  слоем оркестровки  или _use-case_ слоем прецедентов .
 
 ((("faking", "FakeRepository")))
 Вы помните "FakeRepository", который мы подготовили в <<chapter_03_abstractions>>?
@@ -395,7 +394,7 @@ def test_commits():
 ((("service layer", "typical service function")))
 ((("Flask framework", "Flask API and service layer", "typical service layer function")))
 ((("Flask framework", "Flask API and service layer", "introducing service layer and fake repo to unit test it", startref="ix_Flskappserly")))
-We'll write a service function that looks something like this:
+Мы напишем служебную функцию, которая выглядит примерно так:
 
 [[service_function]]
 .Базовая служба распределения (services.py)
@@ -434,7 +433,7 @@ def allocate(line: OrderLine, repo: AbstractRepository, session) -> str:
 
 [role="nobreakinside less_space"]
 [[depend_on_abstractions]]
-.Depend on Abstractions
+.Зависеть от абстракций
 *******************************************************************************
 Обратите внимание на еще одну особенность нашей функции уровня сервиса:
 
@@ -446,7 +445,7 @@ def allocate(line: OrderLine, repo: AbstractRepository, session) -> str:
 
 ((("abstractions", "AbstractRepository, service function depending on")))
 ((("repositories", "service layer function depending on abstract repository")))
-Это зависит от репозитория.  Мы решили сделать зависимость явной и использовали подсказку типа, чтобы сказать, что мы зависим от `AbstractRepository`. Это означает, что он будет работать и тогда, когда тесты предоставят ему `FakeRepository`, и когда приложение Flask предоставит ему `SqlAlchemyRepository`.
+Она зависит от репозитория.  Мы решили сделать зависимость явной и использовали аннотацию типа, чтобы показать, что мы зависим от `AbstractRepository`. Это означает, что функция будет работать даже тогда, когда тесты предоставят ему `FakeRepository`, или когда приложение Flask предоставит ему `SqlAlchemyRepository`.
 
 ((("dependencies", "depending on abstractions")))
 Если вы помните <<dip>>,
@@ -549,7 +548,7 @@ TIP: Если вы решили, что хотите создать конечн
 ******************************************************************************
 
 [[why_is_everything_a_service]]
-=== Почему все называется сервисом?
+=== Почему всё называется сервисом?
 
 ((("services", "application service and domain service")))
 ((("service layer", "difference between domain service and")))
@@ -561,13 +560,13 @@ TIP: Если вы решили, что хотите создать конечн
 К сожалению, не мы выбрали имена, иначе у нас были бы более разумные и дружелюбные способы поговорить об этом.
 
 ((("orchestration", "using application service")))
-В этой главе мы используем две вещи, называемые _service_. Первый-это _application service_ (наш уровень обслуживания). Его работа заключается в обработке запросов из внешнего мира и в _orchestrate _ операции. Мы имеем в виду, что уровень сервиса управляет приложением, следуя нескольким простым шагам:
+В этой главе мы используем две вещи, называемые _service_. Первый-это _application service_ (наш service layer). Его работа заключается в обработке запросов из внешнего мира и в _orchestrate_ операции. Мы имеем в виду, что уровень сервиса управляет приложением, следуя нескольким простым шагам:
 
 * Получить некоторые данные из базы данных
 * Обновить модели домена
 * Сохранить любые изменения
 
-Это рутина, которая должна выполняться для каждой операции в вашей системе, и отделение ее от бизнес-логики помогает поддерживать порядок.
+Это рутина, которая должна выполняться для каждой операции в вашей системе, и отделение её от бизнес-логики помогает поддерживать порядок.
 
 ((("domain services")))
 Второй тип сервиса-это _domain service_. Это имя для части логики, которая принадлежит модели предметной области, но не находится естественным образом внутри состояния сущности или value object. Например, если вы создаете приложение для корзины покупок, вы можете выбрать создание правил налогообложения в качестве доменной службы. Расчет налога-это отдельная работа от обновления корзины, и это важная часть модели, но не кажется правильным иметь постоянную сущность для этой работы. Вместо этого эту работу может выполнять класс TaxCalculator или функция `calculate_tax`.
@@ -622,82 +621,59 @@ TIP: Если вы решили, что хотите создать конечн
 ----
 ====
 
-<1> Let's have a folder for our domain model.  Currently that's just one file,
-    but for a more complex application, you might have one file per class; you
-    might have helper parent classes for `Entity`, `ValueObject`, and
-    `Aggregate`, and you might add an __exceptions.py__ for domain-layer exceptions
-    and, as you'll see in <<part2>>, [.keep-together]#__commands.py__# and __events.py__.
+<1> Давайте создадим папку для нашей доменной модели.  
+	В настоящее время это всего лишь один файл, но для более сложного приложения у
+	вас может быть один файл на класс; у вас могут быть вспомогательные родительские классы для `Entity`, `ValueObject`, и `Aggregate`, и вы могли бы добавить 
+	__exceptions.py__ для исключений доменного уровня и, как вы увидите в  <<part2>>, [.keep-together]#__commands.py__# и __events.py__.
     ((("domain model", "folder for")))
 
-<2> We'll distinguish the service layer. Currently that's just one file
-    called _services.py_ for our service-layer functions.  You could
-    add service-layer exceptions here, and as you'll see in
-    <<chapter_05_high_gear_low_gear>>, we'll add __unit_of_work.py__.
+<2> Мы будем различать уровень обслуживания. В настоящее время это всего лишь один файл с именем _services.py_ для наших функций сервисного уровня.  Здесь вы можете добавить исключения сервисного уровня, и, как вы увидите в <<chapter_05_high_gear_low_gear>>, мы добавим __unit_of_work.py__.
 
-<3> _Adapters_ is a nod to the ports and adapters terminology. This will fill
-    up with any other abstractions around external I/O (e.g., a __redis_client.py__).
-    Strictly speaking, you would call these _secondary_ adapters or _driven_
-    adapters, or sometimes _inward-facing_ adapters.
+<3> _Adapters_ - это дань терминологии портов и адаптеров. Это заполнит любые другие абстракции вокруг внешнего I/O (напр., a __redis_client.py__).     Строго говоря, вы бы назвали эти адаптеры _secondary_ или _driven_ адаптерами, или иногда _inward-facing_ адаптерами.
     ((("adapters", "putting into folder")))
     ((("inward-facing adapters")))
     ((("secondary adapters")))
     ((("driven adapters")))
 
-<4> Entrypoints are the places we drive our application from. In the
-    official ports and adapters terminology, these are adapters too, and are
-    referred to as _primary_, _driving_, or _outward-facing_ adapters.
+<4> Точки входа _entrypoints_ -- это места, откуда мы управляем нашим приложением. В официальной терминологии портов и адаптеров они тоже являются адаптерами и называются адаптерами _primary_ первичными, _driving_ управляющими или _outward-facing_ обращенными наружу.
     ((("entrypoints")))
 
 ((("ports", "putting in folder with adapters")))
-What about ports?  As you may remember, they are the abstract interfaces that the
-adapters implement. We tend to keep them in the same file as the adapters that
-implement them.
+А как насчет портов?  Как вы помните, это абстрактные интерфейсы, которые
+реализуют адаптеры. Мы склонны хранить их в том же файле, что и адаптеры, которые
+их реализуют.
 
 
-=== Wrap-Up
+=== Резюме
 
 
 ((("service layer", "benefits of")))
 ((("Flask framework", "Flask API and service layer", "service layer benefits")))
-Adding the service layer has really bought us quite a lot:
+Добавление _service layer_ уровня сервиса даёт немало преимуществ.
 
-* Our Flask API endpoints become very thin and easy to write: their
-  only responsibility is doing "web stuff," such as parsing JSON
-  and producing the right HTTP codes for happy or unhappy cases.
+* Наши entrypoints Flask API становятся очень тонкими и легкими в написании: их единственная обязанность-делать "web stuff", такие как разбор JSON и создание правильных HTTP-кодов для удачных или неудачных случаев.
 
-* We've defined a clear API for our domain, a set of use cases or
-  entrypoints that can be used by any adapter without needing to know anything
-  about our domain model classes--whether that's an API, a CLI (see
-  <<appendix_csvs>>), or the tests! They're an adapter for our domain too.
+* Мы определили четкий API для нашего домена, набор вариантов использования или точек входа, которые могут быть использованы любым адаптером без необходимости знать что-либо о наших классах моделей домена-будь то API, CLI (см. <<appendix_csvs>>) или тесты! Они также являются адаптером для нашего домена.
 
-* We can write tests in "high gear" by using the service layer, leaving us
-  free to refactor the domain model in any way we see fit. As long as
-  we can still deliver the same use cases, we can experiment with new
-  designs without needing to rewrite a load of tests.
+* Мы можем писать тесты на «высокой скорости», используя уровень сервиса, что дает нам возможность рефакторинга модели предметной области любым способом, который мы сочтем нужным. Пока мы можем предоставлять те же сценарии использования, мы можем экспериментировать с новыми проектами без необходимости переписывать множество тестов.
 
-* And our test pyramid is looking good--the bulk of our tests
-  are fast unit tests, with just the bare minimum of E2E and integration
-  tests.
+* И наша пирамида тестирования выглядит неплохо -- большая часть наших тестов -- это быстрые модульные тесты, с минимальным количеством E2E и интеграционных тестов.
 
 
-==== The DIP in Action
+==== DIP в действии
 
 ((("dependencies", "abstract dependencies of service layer")))
 ((("service layer", "dependencies of")))
 ((("Flask framework", "Flask API and service layer", "service layer dependencies")))
-<<service_layer_diagram_abstract_dependencies>> shows the
-dependencies of our service layer: the domain model
-and `AbstractRepository` (the port, in ports and adapters terminology).
+<<service_layer_diagram_abstract_dependencies>> показывает зависимости нашего уровня сервиса: модель предметной области и `AbstractRepository` (порт в терминологии портов и адаптеров).
 
 ((("dependencies", "abstract dependencies of service layer", "testing")))
 ((("service layer", "dependencies of", "testing")))
-When we run the tests, <<service_layer_diagram_test_dependencies>> shows
-how we implement the abstract dependencies by using `FakeRepository` (the
-adapter).
+Когда мы запускаем тесты, <<service_layer_diagram_test_dependencies>> показывает, как мы реализуем абстрактные зависимости с помощью `FakeRepository` (адаптера).
 
 ((("service layer", "dependencies of", "real dependencies at runtime")))
 ((("dependencies", "real service layer dependencies at runtime")))
-And when we actually run our app, we swap in the "real" dependency shown in
+И когда мы на самом деле запускаем наше приложение, мы меняем "реальную" зависимость, показанную в
 <<service_layer_diagram_runtime_dependencies>>.
 
 [role="width-75"]
@@ -789,61 +765,44 @@ image::images/apwp_0405.png[]
 ----
 
 
-Wonderful.
+Чудесно.
 
 ((("service layer", "pros and cons or trade-offs")))
 ((("Flask framework", "Flask API and service layer", "service layer pros and cons")))
-Let's pause for <<chapter_04_service_layer_tradeoffs>>,
-in which we consider the pros and cons of having a service layer at all.
+Давайте сделаем паузу для <<chapter_04_service_layer_tradeoffs>>, в которой мы рассмотрим плюсы и минусы наличия service layer вообще.
 
 [[chapter_04_service_layer_tradeoffs]]
 [options="header"]
-.Service layer: the trade-offs
+.Service layer: Компромиссы
 |===
-|Pros|Cons
+|Плюсы|Минусы
 a|
-* We have a single place to capture all the use cases for our application.
+* У нас есть единое место, где можно запечатлеть все случаи использования нашего приложения.
 
-* We've placed our clever domain logic behind an API, which leaves us free to
-  refactor.
+* Мы поместили нашу умную доменную логику за API, что оставляет нам свободу для рефакторинга.
 
-* We have cleanly separated "stuff that talks HTTP" from "stuff that talks
-  allocation."
+* Мы четко отделили "stuff that talks HTTP" от "stuff that talks   allocation."
 
-* When combined with the Repository pattern and `FakeRepository`, we have
-  a nice way of writing tests at a higher level than the domain layer;
-  we can test more of our workflow without needing to use integration tests
-  (read on to <<chapter_05_high_gear_low_gear>> for more elaboration on this).
+* В сочетании с шаблоном Repository и `FakeRepository` у нас есть хороший способ написания тестов на более высоком уровне, чем уровень домена; мы можем протестировать большую часть нашего рабочего процесса без необходимости использования интеграционных тестов (подробнее см. в <<chapter_05_high_gear_low_gear>>).
 
 a|
-* If your app is _purely_ a web app, your controllers/view functions can be
-  the single place to capture all the use cases.
+* Если ваше приложение является _purely_ чистым веб-приложением, ваши контроллеры/функции просмотра могут быть единственным местом для захвата всех вариантов использования.
 
-* It's yet another layer of abstraction.
+* Это еще один слой абстракции.
 
-* Putting too much logic into the service layer can lead to the _Anemic Domain_
-  antipattern. It's better to introduce this layer after you spot orchestration
-  logic creeping into your controllers.
+* Внесение слишком большого количества логики в уровень сервиса может привести к антипаттерну _Anemic Domain_. Этот уровень лучше вводить после того, как вы заметите, как логика оркестровки проникает в ваши контроллеры.
   ((("domain model", "getting benefits of rich model")))
   ((("Anemic Domain antipattern")))
 
-* You can get a lot of the benefits that come from having rich domain models
-  by simply pushing logic out of your controllers and down to the model layer,
-  without needing to add an extra layer in between (aka "fat models, thin
-  controllers").
+* Вы можете получить много преимуществ, связанных с наличием богатых моделей предметной области, просто вытолкнув логику из ваших контроллеров на уровень модели, без необходимости добавлять дополнительный слой между ними (также известный как «толстые модели, тонкие контроллеры») .
   ((("Flask framework", "Flask API and service layer", startref="ix_Flskapp")))
   ((("service layer", startref="ix_serlay")))
 |===
 
-But there are still some bits of awkwardness to tidy up:
+Но есть еще несколько неловких моментов, которые нужно убрать:
 
-* The service layer is still tightly coupled to the domain, because
-  its API is expressed in terms of `OrderLine` objects. In
-  <<chapter_05_high_gear_low_gear>>, we'll fix that and talk about
-  the way that the service layer enables more productive TDD.
+* Уровень сервиса по-прежнему тесно связан с доменом, поскольку его API выражается в терминах объектов `OrderLine`. В <<chapter_05_high_gear_low_gear>> мы исправим это и поговорим о том, как уровень сервиса обеспечивает более производительный TDD.
 
-* The service layer is tightly coupled to a `session` object. In <<chapter_06_uow>>,
-  we'll introduce one more pattern that works closely with the Repository and
-  Service Layer patterns, the Unit of Work pattern, and everything will be absolutely lovely.
-  You'll see!
+* Уровень сервиса тесно связан с объектом `session`. В <<chapter_06_uow>> мы введем еще один паттерн, который тесно работает с паттернами Уровня Репозитория и Сервиса, паттерн Unit of Work, и все будет абсолютно прекрасно.   
+Вот увидите!
 

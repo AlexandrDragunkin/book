@@ -1,0 +1,693 @@
+[[chapter_06_uow]]
+== Паттерн Unit of Work
+
+((("Unit of Work pattern", id="ix_UoW")))
+В этой главе мы познакомимся с заключительной частью головоломки, которая связывает воедино паттерны уровня Репозитория и Уровня Сервиса: паттерн _Unit of Work_.
+
+((("UoW", see="Unit of Work pattern")))
+((("atomic operations")))
+Если шаблон хранилища-это наша абстракция по отношению к идее постоянного хранения, то шаблон "Единицы Работы" (UoW) - это наша абстракция по отношению к идее _атомарных операций_. Это позволит нам окончательно и полностью отделить наш уровень обслуживания от уровня данных.
+
+((("Unit of Work pattern", "without, API talking directly to three layers")))
+((("APIs", "without Unit of Work pattern, talking directly to three layers")))
+<<before_uow_diagram>> показывает, что в настоящее время много взаимодействий происходит между уровнями нашей инфраструктуры: API обращается напрямую к уровню базы данных, чтобы начать сеанс, он обращается к уровню репозитория для инициализации `SQLAlchemyRepository`, и он связывается с уровнем сервиса, чтобы  выделить позиции.
+
+[TIP]
+====
+Код для этой главы находится в ветке chapter_06_uow https://oreil.ly/MoWdZ[on 
+[.keep-together]#GitHub#]:
+
+----
+git clone https://github.com/cosmicpython/code.git
+cd code
+git checkout chapter_06_uow
+# or to code along, checkout Chapter 4:
+git checkout chapter_04_service_layer
+----
+====
+
+[role="width-75"]
+[[before_uow_diagram]]
+.Без UoW: API напрямую общается с тремя уровнями
+image::images/apwp_0601.png[]
+
+((("databases", "Unit of Work pattern managing state for")))
+((("Unit of Work pattern", "managing database state")))
+<<after_uow_diagram>> показывает наше целевое состояние. API Flask теперь делает только две вещи: он инициализирует единицу работы и вызывает службу. Сервис сотрудничает с UoW (нам нравится думать о UoW как о части сервисного уровня), но ни сама сервисная функция, ни Flask теперь не нуждаются в непосредственном общении с базой данных.
+
+((("context manager")))
+И мы сделаем все это с помощью прекрасного синтаксиса Python - диспетчера контекста.
+
+[role="width-75"]
+[[after_uow_diagram]]
+.С помощью UoW: UoW теперь управляет состоянием базы данных
+image::images/apwp_0602.png[]
+
+
+=== Unit of Work взаимодействует с репозиторием
+
+//TODO (DS) do you talk anywhere about multiple repositories?
+
+((("repositories", "Unit of Work collaborating with")))
+((("Unit of Work pattern", "collaboration with repository")))
+Давайте посмотрим, как работает единица работы (или UoW, что мы произносим как «you-wow»). Вот как будет выглядеть сервисный слой, когда мы закончим:
+
+[[uow_preview]]
+.Предварительный просмотр Unit of Work в действии (src/allocation/service_layer/services.py)
+====
+[source,python]
+----
+def allocate(
+        orderid: str, sku: str, qty: int,
+        uow: unit_of_work.AbstractUnitOfWork
+) -> str:
+    line = OrderLine(orderid, sku, qty)
+    with uow:  #<1>
+        batches = uow.batches.list()  #<2>
+        ...
+        batchref = model.allocate(line, batches)
+        uow.commit()  #<3>
+----
+====
+
+<1> Мы запустим UoW в качестве менеджера контекста.
+    ((("context manager", "starting Unit of Work as")))
+
+<2> `uow.batches` это пакетный репо, поэтому UoW предоставляет нам доступ к нашему постоянному хранилищу.
+    ((("storage", "permanent, UoW providing entrypoint to")))
+
+<3> Когда мы закончили, мы фиксируем или откатываем нашу работу, используя UoW.
+
+((("object neighborhoods")))
+((("collaborators")))
+UoW действует как единственная точка входа в наше постоянное хранилище и отслеживает, какие объекты были загружены, и последнее состояние.footnote:[
+Возможно, вы встречали слово _collaborators_ для описания объектов, которые работают вместе для достижения цели. Единица работы и репозиторий - отличный пример сотрудничества в объектном моделировании. В дизайне, ориентированном на ответственность, кластеры объектов, взаимодействующих в своих ролях, называются _object neighborhoods_ ближайшими соседями, что, по нашему профессиональному мнению, совершенно восхитительно.]
+
+Это дает нам три полезных преимущества:
+
+* Стабильный моментальный снимок базы данных для работы, поэтому объекты, которые мы используем, не меняются на полпути операции.
+
+* Способ сохранить все наши изменения сразу, чтобы, если что-то пойдет не так, мы не оказались в непоследовательном состоянии.
+
+* Простой API для наших проблем персистентности и удобное место для получения репозитория
+
+
+
+=== Тест-драйв UoW с интеграционными тестами
+
+((("integration tests", "test-driving Unit of Work with")))
+((("testing", "Unit of Work with integration tests")))
+((("Unit of Work pattern", "test driving with integration tests")))
+Here are our integration tests for the UOW:
+
+
+[[test_unit_of_work]]
+.A basic "round-trip" test for a UoW (tests/integration/test_uow.py)
+====
+[source,python]
+----
+def test_uow_can_retrieve_a_batch_and_allocate_to_it(session_factory):
+    session = session_factory()
+    insert_batch(session, 'batch1', 'HIPSTER-WORKBENCH', 100, None)
+    session.commit()
+
+    uow = unit_of_work.SqlAlchemyUnitOfWork(session_factory)  #<1>
+    with uow:
+        batch = uow.batches.get(reference='batch1')  #<2>
+        line = model.OrderLine('o1', 'HIPSTER-WORKBENCH', 10)
+        batch.allocate(line)
+        uow.commit()  #<3>
+
+    batchref = get_allocated_batch_ref(session, 'o1', 'HIPSTER-WORKBENCH')
+    assert batchref == 'batch1'
+----
+====
+
+<1> Мы инициализируем UoW, используя нашу настраиваемую фабрику сеансов, и возвращаем объект `uow` для использования его в нашем блоке `with`.
+
+<2> UoW дает нам доступ к репозиторию batch через `uow.batches`.
+
+<3> Мы вызываем для него `commit()`, когда закончим.
+
+((("SQL", "helpers for Unit of Work")))
+Для любопытных хелперы `insert_batch` и `get_allocated_batch_ref` выглядят так:
+
+[[sql_helpers]]
+.Помощники для работы с SQL (tests/integration/test_uow.py)
+====
+[source,python]
+----
+def insert_batch(session, ref, sku, qty, eta):
+    session.execute(
+        'INSERT INTO batches (reference, sku, _purchased_quantity, eta)'
+        ' VALUES (:ref, :sku, :qty, :eta)',
+        dict(ref=ref, sku=sku, qty=qty, eta=eta)
+    )
+
+
+def get_allocated_batch_ref(session, orderid, sku):
+    [[orderlineid]] = session.execute(
+        'SELECT id FROM order_lines WHERE orderid=:orderid AND sku=:sku',
+        dict(orderid=orderid, sku=sku)
+    )
+    [[batchref]] = session.execute(
+        'SELECT b.reference FROM allocations JOIN batches AS b ON batch_id = b.id'
+        ' WHERE orderline_id=:orderlineid',
+        dict(orderlineid=orderlineid)
+    )
+    return batchref
+----
+====
+
+// TODO: that double-unpacking is freaking ppl out.  maybe [(orderlineid, )] ?
+
+
+=== Unit of Work и её менеджер контекста
+
+((("Unit of Work pattern", "and its context manager")))
+((("context manager", "Unit of Work and", id="ix_ctxtmgr")))
+((("abstractions", "AbstractUnitOfWork")))
+В наших тестах мы неявно определили интерфейс для того, что должен делать UoW. Давайте сделаем это явным с помощью абстрактного базового класса:
+
+
+[[abstract_unit_of_work]]
+.Абстрактный менеджер контекста UoW (src/allocation/service_layer/unit_of_work.py)
+====
+[source,python]
+[role="skip"]
+----
+class AbstractUnitOfWork(abc.ABC):
+    batches: repository.AbstractRepository  #<1>
+
+    def __exit__(self, *args):  #<2>
+        self.rollback()  #<4>
+
+    @abc.abstractmethod
+    def commit(self):  #<3>
+        raise NotImplementedError
+
+    @abc.abstractmethod
+    def rollback(self):  #<4>
+        raise NotImplementedError
+----
+====
+
+<1> UoW предоставляет атрибут под названием `.batches`, который дает нам доступ к репозиторию пакетов.
+
+<2> Если вы никогда не видели контекстного менеджера, +++<code>__enter__</code>+++ и +++<code>__exit__</code>+++ это два волшебных метода, которые выполняются, когда мы входим в блок `with` и когда выходим из него, соответственно. Это наши фазы setup и teardown.
+    ((("magic methods", "&#x5f;&#x5f;enter&#x5f;&#x5f; and &#x5f;&#x5f;exit&#x5f;&#x5f;", secondary-sortas="enter")))
+    ((("&#x5f;&#x5f;enter&#x5f;&#x5f; and &#x5f;&#x5f;exit&#x5f;&#x5f; magic methods", primary-sortas="enter and exit")))
+
+<3> Мы вызовем этот метод, чтобы явно зафиксировать нашу работу, когда будем готовы.
+
+<4> Если мы не фиксируем, или если мы выходим из диспетчера контекста, вызывая ошибку, мы выполняем 
+	«откат» `rollback`. (Откат не возымеет никакого эффекта, если была вызвана функция `commit()`. Читайте дальше для более подробного обсуждения этого вопроса.)
+    ((("rollbacks")))
+
+// TODO: bring this code listing back under test, remove `return self` from all the uows.
+
+
+==== Реальная Unit of Work Использует Сеансы SQLAlchemy
+
+((("Unit of Work pattern", "and its context manager", "real UoW using SQLAlchemy session")))
+((("databases", "SQLAlchemy adding session for Unit of Work")))
+((("SQLAlchemy", "database session for Unit of Work")))
+Главное, что добавляет наша конкретная реализация, - это сеанс базы данных:
+
+[[unit_of_work]]
+.The real SQLAlchemy UoW (src/allocation/service_layer/unit_of_work.py)
+====
+[source,python]
+----
+DEFAULT_SESSION_FACTORY = sessionmaker(bind=create_engine(  #<1>
+    config.get_postgres_uri(),
+))
+
+class SqlAlchemyUnitOfWork(AbstractUnitOfWork):
+
+    def __init__(self, session_factory=DEFAULT_SESSION_FACTORY):
+        self.session_factory = session_factory  #<1>
+
+    def __enter__(self):
+        self.session = self.session_factory()  # type: Session  #<2>
+        self.batches = repository.SqlAlchemyRepository(self.session)  #<2>
+        return super().__enter__()
+
+    def __exit__(self, *args):
+        super().__exit__(*args)
+        self.session.close()  #<3>
+
+    def commit(self):  #<4>
+        self.session.commit()
+
+    def rollback(self):  #<4>
+        self.session.rollback()
+
+----
+====
+
+<1> Модуль определяет фабрику сеансов по умолчанию, которая будет подключаться к Postgres, но мы позволяем переопределить это в наших интеграционных тестах, чтобы вместо этого мы могли использовать SQLite.
+
+<2> Метод +++<code>__enter__</code>+++ отвечает за запуск сеанса базы данных и создание экземпляра реального репозитория, который может использовать этот сеанс.
+    ((("&#x5f;&#x5f;enter&#x5f;&#x5f; and &#x5f;&#x5f;exit&#x5f;&#x5f; magic methods", primary-sortas="enter and exit")))
+
+<3> Закрываем сессию при выходе.
+
+<4> Наконец, мы предоставляем конкретные методы `commit()` и `rollback()`, которые используют наш сеанс базы данных.
+    ((("commits", "commit method")))
+    ((("rollbacks", "rollback method")))
+
+//IDEA: why not swap out db using os.environ?
+// (EJ2) Could be a good idea to point out that this couples the unit of work to postgres.
+//         This does get dealt with in in bootstrap, so you could make a forward-reference.
+// (EJ3) IIRC using a factory like this is considered an antipattern ("Control-Freak" from M.Seeman's book)
+//         Is there a reason to inject a factory instead of a session?
+// (HP) yes because each unit of work needs to start a new session every time
+// we call __enter__ and close it on __exit__
+
+
+
+==== Иммитация Unit of Work для теста
+
+((("Unit of Work pattern", "and its context manager", "fake UoW for testing")))
+((("faking", "FakeUnitOfWork for service layer testing")))
+((("testing", "fake UoW for service layer testing")))
+Вот как мы используем фиктивный UoW в наших тестах уровня сервиса:
+
+[[fake_unit_of_work]]
+.Fake UoW (tests/unit/test_services.py)
+====
+[source,python]
+----
+class FakeUnitOfWork(unit_of_work.AbstractUnitOfWork):
+
+    def __init__(self):
+        self.batches = FakeRepository([])  #<1>
+        self.committed = False  #<2>
+
+    def commit(self):
+        self.committed = True  #<2>
+
+    def rollback(self):
+        pass
+
+
+
+def test_add_batch():
+    uow = FakeUnitOfWork()  #<3>
+    services.add_batch("b1", "CRUNCHY-ARMCHAIR", 100, None, uow)  #<3>
+    assert uow.batches.get("b1") is not None
+    assert uow.committed
+
+
+def test_allocate_returns_allocation():
+    uow = FakeUnitOfWork()  #<3>
+    services.add_batch("batch1", "COMPLICATED-LAMP", 100, None, uow)  #<3>
+    result = services.allocate("o1", "COMPLICATED-LAMP", 10, uow)  #<3>
+    assert result == "batch1"
+...
+----
+====
+
+<1> `FakeUnitOfWork` и `FakeRepository` тесно связаны, так же как  реальные классы `UnitofWork`  и `Repository`.     Это прекрасно, потому что мы признаем, что объекты являются соавторами.
+
+<2> Обратите внимание на сходство с фальшивой функцией `commit()` из `FakeSession` (от которой теперь мы можем избавиться). Но это существенное улучшение, потому что мы сейчас [.keep-together]#подделываем# код, который мы написали, а не сторонний код. Как гласит народная мудрость, https://oreil.ly/0LVj3["Не твоё -- не трогай"].
+
+<3> В наших тестах мы можем создать экземпляр UoW и передать его на наш уровень обслуживания, а не передавать репозиторий и сеанс. Это значительно изящнее.
+
+[role="nobreakinside less_space"]
+.Не твоё -- не мОкай
+********************************************************************************
+((("SQLAlchemy", "database session for Unit of Work", "not mocking")))
+((("mocking", "don&#x27;t mock what you don&#x27;t own")))
+Почему мы чувствуем себя более комфортно, издеваясь над UoW, чем над сессией? Обе наши подделки достигают одного и того же: они дают нам возможность поменять наш уровень персистентности, чтобы мы могли запускать тесты в памяти вместо того, чтобы связываться с реальной базой данных. Разница заключается в полученном дизайне.
+
+Если бы мы заботились только о написании тестов, которые выполняются быстро, мы могли бы создавать макеты, заменяющие SQLAlchemy, и использовать их во всей нашей кодовой базе. Проблема в том, что Session - это сложный объект, который предоставляет множество функций, связанных с постоянством. `Session` легко использовать для выполнения произвольных запросов к базе данных, но это быстро приводит к тому, что код доступа к данным разбрызгивается по всей кодовой базе. Чтобы этого избежать, мы хотим ограничить доступ к нашему уровню сохранения, чтобы каждый компонент имел именно то, что ему нужно, и ничего более.
+
+Связываясь с интерфейсом `Session`, вы решаете объединить всю сложность SQLAlchemy. Вместо этого мы хотим выбрать более простую абстракцию и использовать ее для четкого разделения обязанностей. Наш UoW намного проще, чем сеанс, и мы чувствуем себя комфортно, когда уровень сервиса может запускать и останавливать единицы работы.
+
+«Не смейтесь над тем, что вам не принадлежит» - это эмпирическое правило, которое заставляет нас строить эти простые абстракции над беспорядочными подсистемами. Это дает тот же выигрыш в производительности, что и имитация сеанса SQLAlchemy, но побуждает нас тщательно обдумать наши проекты.
+((("context manager", "Unit of Work and", startref="ix_ctxtmgr")))
+********************************************************************************
+
+=== Использование UoW в сервисном слое
+
+((("Unit of Work pattern", "using UoW in service layer")))
+((("service layer", "using Unit of Work in")))
+Вот как выглядит наш новый уровень обслуживания:
+
+
+[[service_layer_with_uow]]
+.Уровень обслуживания с использованием UoW (src/allocation/service_layer/services.py)
+====
+[source,python]
+----
+def add_batch(
+        ref: str, sku: str, qty: int, eta: Optional[date],
+        uow: unit_of_work.AbstractUnitOfWork  #<1>
+):
+    with uow:
+        uow.batches.add(model.Batch(ref, sku, qty, eta))
+        uow.commit()
+
+
+def allocate(
+        orderid: str, sku: str, qty: int,
+        uow: unit_of_work.AbstractUnitOfWork  #<1>
+) -> str:
+    line = OrderLine(orderid, sku, qty)
+    with uow:
+        batches = uow.batches.list()
+        if not is_valid_sku(line.sku, batches):
+            raise InvalidSku(f'Invalid sku {line.sku}')
+        batchref = model.allocate(line, batches)
+        uow.commit()
+    return batchref
+----
+====
+
+<1> Наш уровень обслуживания теперь имеет только одну зависимость, опять же от _abstract_ UoW.
+    ((("dependencies", "service layer dependency on abstract UoW")))
+
+
+=== Явные тесты для режима Commit/Rollback
+
+((("commits", "explicit tests for")))
+((("rollbacks", "explicit tests for")))
+((("testing", "integration tests for rollback behavior")))
+((("Unit of Work pattern", "explicit tests for commit/rollback behavior")))
+Чтобы убедиться, что поведение _commit/rollback_ фиксации/отката работает, мы написали несколько тестов:
+
+[[testing_rollback]]
+.Интеграционные тесты на поведение отката (tests/integration/test_uow.py)
+====
+[source,python]
+----
+def test_rolls_back_uncommitted_work_by_default(session_factory):
+    uow = unit_of_work.SqlAlchemyUnitOfWork(session_factory)
+    with uow:
+        insert_batch(uow.session, 'batch1', 'MEDIUM-PLINTH', 100, None)
+
+    new_session = session_factory()
+    rows = list(new_session.execute('SELECT * FROM "batches"'))
+    assert rows == []
+
+
+def test_rolls_back_on_error(session_factory):
+    class MyException(Exception):
+        pass
+
+    uow = unit_of_work.SqlAlchemyUnitOfWork(session_factory)
+    with pytest.raises(MyException):
+        with uow:
+            insert_batch(uow.session, 'batch1', 'LARGE-FORK', 100, None)
+            raise MyException()
+
+    new_session = session_factory()
+    rows = list(new_session.execute('SELECT * FROM "batches"'))
+    assert rows == []
+----
+====
+
+TIP: Мы не показывали его здесь, но, возможно, стоит протестировать некоторые из более "неясных" действий базы данных, таких как транзакции, против "реальной" базы данных—то есть того же самого движка. На данный момент нам сходит с рук использование SQLite вместо Postgres, но в <<chapter_07_aggregate>> мы переключим некоторые тесты на использование реальной базы данных. Очень удобно, что наш класс UoW делает это легко!
+    ((("databases", "testing transactions against real database")))
+
+
+=== Явные и неявные коммиты
+
+((("implicit versus explicit commits")))
+((("commits", "explicit versus implicit")))
+((("Unit of Work pattern", "explicit versus implicit commits")))
+Теперь мы вкратце остановимся на различных способах реализации паттерна UoW.
+
+Мы могли бы представить себе несколько иную версию UoW, которая фиксируется по умолчанию и откатывается только в том случае, если замечает исключение:
+
+[[uow_implicit_commit]]
+.UoW с неявной фиксацией ... (src/allocation/unit_of_work.py)
+====
+[source,python]
+[role="skip"]
+----
+
+class AbstractUnitOfWork(abc.ABC):
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, exn_type, exn_value, traceback):
+        if exn_type is None:
+            self.commit()  #<1>
+        else:
+            self.rollback()  #<2>
+----
+====
+
+<1> Должны ли мы иметь на счастливом пути неявную фиксацию?
+<2> И откатиться только при исключении?
+
+Это позволило бы нам сохранить строку кода и удалить явную фиксацию из нашего клиентского кода:
+
+[[add_batch_nocommit]]
+.\...это сэкономило бы нам строку кода (src/allocation/service_layer/services.py)
+====
+[source,python]
+[role="skip"]
+----
+def add_batch(ref: str, sku: str, qty: int, eta: Optional[date], uow):
+    with uow:
+        uow.batches.add(model.Batch(ref, sku, qty, eta))
+        # uow.commit()
+----
+====
+
+Это всубъективное мнение, но мы, как правило, предпочитаем требовать явной фиксации, так что нам приходится выбирать, когда сбросить состояние.
+
+Хотя мы используем дополнительную строку кода, это делает программное обеспечение безопасным по умолчанию. Поведение по умолчанию - "ничего не менять". В свою очередь, это делает наш код более простым для рассуждения, потому что есть только один путь кода, который ведет к изменениям в системе: полный успех и явная фиксация. Любой другой путь кода, любое исключение, любой ранний выход из области действия UoW приводит к безопасному состоянию.
+
+Точно так же мы предпочитаем откат по умолчанию, потому что это легче понять; это откат к последней фиксации, поэтому пользователь либо выполнил задание, или мы сдуем их изменения. Сурово, но просто.
+
+=== Примеры: Использование UoW для группировки нескольких операций в атомарную единицу
+
+((("atomic operations", "using Unit of Work to group  operations into atomic unit", id="ix_atomops")))
+((("Unit of Work pattern", "using UoW to group multiple operations into atomic unit", id="ix_UoWatom")))
+Ниже приведены некоторые примеры используемых схем работы. Это может привести к более простому рассуждению о том, как блоки кода работают совмемтно.
+
+==== Пример 1: Перераспределение
+
+((("Unit of Work pattern", "using UoW to group multiple operations into atomic unit", "reallocate function example")))
+((("reallocate service function")))
+Предположим, что мы хотим отменить распределение, а затем передислоцировать заказ:
+
+[[reallocate]]
+.Перераспределить сервисную функцию
+====
+[source,python]
+[role="skip"]
+----
+def reallocate(line: OrderLine, uow: AbstractUnitOfWork) -> str:
+    with uow:
+        batch = uow.batches.get(sku=line.sku)
+        if batch is None:
+            raise InvalidSku(f'Invalid sku {line.sku}')
+        batch.deallocate(line)  #<1>
+        allocate(line)  #<2>
+        uow.commit()
+----
+====
+
+<1> Если `deallocate()` не работает, мы, очевидно, не хотим вызывать `allocate()`.
+<2> Если `allocate()` терпит неудачу, мы, вероятно, также не хотим фиксировать `deallocate()`.
+
+
+==== Пример 2: Изменить размер партии
+
+((("Unit of Work pattern", "using UoW to group multiple operations into atomic unit", "changing batch quantity example")))
+Наша судоходная компания звонит нам, чтобы сообщить, что одна из дверей контейнера открылась, и половина наших диванов упала в Индийский океан. Ой!
+
+
+[[change_batch_quantity]]
+.Изменение количества
+====
+[source,python]
+[role="skip"]
+----
+def change_batch_quantity(batchref: str, new_qty: int, uow: AbstractUnitOfWork):
+    with uow:
+        batch = uow.batches.get(reference=batchref)
+        batch.change_purchased_quantity(new_qty)
+        while batch.available_quantity < 0:
+            line = batch.deallocate_one()  #<1>
+        uow.commit()
+----
+====
+
+<1> Здесь нам может понадобиться разобраться с любым количеством строк. Если мы получим неудачу на каком-то этапе, мы, вероятно, не захотим вносить никаких изменений.
+    ((("Unit of Work pattern", "using UoW to group multiple operations into atomic unit", startref="ix_UoWatom")))
+    ((("atomic operations", "using Unit of Work to group  operations into atomic unit", startref="ix_atomops")))
+
+
+=== Tidying Up the Integration Tests
+
+((("testing", "Unit of Work with integration tests", "tidying up tests")))
+((("Unit of Work pattern", "tidying up integration tests")))
+We now have three sets of tests, all essentially pointing at the database:
+_test_orm.py_, _test_repository.py_, and _test_uow.py_. Should we throw any
+away?
+
+====
+[source,text]
+[role="tree"]
+----
+└── tests
+    ├── conftest.py
+    ├── e2e
+    │   └── test_api.py
+    ├── integration
+    │   ├── test_orm.py
+    │   ├── test_repository.py
+    │   └── test_uow.py
+    ├── pytest.ini
+    └── unit
+        ├── test_allocate.py
+        ├── test_batches.py
+        └── test_services.py
+
+----
+====
+
+You should always feel free to throw away tests if you think they're not going to
+add value longer term. We'd say that _test_orm.py_ was primarily a tool to help
+us learn SQLAlchemy, so we won't need that long term, especially if the main things
+it's doing are covered in _test_repository.py_. That last test, you might keep around,
+but we could certainly see an argument for just keeping everything at the highest
+possible level of abstraction (just as we did for the unit tests).
+
+[role="nobreakinside less_space"]
+.Exercise for the Reader
+******************************************************************************
+For this chapter, probably the best thing to try is to implement a
+UoW from scratch. The code, as always, is https://github.com/cosmicpython/code/tree/chapter_06_uow_exercise[on GitHub]. You could either follow the model we have quite closely,
+or perhaps experiment with separating the UoW (whose responsibilities are
+`commit()`, `rollback()`, and providing the `.batches` repository) from the
+context manager, whose job is to initialize things, and then do the commit
+or rollback on exit. If you feel like going all-functional rather than
+messing about with all these classes, you could use `@contextmanager` from
+`contextlib`.
+
+We've stripped out both the actual UoW and the fakes, as well as paring back
+the abstract UoW. Why not send us a link to your repo if you come up with
+something you're particularly proud of?
+******************************************************************************
+
+TIP: This is another example of the lesson from <<chapter_05_high_gear_low_gear>>:
+    as we build better abstractions, we can move our tests to run against them,
+    which leaves us free to change the underlying details.
+
+
+=== Wrap-Up
+
+((("Unit of Work pattern", "benefits of using")))
+Hopefully we've convinced you that the Unit of Work pattern is useful, and
+that the context manager is a really nice Pythonic way
+of visually grouping code into blocks that we want to happen atomically.
+
+((("Session object")))
+((("SQLAlchemy", "Session object")))
+This pattern is so useful, in fact, that SQLAlchemy already uses a UoW
+in the shape of the `Session` object. The `Session` object in SQLAlchemy is the way
+that your application loads data from the database.
+
+Every time you load a new entity from the database, the session begins to _track_
+changes to the entity, and when the session is _flushed_, all your changes are
+persisted together. Why do we go to the effort of abstracting away the SQLAlchemy session if it already implements the pattern we want?
+
+((("Unit of Work pattern", "pros and cons or trade-offs")))
+<<chapter_06_uow_tradeoffs>> discusses some of the trade-offs.
+
+[[chapter_06_uow_tradeoffs]]
+[options="header"]
+.Unit of Work pattern: the trade-offs
+|===
+|Pros|Cons
+a|
+* We have a nice abstraction over the concept of atomic operations, and the
+  context manager makes it easy to see, visually, what blocks of code are
+  grouped together atomically.
+  ((("atomic operations", "Unit of Work as abstraction over")))
+  ((("transactions", "Unit of Work and")))
+
+* We have explicit control over when a transaction starts and finishes, and our
+  application fails in a way that is safe by default. We never have to worry
+  that an operation is partially committed.
+
+* It's a nice place to put all your repositories so client code can access them.
+
+* As you'll see in later chapters, atomicity isn't only about transactions; it
+  can help us work with events and the message bus.
+
+a|
+* Your ORM probably already has some perfectly good abstractions around
+  atomicity. SQLAlchemy even has context managers. You can go a long way
+  just passing a session around.
+
+* We've made it look easy, but you have to think quite carefully about
+  things like rollbacks, multithreading, and nested transactions. Perhaps just
+  sticking to what Django or Flask-SQLAlchemy gives you will keep your life
+  simpler.
+  ((("Unit of Work pattern", startref="ix_UoW")))
+|===
+
+For one thing, the Session API is rich and supports operations that we don't
+want or need in our domain. Our `UnitOfWork` simplifies the session to its
+essential core: it can be started, committed, or thrown away.
+
+For another, we're using the `UnitOfWork` to access our `Repository` objects.
+This is a neat bit of developer usability that we couldn't do with a plain
+SQLAlchemy `Session`.
+
+[role="nobreakinside less_space"]
+.Unit of Work Pattern Recap
+*****************************************************************
+((("Unit of Work pattern", "recap of important points")))
+
+The Unit of Work pattern is an abstraction around data integrity::
+    It helps to enforce the consistency of our domain model, and improves
+    performance, by letting us perform a single _flush_ operation at the
+    end of an operation.
+
+It works closely with the Repository and Service Layer patterns::
+    The Unit of Work pattern completes our abstractions over data access by
+    representing atomic updates. Each of our service-layer use cases runs in a
+    single unit of work that succeeds or fails as a block.
+
+This is a lovely case for a context manager::
+    Context managers are an idiomatic way of defining scope in Python. We can use a
+    context manager to automatically roll back our work at the end of a request,
+    which means the system is safe by default.
+
+SQLAlchemy already implements this pattern::
+    We introduce an even simpler abstraction over the SQLAlchemy `Session` object
+    in order to "narrow" the interface between the ORM and our code. This helps
+    to keep us loosely coupled.
+
+*****************************************************************
+
+((("dependency inversion principle")))
+Lastly, we're motivated again by the dependency inversion principle: our
+service layer depends on a thin abstraction, and we attach a concrete
+implementation at the outside edge of the system. This lines up nicely with
+SQLAlchemy's own
+https://oreil.ly/tS0E0[recommendations]:
+
+[quote, SQLALchemy "Session Basics" Documentation]
+____
+Keep the life cycle of the session (and usually the transaction) separate and
+external. The most comprehensive approach, recommended for more substantial
+applications, will try to keep the details of session, transaction, and
+exception management as far as possible from the details of the program doing
+its work.
+____
+
+
+//IDEA:  not sure where, but we should maybe talk about the option of separating
+// the uow into a uow plus a uowm.

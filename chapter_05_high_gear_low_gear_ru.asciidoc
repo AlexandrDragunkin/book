@@ -1,0 +1,452 @@
+[[chapter_05_high_gear_low_gear]]
+== TDD на Высокой и Низкой передаче
+
+((("test-driven development (TDD)", id="ix_TDD")))
+Мы ввели уровень сервиса, чтобы захватить некоторые дополнительные обязанности по оркестровке, которые нам нужны от рабочего приложения. Уровень сервиса помогает нам четко определить наши варианты использования и рабочий процесс для каждого из них: что нам нужно получить из наших репозиториев, какие предварительные проверки и проверку текущего состояния мы должны сделать, и что мы сохраняем в конце.
+
+((("test-driven development (TDD)", "unit tests operating at lower level, acting directly on model")))
+Но в настоящее время многие из наших модульных тестов работают на более низком уровне, воздействуя непосредственно на модель. В этой главе мы обсудим компромиссы, связанные с переносом этих тестов на уровень сервисного уровня, и некоторые более общие рекомендации по тестированию.
+
+
+.Harry Says: Seeing a Test Pyramid in Action Was a Light-Bulb Moment
+*******************************************************************************
+((("test-driven development (TDD)", "test pyramid, examining")))
+Вот несколько слов непосредственно от Гарри:
+
+_Я изначально скептически относился ко всем архитектурным паттернам Боба, но
+настоящая тестовая пирамида сделала меня новообращенным._
+
+_Как только вы реализуете моделирование предметной области и уровень сервиса, вы действительно можете перейти к этапу, когда модульные тесты на порядок превосходят интеграционные и сквозные тесты.  Работая в местах, где тестовая сборка E2E заняла бы несколько часов (по сути, "подождите до завтра"), я не могу сказать вам, какая разница, если вы сможете запустить все свои тесты за считанные минуты или секунды._
+
+_Прочтите несколько рекомендаций о том, как решить, какие тесты писать и на каком уровне. Мышление с высокой передачей High Gear и низкой передачей Low Gear  действительно изменило мою тестовую жизнь._
+*******************************************************************************
+
+
+=== Как выглядит наша тестовая пирамида?
+
+((("service layer", "using, test pyramid and")))
+((("test-driven development (TDD)", "test pyramid with service layer added")))
+Давайте посмотрим, что этот переход к использованию сервисного уровня с его собственными тестами сервисного уровня делает с нашей тестовой пирамидой:
+
+[[test_pyramid]]
+.Подсчет типов тестов
+====
+[source,sh]
+[role="skip"]
+----
+$ grep -c test_ **/test_*.py
+tests/unit/test_allocate.py:4
+tests/unit/test_batches.py:8
+tests/unit/test_services.py:3
+
+tests/integration/test_orm.py:6
+tests/integration/test_repository.py:2
+
+tests/e2e/test_api.py:2
+----
+====
+
+//NICE-TO-HAVE: test listing this too?
+
+Неплохо! У нас есть 15 модульных тестов, 8 интеграционных тестов и всего 2 сквозных теста.  Это уже здоровая на вид тестовая пирамида.
+
+
+
+=== Должны ли тесты доменного уровня перейти на уровень сервиса?
+
+((("domain layer", "tests moving to service layer")))
+((("service layer", "domain layer tests moving to")))
+((("test-driven development (TDD)", "domain layer tests moving to service layer")))
+Посмотрим, что произойдет, если мы сделаем еще один шаг. Поскольку мы можем тестировать наше программное обеспечение на уровне сервисов, нам больше не нужны тесты для модели предметной области. Вместо этого мы могли бы переписать все тесты уровня домена из
+<<chapter_01_domain_model>> с точки зрения уровня обслуживания:
+
+
+.Переписывание теста домена на уровне сервиса (tests/unit/test_services.py)
+====
+[source,python]
+[role="skip"]
+----
+# domain-layer test:
+def test_prefers_current_stock_batches_to_shipments():
+    in_stock_batch = Batch("in-stock-batch", "RETRO-CLOCK", 100, eta=None)
+    shipment_batch = Batch("shipment-batch", "RETRO-CLOCK", 100, eta=tomorrow)
+    line = OrderLine("oref", "RETRO-CLOCK", 10)
+
+    allocate(line, [in_stock_batch, shipment_batch])
+
+    assert in_stock_batch.available_quantity == 90
+    assert shipment_batch.available_quantity == 100
+
+
+# service-layer test:
+def test_prefers_warehouse_batches_to_shipments():
+    in_stock_batch = Batch("in-stock-batch", "RETRO-CLOCK", 100, eta=None)
+    shipment_batch = Batch("shipment-batch", "RETRO-CLOCK", 100, eta=tomorrow)
+    repo = FakeRepository([in_stock_batch, shipment_batch])
+    session = FakeSession()
+
+    line = OrderLine('oref', "RETRO-CLOCK", 10)
+
+    services.allocate(line, repo, session)
+
+    assert in_stock_batch.available_quantity == 90
+    assert shipment_batch.available_quantity == 100
+----
+====
+
+((("domain layer", "tests moving to service layer", "reasons for")))
+((("service layer", "domain layer tests moving to", "reasons for")))
+Зачем нам это нужно?
+
+Предполагается, что тесты помогают нам безбоязненно изменять нашу систему, но часто мы видим, как команды пишут слишком много тестов для своей модели предметной области. Это вызывает проблемы, когда они приходят изменить свою кодовую базу и обнаруживают, что им необходимо обновить десятки или даже сотни модульных тестов.
+
+В этом есть смысл, если вы перестанете задумываться о назначении автоматических тестов. Мы используем тесты, чтобы убедиться, что свойство системы не меняется во время работы. Мы используем тесты, чтобы проверить, что API продолжает возвращать 200, что сеанс базы данных продолжает фиксироваться и что заказы все еще распределяются.
+
+Если мы случайно изменим одно из этих поведений, наши тесты сломаются. Однако оборотная сторона состоит в том, что если мы захотим изменить дизайн нашего кода, любые тесты, напрямую полагающиеся на этот код, также потерпят неудачу.
+
+По мере того, как мы углубимся в книгу, вы увидите, как уровень сервиса формирует API для нашей системы, которым мы можем управлять разными способами. Тестирование этого API сокращает объем кода, который нам нужно изменить при рефакторинге нашей модели предметной области. Если мы ограничимся тестированием только на уровне сервиса, у нас не будет никаких тестов, которые напрямую взаимодействуют с «частными» методами или атрибутами объектов нашей модели, что дает нам больше свободы для их рефакторинга.
+
+TIP: Каждая строка кода, которую мы помещаем в тест, подобна капле клея, удерживающему систему в определенной форме. Чем больше у нас будет тестов низкого уровня, тем труднее будет что-то изменить.
+
+
+[[kinds_of_tests]]
+=== О принятии решения О том, Какие Тесты писать
+
+((("domain model", "deciding whether to write tests against")))
+((("coupling", "trade-off between design feedback and")))
+((("test-driven development (TDD)", "deciding what kinds of tests to write")))
+Вы можете спросить себя: «А стоит ли мне тогда переписать все свои модульные тесты? Разве неправильно писать тесты для модели предметной области?» Чтобы ответить на эти вопросы, важно понимать компромисс между связью и обратной связью по проекту (см. <<test_spectrum_diagram>>).
+
+[[test_spectrum_diagram]]
+.Тестовый спектр
+image::images/apwp_0501.png[]
+[role="image-source"]
+----
+[ditaa, apwp_0501]
+| Низкая обратная связь                                    Высокая обратная связь |
+| Низкий барьер для изменений                           Высокий барьер для перемен |
+| Высокий охват системы                                  Сфокусированное покрытие |
+|                                                                              |
+| <---------                                                       ----------> |
+|                                                                              |
+| API Tests                  Service–Layer Tests                  Domain Tests |
+----
+
+
+((("extreme programming (XP), exhortation to listen to the code")))
+Экстремальное программирование (XP) призывает нас «слушать код». Когда мы пишем тесты, мы можем обнаружить, что код трудно использовать, или заметим запах кода. Это повод для рефакторинга и пересмотра нашего дизайна.
+
+Однако мы получаем эту обратную связь только тогда, когда тесно работаем с целевым кодом. Тест HTTP API ничего не говорит нам о детальном дизайне наших объектов, потому что он находится на гораздо более высоком уровне абстракции.
+
+С другой стороны, мы можем переписать все наше приложение, и, пока мы не меняем URL-адреса или форматы запросов, наши HTTP-тесты будут продолжать проходить. Это дает нам уверенность в том, что крупномасштабные изменения, такие как изменение схемы базы данных, не нарушили наш код.
+
+На другом конце спектра тесты, которые мы написали в <<chapter_01_domain_model>>, помогли нам конкретизировать наше понимание необходимых нам объектов. Тесты привели нас к разработке, которая имеет смысл и читается на языке предметной области. Когда наши тесты читаются на языке предметной области, мы чувствуем себя комфортно, потому что наш код соответствует нашей интуиции относительно проблемы, которую мы пытаемся решить.
+
+Поскольку тесты написаны на языке предметной области, они служат живой документацией для нашей модели. Новый член команды может прочитать эти тесты, чтобы быстро понять, как работает система и как взаимосвязаны основные концепции.
+
+Мы часто «зарисовываем» новое поведение, написав тесты на этом уровне, чтобы увидеть, как может выглядеть код. Однако, когда мы хотим улучшить дизайн кода, нам нужно будет заменить или удалить эти тесты, потому что они тесно связаны с конкретной
+[.keep-together]#implementation реализацей#.
+
+// IDEA: (EJ3) an example that is overmocked would be good here if you decide to
+// add one. Ch12 already has one that could be expanded.
+
+// IDEA (SG) - maybe we could do with a/some concrete examples here?  Eg an
+// example where a unit test would break but a service-layer test wouldn't?
+// and maybe make the analogy of "you should only write tests against public
+// methods of your classes, and the service layer is just another more-public
+// layer
+
+
+=== Высокая и низкая передача
+
+((("test-driven development (TDD)", "high and low gear")))
+В большинстве случаев, когда мы добавляем новую функцию или исправляем ошибку, нам не нужно вносить значительные изменения в модель домена. В этих случаях мы предпочитаем писать тесты против сервисов из-за более низкой связи и более высокого покрытия.
+
+((("service layer", "writing tests against")))
+Например, при написании функции `add_stock` или функции `cancel_order` мы можем работать быстрее и с меньшей связью, написав тесты на уровне сервиса.
+
+((("domain model", "writing tests against")))
+Когда мы начинаем новый проект или сталкиваемся с особенно сложной проблемой, мы возвращаемся к написанию тестов против модели предметной области, чтобы получить лучшую обратную связь и исполняемую документацию о наших намерениях.
+
+Мы используем в качестве метафоры термины переключения передач. В начале поездки велосипед должен быть на пониженной передаче, чтобы он мог преодолеть инерцию. Когда мы тронемся и бежим, мы можем двигаться быстрее и эффективнее, переключившись на повышенную передачу; но если мы внезапно наталкиваемся на крутой холм или вынуждены замедляться из-за опасности, мы снова переключаемся на низкую передачу, пока не сможем снова набрать скорость.
+
+
+
+[[primitive_obsession]]
+=== Полное отделение тестов уровня сервиса от домена
+
+((("service layer", "fully decoupling from the domain", id="ix_serlaydec")))
+((("domain layer", "fully decoupling service layer from", id="ix_domlaydec")))
+((("test-driven development (TDD)", "fully decoupling service layer from the domain", id="ix_TDDdecser")))
+У нас все еще есть прямые зависимости от домена в наших тестах уровня обслуживания, потому что мы используем объекты домена для настройки наших тестовых данных и вызова наших функций уровня обслуживания.
+
+Чтобы иметь уровень сервиса, который полностью отделен от домена, нам нужно переписать его API, чтобы работать в терминах примитивов.
+
+Наш уровень обслуживания в настоящее время принимает доменный объект `OrderLine`:
+
+[[service_domain]]
+.До: allocate принимает объект домена (service_layer/services.py)
+====
+[source,python]
+[role="skip"]
+----
+def allocate(line: OrderLine, repo: AbstractRepository, session) -> str:
+----
+====
+
+Как бы это выглядело, если бы все его параметры были примитивными типами?
+
+[[service_takes_primitives]]
+.После: allocate принимает строки и целые числа (service_layer/services.py)
+====
+[source,python]
+----
+def allocate(
+        orderid: str, sku: str, qty: int, repo: AbstractRepository, session
+) -> str:
+----
+====
+
+Мы также переписываем тесты в этих терминах:
+
+[[tests_call_with_primitives]]
+.Tests now use primitives in function call (tests/unit/test_services.py)
+====
+[source,python]
+[role="non-head"]
+----
+def test_returns_allocation():
+    batch = model.Batch("batch1", "COMPLICATED-LAMP", 100, eta=None)
+    repo = FakeRepository([batch])
+
+    result = services.allocate("o1", "COMPLICATED-LAMP", 10, repo, FakeSession())
+    assert result == "batch1"
+----
+====
+
+Но наши тесты все еще зависят от домена, потому что мы все еще вручную создаем экземпляры `Batch` объектов.  Поэтому, если в один прекрасный день мы решим провести массовый рефакторинг того, как работает наша `Batch` модель, нам придется изменить кучу тестов.
+
+
+==== Смягчение последствий: Храните Все доменные зависимости в функциях Fixture
+
+((("faking", "FakeRepository", "adding fixture function on")))
+((("fixture functions, keeping all domain dependencies in")))
+((("test-driven development (TDD)", "fully decoupling service layer from the domain", "keeping all domain dependencies in fixture functions")))
+((("dependencies", "keeping all domain dependencies in fixture functions")))
+Мы могли бы, по крайней мере, абстрагировать это до вспомогательной функции или фикстуры в наших тестах.  Вот один из способов, которым вы могли бы это сделать, добавив фабричную функцию в `FakeRepository`:
+
+
+[[services_factory_function]]
+.Фабричные функции для фикстур -- это одна из возможностей (tests/unit/test_services.py)
+====
+[source,python]
+[role="skip"]
+----
+class FakeRepository(set):
+
+    @staticmethod
+    def for_batch(ref, sku, qty, eta=None):
+        return FakeRepository([
+            model.Batch(ref, sku, qty, eta),
+        ])
+
+    ...
+
+
+def test_returns_allocation():
+    repo = FakeRepository.for_batch("batch1", "COMPLICATED-LAMP", 100, eta=None)
+    result = services.allocate("o1", "COMPLICATED-LAMP", 10, repo, FakeSession())
+    assert result == "batch1"
+----
+====
+
+
+По крайней мере, это переместило бы все зависимости наших тестов из домена в одно место.
+
+
+==== Добавление отсутствующей службы
+
+((("test-driven development (TDD)", "fully decoupling service layer from the domain", "adding missing service")))
+Но мы могли бы сделать еще один шаг. Если бы у нас был сервис для добавления запасов, мы могли бы использовать его и сделать наши тесты уровня сервиса полностью выраженными в терминах официальных вариантов использования уровня сервиса, удалив все зависимости от домена:
+
+
+[[test_add_batch]]
+.Тест для нового сервиса add_batch (tests/unit/test_services.py)
+====
+[source,python]
+----
+def test_add_batch():
+    repo, session = FakeRepository([]), FakeSession()
+    services.add_batch("b1", "CRUNCHY-ARMCHAIR", 100, None, repo, session)
+    assert repo.get("b1") is not None
+    assert session.committed
+----
+====
+
+
+TIP: В общем, если вам нужно делать что-то на уровне домена непосредственно в тестах уровня сервиса, это может быть признаком того, что ваш уровень сервиса не завершен.
+
+[role="pagebreak-before"]
+А реализация -- это всего две строчки:
+
+[[add_batch_service]]
+.Новый сервис для add_batch (service_layer/services.py)
+====
+[source,python]
+----
+def add_batch(
+        ref: str, sku: str, qty: int, eta: Optional[date],
+        repo: AbstractRepository, session,
+):
+    repo.add(model.Batch(ref, sku, qty, eta))
+    session.commit()
+
+
+def allocate(
+        orderid: str, sku: str, qty: int, repo: AbstractRepository, session
+) -> str:
+    ...
+----
+====
+
+NOTE: Стоит ли писать новую службу только потому, что она поможет устранить зависимости из ваших тестов? Возможно нет. Но в этом случае нам почти наверняка однажды понадобится сервис `add_batch`. 
+[.keep-together]#так или иначе#.
+
+((("services", "service layer tests only using services")))
+Теперь это позволяет нам переписать _все_ наши тесты сервисного уровня исключительно с точки зрения самих сервисов, используя только примитивы и без каких-либо зависимостей от модели:
+
+
+[[services_tests_all_services]]
+.Тесты сервисов теперь используют только сервисы (tests/unit/test_services.py)
+====
+[source,python]
+----
+def test_allocate_returns_allocation():
+    repo, session = FakeRepository([]), FakeSession()
+    services.add_batch("batch1", "COMPLICATED-LAMP", 100, None, repo, session)
+    result = services.allocate("o1", "COMPLICATED-LAMP", 10, repo, session)
+    assert result == "batch1"
+
+
+def test_allocate_errors_for_invalid_sku():
+    repo, session = FakeRepository([]), FakeSession()
+    services.add_batch("b1", "AREALSKU", 100, None, repo, session)
+
+    with pytest.raises(services.InvalidSku, match="Invalid sku NONEXISTENTSKU"):
+        services.allocate("o1", "NONEXISTENTSKU", 10, repo, FakeSession())
+----
+====
+
+
+((("service layer", "fully decoupling from the domain", startref="ix_serlaydec")))
+((("domain layer", "fully decoupling service layer from", startref="ix_domlaydec")))
+((("test-driven development (TDD)", "fully decoupling service layer from the domain", startref="ix_TDDdecser")))
+Это действительно хорошее место.  Наши тесты уровня сервиса зависят только от самого уровня сервиса, что дает нам полную свободу для рефакторинга модели по своему усмотрению.
+
+[role="pagebreak-before less_space"]
+=== Внесение улучшений в тесты E2E
+
+((("E2E tests", see="end-to-end tests")))
+((("end-to-end tests", "decoupling of service layer from domain, carrying through to")))
+((("test-driven development (TDD)", "fully decoupling service layer from the domain", "carrying improvement through to E2E tests")))
+((("APIs", "adding API for adding a batch")))
+Точно так же, как добавление `add_batch` помогло отделить наши тесты сервисного уровня от модели, добавление конечной точки API для добавления пакета устранило бы необходимость в уродливом приспособлении `add_stock`, и наши тесты E2E могли бы быть свободны от этих жестко закодированных SQL-запросов и прямой зависимости от базы данных.
+
+Благодаря нашей сервисной функции добавить endpoint очень просто, требуется всего лишь немного порботать с JSON и один раз вызвать функцию:
+
+
+[[api_for_add_batch]]
+.API для добавления batch (entrypoints/flask_app.py)
+====
+[source,python]
+----
+@app.route("/add_batch", methods=['POST'])
+def add_batch():
+    session = get_session()
+    repo = repository.SqlAlchemyRepository(session)
+    eta = request.json['eta']
+    if eta is not None:
+        eta = datetime.fromisoformat(eta).date()
+    services.add_batch(
+        request.json['ref'], request.json['sku'], request.json['qty'], eta,
+        repo, session
+    )
+    return 'OK', 201
+----
+====
+
+NOTE: Вы думаете про себя, POST to _ /add_batch_? Это не очень RESTful!  Вы совершенно правы.  Мы, к счастью, небрежны, но если вы хотите сделать все более RESTy, возможно, POST to _/batches_,тогда сам щёлкни себя по носу! Поскольку Flask - тонкий адаптер, это будет несложно. See <<types_of_test_rules_of_thumb, the next sidebar>>.
+
+И наши жестко закодированные SQL-запросы из _conftest.py_ заменяются некоторыми вызовами API, что означает, что тесты API не имеют никаких зависимостей, кроме API, что тоже неплохо:
+
+[[api_tests_with_no_sql]]
+.Тесты API теперь могут добавлять свои собственные пакеты (tests/e2e/test_api.py)
+====
+[source,python]
+----
+def post_to_add_batch(ref, sku, qty, eta):
+    url = config.get_api_url()
+    r = requests.post(
+        f'{url}/add_batch',
+        json={'ref': ref, 'sku': sku, 'qty': qty, 'eta': eta}
+    )
+    assert r.status_code == 201
+
+
+@pytest.mark.usefixtures('postgres_db')
+@pytest.mark.usefixtures('restart_api')
+def test_happy_path_returns_201_and_allocated_batch():
+    sku, othersku = random_sku(), random_sku('other')
+    earlybatch = random_batchref(1)
+    laterbatch = random_batchref(2)
+    otherbatch = random_batchref(3)
+    post_to_add_batch(laterbatch, sku, 100, '2011-01-02')
+    post_to_add_batch(earlybatch, sku, 100, '2011-01-01')
+    post_to_add_batch(otherbatch, othersku, 100, None)
+    data = {'orderid': random_orderid(), 'sku': sku, 'qty': 3}
+    url = config.get_api_url()
+    r = requests.post(f'{url}/allocate', json=data)
+    assert r.status_code == 201
+    assert r.json()['batchref'] == earlybatch
+----
+====
+
+
+=== Заключение
+
+((("service layer", "benefits to test-driven development")))
+((("test-driven development (TDD)", "benefits of service layer to")))
+Как только у вас появится уровень сервиса, вы действительно можете переместить большую часть тестового покрытия в модульные тесты и разработать здоровую пирамиду тестов.
+
+[role="nobreakinside less_space"]
+[[types_of_test_rules_of_thumb]]
+.Резюме: Эмпирические правила для различных типов тестов
+******************************************************************************
+
+Стремитесь к одному сквозному тесту для каждой функции. :: Это может быть написано, 
+	например, для HTTP API. Цель состоит в том, чтобы продемонстрировать, что функция работает, и что все движущиеся части правильно склеены.
+    ((("end-to-end tests", "aiming for one test per feature")))
+
+Пишите основную часть ваших тестов на уровне сервиса. :: Эти сквозные тесты 
+	предлагают хороший компромисс между охватом, временем выполнения и эффективностью. Каждый тест обычно охватывает один путь кода функции и использует подделки для ввода-вывода. Это место, где можно полностью охватить все крайние случаи и тонкости вашей бизнес-логики.footnote:[Обоснованное беспокойство по поводу написания тестов на более высоком уровне заключается в том, что это может привести к комбинаторному взрыву для более сложных случаев использования. В этих случаях может быть полезно перейти к модульным тестам более низкого уровня различных сотрудничающих объектов домена. Смотрите также <<chapter_08_events_and_message_bus>> и <<fake_message_bus>>.]
+    ((("service layer", "writing bulk of tests against")))
+
+Поддерживайте небольшое ядро ​​тестов, написанных для вашей модели предметной области. :: Эти тесты имеют 
+	узконаправленный охват и более хрупкие, но они имеют самую высокую обратную связь. Не бойтесь удалить эти тесты, если их функциональность позже будет покрыта тестами на уровне сервиса.
+    ((("domain model", "maintaining small core of tests written against")))
+
+Обработку ошибок считайте функцией. ::
+	В идеале ваше приложение должно быть структурировано таким образом, чтобы все ошибки, возникающие в ваших точках входа (например, Flask), обрабатывались одинаково. Это означает, что вам нужно протестировать только удачный путь для каждой функции и зарезервировать один сквозной тест для всех неудачных путей (и, конечно, многих модульных тестов неудачных путей).
+    ((("test-driven development (TDD)", startref="ix_TDD")))
+    ((("error handling", "counting as a feature")))
+
+******************************************************************************
+
+В этом вам помогут несколько вещей:
+
+* Выражайте уровень обслуживания в терминах примитивов, а не объектов предметной области.
+
+* В идеальном мире у вас будут все сервисы, которые вам нужны, чтобы иметь возможность полностью протестировать уровень сервиса, а не взламывать состояние через репозитории или базу данных. Это также окупается в ваших сквозных тестах.
+  ((("test-driven development (TDD)", "types of tests, rules of thumb for")))
+
+Переходим к следующей главе!
