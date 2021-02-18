@@ -1,27 +1,20 @@
 [[chapter_07_aggregate]]
-== Aggregates and Consistency Boundaries
+== Агрегаты и границы консистентности
 
 ((("aggregates", "Product aggregate")))
 ((("consistency boundaries")))
 ((("performance", "consistency boundaries and")))
 ((("Product object")))
-In this chapter, we'd like to revisit our domain model to talk about invariants
-and constraints, and see how our domain objects can maintain their own
-internal consistency, both conceptually and in persistent storage.  We'll
-discuss the concept of a _consistency boundary_ and show how making it
-explicit can help us to build high-performance software without compromising
-maintainability.
+В этой главе мы бы хотели вернуться к нашей доменной модели, чтобы поговорить об инвариантах и ограничениях, а также посмотреть, как наши доменные объекты могут поддерживать свою собственную внутреннюю согласованность, как концептуально, так и в постоянном хранении.  Мы обсудим концепцию _границ консистентности_ и покажем, как ее постановка может помочь нам построить высокопроизводительное программное обеспечение без ущерба для удобства обслуживания.
 
-<<maps_chapter_06>> shows a preview of where we're headed: we'll introduce
-a new model object called `Product` to wrap multiple batches, and we'll make
-the old `allocate()` domain service available as a method on `Product` instead.
+<<maps_chapter_06>> показывает предварительный образ того, куда мы движемся: мы введем новый объект модели под названием `Product` для упаковки нескольких пакетов _batches_, и вместо этого сделаем старую доменную службу `allocate()` доступной в качестве метода в `Product`.
 
 [[maps_chapter_06]]
-.Adding the Product aggregate
+.Добавление Product aggregate
 image::images/apwp_0701.png[]
 
 
-Why? Let's find out.
+Почему? Давай выясним.
 
 
 [TIP]

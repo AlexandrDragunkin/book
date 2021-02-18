@@ -30,7 +30,7 @@ include::chapter_05_high_gear_low_gear_ru.asciidoc[]
 
 include::chapter_06_uow_ru.asciidoc[]
 
-include::chapter_07_aggregate.asciidoc[]
+include::chapter_07_aggregate_ru.asciidoc[]
 
 
 include::part2_ru.asciidoc[]
