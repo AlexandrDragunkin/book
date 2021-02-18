@@ -38,7 +38,7 @@ git checkout chapter_06_uow
 ((("spreadsheets, using instead of domain model")))
 В любом случае, в чем смысл доменной модели? Какую фундаментальную проблему мы пытаемся решить?
 
-Не могли бы мы просто запустить все в электронную таблицу? Многие из наших пользователей были бы [.keep-together] #в восторге# от этого. Бизнес-пользователи _любят_ электронные таблицы, потому что они простые, привычные и в то же время невероятно мощные.
+Не могли бы мы просто запустить все в электронную таблицу? Многие из наших пользователей были бы [.keep-together]#в восторге# от этого. Бизнес-пользователи _любят_ электронные таблицы, потому что они простые, привычные и в то же время невероятно мощные.
 
 ((("CSV over SMTP architecture")))
 На самом деле, огромное количество бизнес-процессов работают путем ручной отправки электронных таблиц туда и обратно по электронной почте. Эта архитектура «CSV поверх SMTP» имеет низкую начальную сложность, но имеет тенденцию не очень хорошо масштабироваться, потому что трудно применять логику и поддерживать согласованность.
@@ -200,14 +200,11 @@ allocate --> allocate_domain_service: allocate(orderline, batches)
 
 ((("batches", "asking Product to allocate against")))
 ((("Product object", "asking Product to allocate against its batches")))
-...we'll move to the world of <<after_aggregates_diagram>>, in which there is a new
-`Product` object for the particular SKU of our order line, and it will be in charge
-of all the batches _for that SKU_, and we can call a `.allocate()` method on that
-instead.
+... мы переместимся в мир <<after_aggregates_diagram>>, в котором есть новый объект `Product` для конкретного SKU нашей строки заказа который теперь будет отвечать за все партии _для этого SKU_, и вместо этого мы можем вызвать метод `.allocate()`.
 
 [role="width-75"]
 [[after_aggregates_diagram]]
-.After: ask Product to allocate against its batches
+.После: просим  Product распределить продукт по его партиям
 image::images/apwp_0703.png[]
 [role="image-source"]
 ----
@@ -304,52 +301,29 @@ NOTE: Этот `Product` может выглядеть не так, как вы 
 .Агрегаты, Ограниченные контексты и микросервисы
 *******************************************************************************
 ((("bounded contexts")))
-One of the most important contributions from Evans and the DDD community
-is the concept of
-https://martinfowler.com/bliki/BoundedContext.html[_bounded contexts_].
+Одним из наиболее важных вкладов Эванса и сообщества DDD является концепция
+https://martinfowler.com/bliki/BoundedContext.html[_ограниченные контексты_].
 
 ((("domain driven design (DDD)", "bounded contexts")))
-In essence, this was a reaction against attempts to capture entire businesses
-into a single model. The word _customer_ means different things to people
-in sales, customer service, logistics, support, and so on. Attributes
-needed in one context are irrelevant in another; more perniciously, concepts
-with the same name can have entirely different meanings in different contexts.
-Rather than trying to build a single model (or class, or database) to capture
-all the use cases, it's better to have several models, draw boundaries
-around each context, and handle the translation between different contexts
-explicitly.
+По сути, это была реакция на попытки объединить весь бизнес в единую модель. Слово "клиент" означает разные вещи для людей в сфере продаж, обслуживания клиентов, логистики, поддержки и так далее. Атрибуты, необходимые в одном контексте, не имеют значения в другом; более пагубно то, что понятия с одним и тем же именем могут иметь совершенно разные значения в разных контекстах. Вместо того чтобы пытаться построить единую модель (или класс, или базу данных), чтобы охватить все варианты использования, лучше иметь несколько моделей, рисовать границы вокруг каждого контекста и явно обрабатывать перевод между различными контекстами.
 
 ((("microservices", "bounded contexts and")))
-This concept translates very well to the world of microservices, where each
-microservice is free to have its own concept of "customer" and its own rules for
-translating that to and from other microservices it integrates with.
+Эта концепция очень хорошо переносится в мир микросервисов, где каждая микросервисная служба свободна иметь свою собственную концепцию "клиента" и свои собственные правила перевода этого понятия в другие микросервисы, с которыми она интегрируется.
 
-In our example, the allocation service has `Product(sku, batches)`,
-whereas the ecommerce will have `Product(sku, description, price, image_url,
-dimensions, etc...)`. As a rule of thumb, your domain models should
-include only the data that they need for performing calculations.
+В нашем примере сервис распределения имеет `Product(sku, batches)`, в то время как электронная коммерция будет иметь `Product(sku, description, price, image_url,dimensions, etc...)`. Как правило, ваши доменные модели должны включать только те данные, которые необходимы для выполнения вычислений.
 
-Whether or not you have a microservices architecture, a key consideration
-in choosing your aggregates is also choosing the bounded context that they
-will operate in. By restricting the context, you can keep your number of
-aggregates low and their size manageable.
+Независимо от того, имеете ли вы архитектуру микроуслуг или нет, ключевым моментом при выборе ваших агрегатов также является выбор ограниченного контекста, в котором они будут работать. Ограничив контекст, вы можете держать ваше количество агрегатов низким, а их размер управляемым.
 
 ((("aggregates", "choosing an aggregrate", startref="ix_aggch")))
-Once again, we find ourselves forced to say that we can't give this issue
-the treatment it deserves here, and we can only encourage you to read up on it
-elsewhere. The Fowler link at the start of this sidebar is a good starting point, and either
-(or indeed, any) DDD book will have a chapter or more on bounded contexts.
+Еще раз, мы вынуждены сказать, что мы не можем уделить этому вопросу должное внимание здесь, и мы можем только посоветовать вам прочитать об этом в другом месте. Ссылка Фаулера в начале этой боковой панели является хорошей отправной точкой, и в любой (или даже в любой другой) книге DDD будет глава или больше об ограниченных контекстах.
 
 *******************************************************************************
 
-=== One Aggregate = One Repository
+=== Один Агрегат = Один Репозиторий
 
 ((("aggregates", "one aggregrate &#x3D; one repository")))
 ((("repositories", "one aggregrate &#x3D; one repository")))
-Once you define certain entities to be aggregates, we need to apply the rule
-that they are the only entities that are publicly accessible to the outside
-world.  In other words, the only repositories we are allowed should be
-repositories that return aggregates.
+Как только вы определяете определенные сущности как агрегаты, мы должны применить правило, что они являются единственными сущностями, которые являются общедоступными для внешнего мира.  Другими словами, единственными репозиториями, которые нам разрешены, должны быть репозитории, возвращающие агрегаты.
 
 NOTE: The rule that repositories should only return aggregates is the main place
     where we enforce the convention that aggregates are the only way into our
