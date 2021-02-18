@@ -19,229 +19,141 @@ image::images/apwp_0701.png[]
 
 [TIP]
 ====
-The code for this chapter is in the chapter_07_aggregate branch
+Код этой главы находится в ветке chapter_07_aggregate
 https://github.com/cosmicpython/code/tree/chapter_07_aggregate[on [.keep-together]#GitHub#]:
 
 ----
 git clone https://github.com/cosmicpython/code.git
 cd code
 git checkout chapter_07_aggregate
-# or to code along, checkout the previous chapter:
+# или, чтобы кодировать вместе, проверьте предыдущую главу:
 git checkout chapter_06_uow
 ----
 ====
 
 
-=== Why Not Just Run Everything in a Spreadsheet?
+=== Почему бы просто не запустить все в электронной таблице?
 
 ((("domain model", "using spreadsheets instead of")))
 ((("spreadsheets, using instead of domain model")))
-What's the point of a domain model, anyway? What's the fundamental problem
-we're trying to address?
+В любом случае, в чем смысл доменной модели? Какую фундаментальную проблему мы пытаемся решить?
 
-Couldn't we just run everything in a spreadsheet? Many of our users would be
-[.keep-together]#delighted# by that. Business users _like_ spreadsheets because
-they're simple, familiar, and yet enormously powerful.
+Не могли бы мы просто запустить все в электронную таблицу? Многие из наших пользователей были бы [.keep-together] #в восторге# от этого. Бизнес-пользователи _любят_ электронные таблицы, потому что они простые, привычные и в то же время невероятно мощные.
 
 ((("CSV over SMTP architecture")))
-In fact, an enormous number of business processes do operate by manually sending
-spreadsheets back and forth over email. This "CSV over SMTP" architecture has
-low initial complexity but tends not to scale very well because it's difficult
-to apply logic and maintain consistency.
+На самом деле, огромное количество бизнес-процессов работают путем ручной отправки электронных таблиц туда и обратно по электронной почте. Эта архитектура «CSV поверх SMTP» имеет низкую начальную сложность, но имеет тенденцию не очень хорошо масштабироваться, потому что трудно применять логику и поддерживать согласованность.
 
 // IDEA: better examples?
 
-Who is allowed to view this particular field? Who's allowed to update it? What
-happens when we try to order –350 chairs, or 10,000,000 tables? Can an employee
-have a negative salary?
+Кому разрешено просматривать это конкретное поле? Кому разрешено обновлять? Что происходит, когда мы пытаемся заказать -350 стульев, или 10 000 000 столов? Может ли работник иметь отрицательную зарплату?
 
-These are the constraints of a system. Much of the domain logic we write exists
-to enforce these constraints in order to maintain the invariants of the
-system. The _invariants_ are the things that have to be true whenever we finish
-an operation.
+Это ограничения системы. Большая часть логики предметной области, которую мы пишем, существует для обеспечения соблюдения этих ограничений, чтобы поддерживать инварианты системы. Инварианты -- это то, что должно быть истинным всякий раз, когда мы заканчиваем операцию.
 
 
-=== Invariants, Constraints, and Consistency
+=== Инварианты, Ограничения и Консистентность
 
 ((("invariants", "invariants, constraints, and consistency")))
 ((("domain model", "invariants, constraints, and consistency")))
-The two words are somewhat interchangeable, but a _constraint_ is a
-rule that restricts the possible states our model can get into, while an _invariant_
-is defined a little more precisely as a condition that is always true.
+Эти два слова в некоторой степени взаимозаменяемы, но _constraint_ Ограничения -- это правило, ограничивающее возможные состояния, в которые может попасть наша модель, в то время как _invariant_ определяется немного более точно как условие, которое всегда истинно.
 
 ((("constraints")))
-If we were writing a hotel-booking system, we might have the constraint that double
-bookings are not allowed. This supports the invariant that a room cannot have more
-than one booking for the same night.
+Если бы мы писали систему бронирования отелей, у нас могло бы возникнуть ограничение, что двойное бронирование не допускается. Это подтверждает инвариант, что номер не может быть забронирован более чем на одну ночь.
 
 ((("consistency")))
-Of course, sometimes we might need to temporarily _bend_ the rules. Perhaps we
-need to shuffle the rooms around because of a VIP booking. While we're moving
-bookings around in memory, we might be double booked, but our domain model
-should ensure that, when we're finished, we end up in a final consistent state,
-where the invariants are met. If we can't find a way to accommodate all our guests,
-we should raise an error and refuse to complete the operation.
+Конечно, иногда нам может понадобиться временно нарушить правила. Возможно, нам нужно перетасовать номера из-за VIP-бронирования. Пока мы перемещаем заказы в памяти, мы можем быть дважды забронированы, но наша модель предметной области должна гарантировать, что, когда мы закончим, мы окажемся в конечном согласованном состоянии, где инварианты будут выполнены. Если мы не можем найти способ разместить всех наших гостей, мы должны поднять ошибку и отказаться от завершения операции.
 
-Let's look at a couple of concrete examples from our business requirements; we'll start with this one:
+Давайте рассмотрим несколько конкретных примеров из наших бизнес-требований; мы начнем с этого:
 
 [quote, The business]
 ____
-An order line can be allocated to only one batch at a time.
+Строка заказа может быть выделена только для одной партии одновременно.
 ____
 
 ((("business rules", "invariants, constraints, and consistency")))
-This is a business rule that imposes an invariant. The invariant is that an
-order line is allocated to either zero or one batch, but never more than one.
-We need to make sure that our code never accidentally calls `Batch.allocate()`
-on two different batches for the same line, and currently, there's nothing
-there to explicitly stop us from doing that.
+Это бизнес - правило, которое накладывает инвариант. Инвариант заключается в том, что строка заказа распределяется либо на ноль, либо на одну партию, но никогда не более чем на одну. Нам нужно убедиться, что наш код никогда случайно не вызывает `Batch.allocate()` в двух разных пакетах для одной и той же строки, и в настоящее время ничто явно не мешает нам это сделать.
 
 
-==== Invariants, Concurrency, and Locks
+==== Инварианты, Параллельность, и Блокировки _locks_
 
 ((("business rules", "invariants, concurrency, and locks")))
-Let's look at another one of our business rules:
+Давайте рассмотрим еще одно из наших бизнес-правил:
 
 [quote, The business]
 ____
-We can't allocate to a batch if the available quantity is less than the
-quantity of the order line.
+Мы не можем выделить партию, если доступное количество меньше количества строки заказа.
 ____
 
 ((("invariants", "invariants, concurrency, and locks")))
-Here the constraint is that we can't allocate more stock than is available to a
-batch, so we never oversell stock by allocating two customers to the same
-physical cushion, for example. Every time we update the state of the system, our code needs
-to ensure that we don't break the invariant, which is that the available
-quantity must be greater than or equal to zero.
+Ограничением здесь является то, что мы не можем выделить больше запасов, чем имеется в наличии для партии, поэтому мы никогда не перепродаем запасы, например, выделяя двух клиентов на одну и ту же физическую подушку. Каждый раз, когда мы обновляем состояние системы, наш код должен гарантировать, что мы не сломаем инвариант, а именно, что доступное количество должно быть больше или равно нулю.
 
-In a single-threaded, single-user application, it's relatively easy for us to
-maintain this invariant. We can just allocate stock one line at a time, and
-raise an error if there's no stock available.
+В однопоточном, однопользовательском приложении нам относительно легко поддерживать этот инвариант. Мы можем просто выделить запас по одной строке за раз и вызвать ошибку, если запаса нет.
 
 ((("concurrency")))
-This gets much harder when we introduce the idea of _concurrency_. Suddenly we
-might be allocating stock for multiple order lines simultaneously. We might
-even be allocating order lines at the same time as processing changes to the
-batches [.keep-together]#themselves#.
+Это становится намного сложнее, когда мы вводим идею _concurrency_. Внезапно мы можем распределять запасы для нескольких строк заказа одновременно. Мы могли бы даже выделять строки заказа одновременно с обработкой изменений в пакетах [.keep-together]#сами для себя#.
 
 ((("locks on database tables")))
-We usually solve this problem by applying _locks_ to our database tables. This
-prevents two operations from happening simultaneously on the same row or same
-table.
+Обычно мы решаем эту проблему, применяя блокировку _locks_ к нашим таблицам базы данных. Это предотвращает одновременное выполнение двух операций в одной строке или одной таблице.
 
-As we start to think about scaling up our app, we realize that our model
-of allocating lines against all available batches may not scale. If we process
-tens of thousands of orders per hour, and hundreds of thousands of
-order lines, we can't hold a lock over the whole `batches` table for
-every single one--we'll get deadlocks or performance problems at the very least.
+Когда мы начинаем думать о масштабировании нашего приложения, мы понимаем, что наша модель распределения строк по всем доступным пакетам может не масштабироваться. Если мы обрабатываем десятки тысяч заказов в час и сотни тысяч строк заказов, мы не можем держать блокировку над всей таблицей `batches` партии для каждого из них -- мы получим тупики или проблемы с производительностью, по крайней мере.
 
 
-=== What Is an Aggregate?
+=== Что такое Агрегат?
 
 ((("aggregates", "about")))
 ((("concurrency", "allowing for greatest degree of")))
 ((("invariants", "protecting while allowing concurrency")))
-OK, so if we can't lock the whole database every time we want to allocate an
-order line, what should we do instead? We want to protect the invariants of our
-system but allow for the greatest degree of concurrency. Maintaining our
-invariants inevitably means preventing concurrent writes; if multiple users can
-allocate `DEADLY-SPOON` at the same time, we run the risk of overallocating.
+Итак, если мы не можем блокировать всю базу данных каждый раз, когда хотим выделить строку заказа, что мы должны делать вместо этого? Мы хотим защитить инварианты нашей системы, но при этом обеспечить максимальную степень параллелизма. Сохранение наших инвариантов неизбежно означает предотвращение одновременной записи; если несколько пользователей могут выделить "DEADLY-SPOON" одновременно, мы рискуем перераспределить ее.
 
-On the other hand, there's no reason we can't allocate `DEADLY-SPOON` at the
-same time as `FLIMSY-DESK`. It's safe to allocate two products at the
-same time because there's no invariant that covers them both. We don't need them
-to be consistent with each other.
+С другой стороны, нет причин, по которым мы не можем выделить `DEADLY-SPOON` одновременно с `FLIMSY-DESK`. Безопасно выделять два продукта одновременно, потому что нет инварианта, покрывающего оба. Нам не нужно, чтобы они были консистентны друг другу.
 
 ((("Aggregate pattern")))
 ((("domain driven design (DDD)", "Aggregate pattern")))
-The _Aggregate_ pattern is a design pattern from the DDD community that helps us
-to resolve this tension. An _aggregate_ is just a domain object that contains
-other domain objects and lets us treat the whole collection as a single unit.
+Шаблон _Aggregate_ является шаблоном дизайна от сообщества DDD, который помогает нам решить эту проблему. _aggregate_ - это просто объект домена, который содержит другие объекты домена и позволяет нам рассматривать всю коллекцию как единое целое.
 
-The only way to modify the objects inside the aggregate is to load the whole
-thing, and to call methods on the aggregate itself.
+Единственный способ модифицировать объекты внутри агрегата - это загрузить его целиком, а также вызвать методы внутри самомого агрегата.
 
 ((("collections")))
-As a model gets more complex and grows more entity and value objects,
-referencing each other in a tangled graph, it can be hard to keep track of who
-can modify what. Especially when we have _collections_ in the model as we do
-(our batches are a collection), it's a good idea to nominate some entities to be
-the single entrypoint for modifying their related objects. It makes the system
-conceptually simpler and easy to reason about if you nominate some objects to be
-in charge of consistency for the others.
+По мере усложнения модели и увеличения числа объектов сущностей и значений, ссылающихся друг на друга в запутанном графе, становится трудно отслеживать, кто и что может изменять. Особенно когда у нас есть _collections_ в модели, как у нас это принято (наши пакеты-это коллекция), это хорошая идея назначить некоторые сущности в качестве единственной точки входа для изменения связанных с ними объектов. Это делает систему концептуально проще и легче обоснуемой, если вы назначаете некоторые объекты ответственными за консистентность над другими.
 
-For example, if we're building a shopping site, the Cart might make a good
-aggregate: it's a collection of items that we can treat as a single unit.
-Importantly, we want to load the entire basket as a single blob from our data
-store. We don't want two requests to modify the basket at the same time, or we
-run the risk of weird concurrency errors. Instead, we want each change to the
-basket to run in a single database transaction.
+Например, если мы создаем Интернет-магазин, Корзина может стать хорошим Агрегатом: это коллекция предметов, которые мы можем рассматривать как единое целое. Важно отметить, что мы хотим загрузить всю корзину как одну большую каплю из нашего хранилища данных. Мы не хотим, чтобы два запроса изменяли корзину одновременно, иначе мы рискуем получить странные ошибки параллелизма. Вместо этого мы хотим, чтобы каждое изменение корзины выполнялось в одной транзакции базы данных.
 
 ((("consistency boundaries")))
-We don't want to modify multiple baskets in a transaction, because there's no
-use case for changing the baskets of several customers at the same time. Each
-basket is a single _consistency boundary_ responsible for maintaining its own
-invariants.
+Мы не хотим изменять несколько корзин в транзакции, потому что нет смысла менять корзины нескольких клиентов одновременно. Каждая корзина представляет собой единственную _границу соответствия_, отвечающую за поддержание своих собственных инвариантов.
 
 [quote, Eric Evans, Domain-Driven Design blue book]
 ____
-An AGGREGATE is a cluster of associated objects that we treat as a unit for the
-purpose of data changes.
+АГРЕГАТ - это кластер связанных объектов, который мы рассматриваем как единое целое с целью изменения данных.
 ((("Evans, Eric")))
 ____
 
-Per Evans, our aggregate has a root entity (the Cart) that encapsulates access
-to items. Each item has its own identity, but other parts of the system will always
-refer to the Cart only as an indivisible whole.
+Согласно Эвансу, наш агрегат имеет корневую сущность (корзину), которая инкапсулирует доступ к элементам. Каждый товар имеет свою индивидуальность, но другие части системы всегда будут относиться к Корзине только как к неделимому целому.
 
-TIP: Just as we sometimes use pass:[<code><em>_leading_underscores</em></code>] to mark methods or functions
-    as "private," you can think of aggregates as being the "public" classes of our
-    model, and the rest of the entities and value objects as "private."
+TIP: Точно так же, как мы иногда используем pass:[<code><em>_leading_underscores</em></code>] для обозначения методов или функций как "частных", вы можете думать о агрегатах как о "публичных" классах нашей модели, а об остальных сущностях и объектах значений как о "частных"."
 
-=== Choosing an Aggregate
+=== Выбор агрегата
 
 ((("performance", "impact of using aggregates")))
 ((("aggregates", "choosing an aggregrate", id="ix_aggch")))
-What aggregate should we use for our system? The choice is somewhat arbitrary,
-but it's important. The aggregate will be the boundary where we make sure
-every operation ends in a consistent state. This helps us to reason about our
-software and prevent weird race issues. We want to draw a boundary around a
-small number of objects—the smaller, the better, for performance—that have to
-be consistent with one another, and we need to give this boundary a good name.
+Какой агрегат мы должны использовать для нашей системы? Выбор несколько произвольный, но он важен. Агрегат будет границей, где мы будем следить за тем, чтобы каждая операция заканчивалась в последовательном состоянии. Это помогает нам рассуждать о нашем программном обеспечении и предотвращать тайные расовые проблемы. Мы хотим нарисовать границу вокруг небольшого количества объектов - чем меньше, тем лучше, для производительности - которые должны быть совместимы друг с другом, и мы должны дать этой границе хорошее имя.
 
 ((("batches", "collection of")))
-The object we're manipulating under the covers is `Batch`. What do we call a
-collection of batches? How should we divide all the batches in the system into
-discrete islands of consistency?
+Объект, которым мы манипулируем под капотом, - это `Batch`.. Что мы называем коллекцией партий? Как нам разделить все партии в системе на дискретные острова консистентности?
 
-We _could_ use `Shipment` as our boundary. Each shipment contains several
-batches, and they all travel to our warehouse at the same time. Or perhaps we
-could use `Warehouse` as our boundary: each warehouse contains many batches,
-and counting all the stock at the same time could make sense.
+Мы _можем_ использовать `Shipment` отгрузку в качестве границы. Каждая отгрузка содержит несколько партий, и все они отправляются на наш склад одновременно. Или, возможно, мы могли бы использовать `Warehouse` "Склад" в качестве нашей границы: каждый склад содержит много партий, и подсчет всех запасов одновременно может иметь смысл.
 
-Neither of these concepts really satisfies us, though. We should be able to
-allocate `DEADLY-SPOONs` and `FLIMSY-DESKs` at the same time, even if they're in the
-same warehouse or the same shipment. These concepts have the wrong granularity.
+Но ни одна из этих концепций нас не удовлетворяет. Мы должны быть в состоянии выделить `DEADLLY-SPOONs` и `FLIMSY-DESK` одновременно, даже если они находятся на одном и том же складе или в одной и той же отгрузке. Эти понятия имеют неправильную гранулярность.
 
-When we allocate an order line, we're interested only in batches
-that have the same SKU as the order line. Some sort of concept like
-`GlobalSkuStock` could work: a collection of all the batches for a given SKU.
+Когда мы выделяем линию заказа, нас интересуют только те партии, которые имеют тот же SKU, что и линия заказа. Может сработать какая-нибудь концепция вроде `GlobalSkuStock`: сбор всех партий для данного SKU.
 
-It's an unwieldy name, though, so after some bikeshedding via `SkuStock`, `Stock`,
-`ProductStock`, and so on, we decided to simply call it `Product`—after all,
-that was the first concept we came across in our exploration of the
-domain language back in <<chapter_01_domain_model>>.
+Однако, это громоздкое имя, поэтому после некоторого пролива велосипедов через `SkuStock`, `Stock`, `ProductStock` и так далее, мы решили просто назвать его `Product` -- в конце концов, это была первая концепция, с которой мы столкнулись при изучении языка домена еще в <<chapter_01_domain_model>>.
 
 ((("allocate service", "allocating against all batches with")))
 ((("batches", "allocating against all batches using domain service")))
-So the plan is this: when we want to allocate an order line, instead of
-<<before_aggregates_diagram>>, where we look up all the `Batch` objects in
-the world and pass them to the `allocate()` domain service...
+Итак, план таков: когда мы хотим выделить строку заказа вместо <<before_aggregates_diagram>>, где мы ищем все объекты `Batch` в мире и передаем их службе домена `allocate()`.. .
 
 [role="width-60"]
 [[before_aggregates_diagram]]
-.Before: allocate against all batches using the domain service
+.Раньше: распределение по всем пакетам, использующим доменную службу
 image::images/apwp_0702.png[]
 [role="image-source"]
 ----
@@ -341,11 +253,11 @@ Product o- Batch: has
 ----
 
 ((("Product object", "code for")))
-Let's see how that looks in code form:
+Посмотрим, как это выглядит в виде кода:
 
 [role="pagebreak-before"]
 [[product_aggregate]]
-.Our chosen aggregate, Product (src/allocation/domain/model.py)
+.Наш выбранный агрегат, Продукт (src/allocation/domain/model.py)
 ====
 [source,python]
 [role="non-head"]
@@ -368,13 +280,12 @@ class Product:
 ----
 ====
 
-<1> `Product`'s main identifier is the `sku`.
+<1> Основной идентификатор `Product` - это `sku`.
 
-<2> Our `Product` class holds a reference to a collection of `batches` for that SKU.
+<2> Наш класс `Product` содержит ссылку на коллекцию `batches` для этого SKU.
     ((("allocate service", "moving to be a method on Product aggregate")))
 
-<3> Finally, we can move the `allocate()` domain service to
-    be a method on the [.keep-together]#`Product`# aggregate.
+<3> Наконец, мы можем переместить доменную службу `allocate()` в метод агрегата [.keep-together]#'Product`#.
 
 // IDEA (hynek): random nitpick: exceptions denoting errors should be
 // named *Error.  Are you doing this to save space in the listing?
@@ -384,18 +295,13 @@ class Product:
 //      are never supposed to have a collection of aggregates, they could return
 //      an error for __hash__. or sumfink.
 
-NOTE: This `Product` might not look like what you'd expect a `Product`
-    model to look like.  No price, no description, no dimensions.
-    Our allocation service doesn't care about any of those things.
-    This is the power of bounded contexts; the concept
-    of a product in one app can be very different from another.
-    See the following sidebar for more discussion.
+NOTE: Этот `Product` может выглядеть не так, как вы ожидаете от модели `Product`. Ни цены, ни описания, ни габаритов. Нашу службу размещения не волнует ни одна из этих вещей. В этом сила ограниченных контекстов; концепция продукта в одном приложении может сильно отличаться от другого. См. Дополнительную информацию на следующей боковой панели.
     ((("bounded contexts", "product concept and")))
 
 
 [role="nobreakinside less_space"]
 [[bounded_contexts_sidebar]]
-.Aggregates, Bounded Contexts, and Microservices
+.Агрегаты, Ограниченные контексты и микросервисы
 *******************************************************************************
 ((("bounded contexts")))
 One of the most important contributions from Evans and the DDD community
