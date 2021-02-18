@@ -1,5 +1,5 @@
 [[chapter_06_uow]]
-== Паттерн Unit of Work
+== Паттерн Unit of Work(Единица работы)
 
 ((("Unit of Work pattern", id="ix_UoW")))
 В этой главе мы познакомимся с заключительной частью головоломки, которая связывает воедино паттерны уровня Репозитория и Уровня Сервиса: паттерн _Unit of Work_.
@@ -320,7 +320,7 @@ def test_allocate_returns_allocation():
 ********************************************************************************
 ((("SQLAlchemy", "database session for Unit of Work", "not mocking")))
 ((("mocking", "don&#x27;t mock what you don&#x27;t own")))
-Почему мы чувствуем себя более комфортно, издеваясь над UoW, чем над сессией? Обе наши подделки достигают одного и того же: они дают нам возможность поменять наш уровень персистентности, чтобы мы могли запускать тесты в памяти вместо того, чтобы связываться с реальной базой данных. Разница заключается в полученном дизайне.
+Почему мы чувствуем себя более комфортно, мокая UoW, а не сессию? Обе наши имитации преднназначены для одного и того же: дать нам возможность изменить уровень персистентности, чтобы мы могли запускать тесты в памяти вместо того, чтобы связываться с реальной базой данных. Разница заключается в полученном дизайне.
 
 Если бы мы заботились только о написании тестов, которые выполняются быстро, мы могли бы создавать макеты, заменяющие SQLAlchemy, и использовать их во всей нашей кодовой базе. Проблема в том, что Session - это сложный объект, который предоставляет множество функций, связанных с постоянством. `Session` легко использовать для выполнения произвольных запросов к базе данных, но это быстро приводит к тому, что код доступа к данным разбрызгивается по всей кодовой базе. Чтобы этого избежать, мы хотим ограничить доступ к нашему уровню сохранения, чтобы каждый компонент имел именно то, что ему нужно, и ничего более.
 
@@ -460,7 +460,7 @@ def add_batch(ref: str, sku: str, qty: int, eta: Optional[date], uow):
 ----
 ====
 
-Это всубъективное мнение, но мы, как правило, предпочитаем требовать явной фиксации, так что нам приходится выбирать, когда сбросить состояние.
+Это субъективное мнение, но мы, как правило, предпочитаем требовать явной фиксации, так что нам приходится выбирать, когда сбросить состояние.
 
 Хотя мы используем дополнительную строку кода, это делает программное обеспечение безопасным по умолчанию. Поведение по умолчанию - "ничего не менять". В свою очередь, это делает наш код более простым для рассуждения, потому что есть только один путь кода, который ведет к изменениям в системе: полный успех и явная фиксация. Любой другой путь кода, любое исключение, любой ранний выход из области действия UoW приводит к безопасному состоянию.
 
@@ -470,7 +470,7 @@ def add_batch(ref: str, sku: str, qty: int, eta: Optional[date], uow):
 
 ((("atomic operations", "using Unit of Work to group  operations into atomic unit", id="ix_atomops")))
 ((("Unit of Work pattern", "using UoW to group multiple operations into atomic unit", id="ix_UoWatom")))
-Ниже приведены некоторые примеры используемых схем работы. Это может привести к более простому рассуждению о том, как блоки кода работают совмемтно.
+Ниже приведены некоторые примеры используемых схем работы. Это может привести к более простому рассуждению о том, как блоки кода работают совместно.
 
 ==== Пример 1: Перераспределение
 
@@ -495,8 +495,8 @@ def reallocate(line: OrderLine, uow: AbstractUnitOfWork) -> str:
 ----
 ====
 
-<1> Если `deallocate()` не работает, мы, очевидно, не хотим вызывать `allocate()`.
-<2> Если `allocate()` терпит неудачу, мы, вероятно, также не хотим фиксировать `deallocate()`.
+<1> Если `deallocate()` не работает, очевидно мы не хотим вызывать `allocate()`.
+<2> Если `allocate()` терпит неудачу, вероятно мы, так же не хотим фиксить `deallocate()`
 
 
 ==== Пример 2: Изменить размер партии
@@ -526,13 +526,11 @@ def change_batch_quantity(batchref: str, new_qty: int, uow: AbstractUnitOfWork):
     ((("atomic operations", "using Unit of Work to group  operations into atomic unit", startref="ix_atomops")))
 
 
-=== Tidying Up the Integration Tests
+=== Уборка интеграционных тестов
 
 ((("testing", "Unit of Work with integration tests", "tidying up tests")))
 ((("Unit of Work pattern", "tidying up integration tests")))
-We now have three sets of tests, all essentially pointing at the database:
-_test_orm.py_, _test_repository.py_, and _test_uow.py_. Should we throw any
-away?
+Теперь у нас есть три набора тестов, все из которых, по сути, направлены на базу данных: _test_orm.py_, _test_repository.py_, и _test_uow.py_. Может, выкинем что-нибудь?
 
 ====
 [source,text]
@@ -555,137 +553,85 @@ away?
 ----
 ====
 
-You should always feel free to throw away tests if you think they're not going to
-add value longer term. We'd say that _test_orm.py_ was primarily a tool to help
-us learn SQLAlchemy, so we won't need that long term, especially if the main things
-it's doing are covered in _test_repository.py_. That last test, you might keep around,
-but we could certainly see an argument for just keeping everything at the highest
-possible level of abstraction (just as we did for the unit tests).
+Вы всегда можете отказаться от тестов, если считаете, что они не принесут пользы в долгосрочной перспективе. Мы бы сказали, что _test_orm.py_ был в первую очередь инструментом для изучения SQLAlchemy, поэтому в дальнейшем он не понадобится, особенно если основные вещи, которые он делает, описаны в _test_repository.py_. Этот последний тест вы можете оставить, но мы, безусловно, видим аргумент в пользу того, чтобы просто держать все на максимально возможном уровне абстракции (так же, как мы делали это в юнит-тестах).
 
 [role="nobreakinside less_space"]
-.Exercise for the Reader
+.Упражнение для читателя
 ******************************************************************************
-For this chapter, probably the best thing to try is to implement a
-UoW from scratch. The code, as always, is https://github.com/cosmicpython/code/tree/chapter_06_uow_exercise[on GitHub]. You could either follow the model we have quite closely,
-or perhaps experiment with separating the UoW (whose responsibilities are
-`commit()`, `rollback()`, and providing the `.batches` repository) from the
-context manager, whose job is to initialize things, and then do the commit
-or rollback on exit. If you feel like going all-functional rather than
-messing about with all these classes, you could use `@contextmanager` from
-`contextlib`.
+Для этой главы, пожалуй, лучшее, что можно попробовать, это реализовать UoW с нуля. Код, как всегда, здесь https://github.com/cosmicpython/code/tree/chapter_06_uow_exercise[на GitHub]. Вы можете либо достаточно внимательно следовать нашей модели, либо, возможно, поэкспериментировать с отделением UoW (в обязанности которого входит `commit()`, `rollback()` и предоставление репозитория `.batches`) от контекстного менеджера, чья работа заключается в инициализации объектов, а затем выполнить коммит или откат при выходе. Если вы чувствуете, что хотите работать полностью функционально, а не возиться со всеми этими классами, вы можете использовать `@contextmanager` из `contextlib`.
 
-We've stripped out both the actual UoW and the fakes, as well as paring back
-the abstract UoW. Why not send us a link to your repo if you come up with
-something you're particularly proud of?
+Мы удалили как фактический UoW, так и подделки, а также сократили абстрактный UoW. Почему бы не прислать нам ссылку на ваше репо, если вы придумали что-то, чем особенно гордитесь?
 ******************************************************************************
 
-TIP: This is another example of the lesson from <<chapter_05_high_gear_low_gear>>:
-    as we build better abstractions, we can move our tests to run against them,
-    which leaves us free to change the underlying details.
+TIP: Это еще один пример урока из <<chapter_05_high_gear_low_gear>>: по мере того как мы строим лучшие абстракции, мы можем перемещать наши тесты, чтобы работать с ними, что оставляет нам свободу изменять лежащие в их основе детали.
 
 
-=== Wrap-Up
+=== Заключение
 
 ((("Unit of Work pattern", "benefits of using")))
-Hopefully we've convinced you that the Unit of Work pattern is useful, and
-that the context manager is a really nice Pythonic way
-of visually grouping code into blocks that we want to happen atomically.
+Надеюсь, мы убедили вас, что шаблон «Единица работы» полезен и что диспетчер контекста - действительно хороший питонический способ визуальной группировки кода в блоки, которые мы хотим реализовать атомарно.
 
 ((("Session object")))
 ((("SQLAlchemy", "Session object")))
-This pattern is so useful, in fact, that SQLAlchemy already uses a UoW
-in the shape of the `Session` object. The `Session` object in SQLAlchemy is the way
-that your application loads data from the database.
+Этот шаблон настолько полезен, что SQLAlchemy уже использует UoW в форме объекта `Session`. Объект `Session` в SQLAlchemy - это способ, которым ваше приложение загружает данные из базы данных.
 
-Every time you load a new entity from the database, the session begins to _track_
-changes to the entity, and when the session is _flushed_, all your changes are
-persisted together. Why do we go to the effort of abstracting away the SQLAlchemy session if it already implements the pattern we want?
+Каждый раз, когда вы загружаете новую _сущность_ из базы данных, сеанс начинает _отслеживать_ изменения в сущности, и когда сеанс сбрасывается, все ваши изменения сохраняются вместе. Зачем нам пытаться абстрагировать сеанс SQLAlchemy, если он уже реализует нужный нам паттерн?
 
 ((("Unit of Work pattern", "pros and cons or trade-offs")))
-<<chapter_06_uow_tradeoffs>> discusses some of the trade-offs.
+<<chapter_06_uow_tradeoffs>> обсуждает некоторые компромиссы.
 
 [[chapter_06_uow_tradeoffs]]
 [options="header"]
-.Unit of Work pattern: the trade-offs
+.Паттерн Единица Работы: компромиссы
 |===
-|Pros|Cons
+|Плюсы|Минусы
 a|
-* We have a nice abstraction over the concept of atomic operations, and the
-  context manager makes it easy to see, visually, what blocks of code are
-  grouped together atomically.
+* У нас есть хорошая абстракция над концепцией атомарных операций, и контекстный менеджер позволяет легко увидеть, визуально, какие блоки кода сгруппированы вместе атомарно.
   ((("atomic operations", "Unit of Work as abstraction over")))
   ((("transactions", "Unit of Work and")))
 
-* We have explicit control over when a transaction starts and finishes, and our
-  application fails in a way that is safe by default. We never have to worry
-  that an operation is partially committed.
+* У нас есть явный контроль над тем, когда транзакция начинается и заканчивается, и наше приложение выходит в случае сбоя таким образом, который безопасен по умолчанию. Нам никогда не приходётсяся беспокоиться о том, что операция завершена лишь частично.
 
-* It's a nice place to put all your repositories so client code can access them.
+* Это хорошее место для размещения всех репозиториев, доступных для клиентского кода.
 
-* As you'll see in later chapters, atomicity isn't only about transactions; it
-  can help us work with events and the message bus.
+* Как вы увидите в последующих главах, атомарность -- это не только транзакции; она может помочь нам работать с событиями и шиной сообщений.
 
 a|
-* Your ORM probably already has some perfectly good abstractions around
-  atomicity. SQLAlchemy even has context managers. You can go a long way
-  just passing a session around.
+* В вашем ORM, вероятно, уже есть отличные абстракции вокруг атомарности. В SQLAlchemy даже есть диспетчеры контекста. Вы можете пройти долгий путь, просто пропуская сеанс.
 
-* We've made it look easy, but you have to think quite carefully about
-  things like rollbacks, multithreading, and nested transactions. Perhaps just
-  sticking to what Django or Flask-SQLAlchemy gives you will keep your life
-  simpler.
+* Мы сделали так, чтобы это выглядело легко, но вы должны очень тщательно подумать о таких вещах, как откаты, многопоточность и вложенные транзакции. Возможно, просто придерживаясь того, что дает вам Django или Flask-SQLAlchemy, вы упростите свою жизнь.
   ((("Unit of Work pattern", startref="ix_UoW")))
 |===
 
-For one thing, the Session API is rich and supports operations that we don't
-want or need in our domain. Our `UnitOfWork` simplifies the session to its
-essential core: it can be started, committed, or thrown away.
+Во-первых, Session API богат и поддерживает операции, которые нам не нужны или не нужны в нашем домене. Наш `UnitOfWork` упрощает сеанс до его основного ядра: его можно запустить, зафиксировать или выбросить.
 
-For another, we're using the `UnitOfWork` to access our `Repository` objects.
-This is a neat bit of developer usability that we couldn't do with a plain
-SQLAlchemy `Session`.
+Во-вторых, мы используем `UnitOfWork` для доступа к нашим объектам `Repository`. Это добавит удобства в использовании разработчиками, и это то, то мы не смогли бы сделать с помощью простого SQLAlchemy `Session`.
 
 [role="nobreakinside less_space"]
-.Unit of Work Pattern Recap
+.Краткий обзор шаблона Unit of Work
 *****************************************************************
 ((("Unit of Work pattern", "recap of important points")))
 
-The Unit of Work pattern is an abstraction around data integrity::
-    It helps to enforce the consistency of our domain model, and improves
-    performance, by letting us perform a single _flush_ operation at the
-    end of an operation.
+Шаблон Unit of Work - это абстракция вокруг целостности данных:: 
+	Он помогает обеспечить согласованность нашей модели предметной области и повышает производительность, позволяя нам выполнять одну _flush_операцию  в конце операции.
 
-It works closely with the Repository and Service Layer patterns::
-    The Unit of Work pattern completes our abstractions over data access by
-    representing atomic updates. Each of our service-layer use cases runs in a
-    single unit of work that succeeds or fails as a block.
+Он тесно работает с шаблонами Уровня репозитория и сервиса:: 
+	Шаблон Unit of Work завершает наши абстракции над доступом к данным, представляя атомарные обновления. Каждый из наших вариантов использования сервисного уровня выполняется в одной единице работы, которая успешно или неудачно выполняется как блок.
 
-This is a lovely case for a context manager::
-    Context managers are an idiomatic way of defining scope in Python. We can use a
-    context manager to automatically roll back our work at the end of a request,
-    which means the system is safe by default.
+Это прекрасный случай для контекстного менеджера::
+	Менеджеры контекста - это идиоматический способ определения области видимости в Python. Мы можем использовать диспетчер контекста для автоматического отката нашей работы в конце запроса, что означает, что система по умолчанию безопасна.
 
-SQLAlchemy already implements this pattern::
-    We introduce an even simpler abstraction over the SQLAlchemy `Session` object
-    in order to "narrow" the interface between the ORM and our code. This helps
-    to keep us loosely coupled.
+SQLAlchemy уже реализует этот шаблон:
+    Мы вводим еще более простую абстракцию над объектом SQLAlchemy `Session`, чтобы "сузить" интерфейс между ORM и нашим кодом. Это помогает нам сохранять слабую связь.
 
 *****************************************************************
 
 ((("dependency inversion principle")))
-Lastly, we're motivated again by the dependency inversion principle: our
-service layer depends on a thin abstraction, and we attach a concrete
-implementation at the outside edge of the system. This lines up nicely with
-SQLAlchemy's own
-https://oreil.ly/tS0E0[recommendations]:
+Наконец, мы снова мотивированы принципом инверсии зависимостей: наш уровень сервиса зависит от тонкой абстракции, и мы прикрепляем конкретную реализацию к внешнему краю системы. Это хорошо согласуется с собственной https://oreil.ly/tS0E0[рекомендацией] SQLAlchemy:
 
 [quote, SQLALchemy "Session Basics" Documentation]
 ____
-Keep the life cycle of the session (and usually the transaction) separate and
-external. The most comprehensive approach, recommended for more substantial
-applications, will try to keep the details of session, transaction, and
-exception management as far as possible from the details of the program doing
-its work.
+Держите жизненный цикл сеанса (и, как правило, транзакции) отдельным и внешним. Наиболее комплексный подход, рекомендуемый для более существенных приложений, будет стараться держать детали сеанса, транзакции и управления исключениями как можно дальше от деталей программы, выполняющей свою работу.
 ____
 
 
