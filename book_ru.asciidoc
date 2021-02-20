@@ -32,11 +32,10 @@ include::chapter_06_uow_ru.asciidoc[]
 
 include::chapter_07_aggregate_ru.asciidoc[]
 
-
 include::part2_ru.asciidoc[]
-////
-include::chapter_08_events_and_message_bus.asciidoc[]
 
+include::chapter_08_events_and_message_bus_ru.asciidoc[]
+////
 include::chapter_09_all_messagebus.asciidoc[]
 
 include::chapter_10_commands.asciidoc[]
