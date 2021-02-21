@@ -118,7 +118,7 @@ def allocate_endpoint():
 
 ((("service layer", "sending email alerts when out of stock, avoiding")))
 ((("events and the message bus", "sending email alerts when out of stock", "out of place in the service layer")))
-Требование "Попробуйте выделить некоторый запас и отправить электронное письмо, если это не удастся" является примером оркестровки рабочего процесса: это набор шагов, которые система должна выполнить, чтобы [.keep-together]#достичь# цели.
+Требование "Попробуйте распределить некоторый запас и отправить электронное письмо, если это не удастся" является примером оркестровки рабочего процесса: это набор шагов, которые система должна выполнить, чтобы [.keep-together]#достичь# цели.
 
 Мы написали сервисный уровень для управления оркестровкой для нас, но даже здесь эта функция кажется неуместной:
 
@@ -222,7 +222,7 @@ class OutOfStock(Event):  #<2>
 Когда наша модель домена фиксирует факт, который произошел, мы говорим, что это _raises (поднимает)_ событие.
 
 ((("aggregates", "testing Product object to raise events")))
-Вот как это будет выглядеть со стороны; если мы попросим "Product" выделить _allocate_, но он не сможет, он должен _raise (поднять)_ событие:
+Вот как это будет выглядеть со стороны; если мы попросим "Product" распределить  ( _allocate_ ), но он не сможет, он должен _raise (поднять)_ событие:
 
 
 [[test_raising_event]]
@@ -271,34 +271,25 @@ class Product:
 ====
 
 <1> Вот наш новый атрибут `.events`.
-<2> Rather than invoking some email-sending code directly, we record those
-    events at the place they occur, using only the language of the domain.
 
-<3> We're also going to stop raising an exception for the out-of-stock
-    case. The event will do the job the exception was doing.
+<2> Вместо того, чтобы напрямую вызывать какой-либо код отправки электронной почты, мы записываем эти события в том месте, где они происходят, используя только язык домена.
 
+<3> Мы также собираемся прекратить создавать исключение для случая отсутствия на складе. Событие выполнит ту работу, которую выполняло исключение.
 
 
-NOTE: We're actually addressing a code smell we had until now, which is that we were
-    https://oreil.ly/IQB51[using
-    exceptions for control flow]. In general, if you're implementing domain
-    events, don't raise exceptions to describe the same domain concept.
-    As you'll see later when we handle events in the Unit of Work pattern, it's
-    confusing to have to reason about events and exceptions together.
+
+NOTE: На самом деле мы "принюхиваемся" к коду, который мы рассматривали до сих пор, а именно к тому, что обсуждается в https://oreil.ly/IQB51[использование исключений для потока управления]. В общем случае, если вы реализуете доменные события, не создавайте исключений для описания одной и той же концепции домена.     Как вы увидите позже, когда мы будем обрабатывать события в шаблоне Unit of Work, это сбивает с толку, когда приходится рассуждать о совместном использовании событий и исключений.
     ((("control flow, using exceptions for")))
     ((("exceptions", "using for control flow")))
 
 
 
-==== The Message Bus Maps Events to Handlers
+==== Шина сообщений сопоставляет События(Events) с Обработчиками(Handlers)
 
 ((("message bus", "mapping events to handlers")))
 ((("events and the message bus", "message bus mapping events to handlers")))
 ((("publish-subscribe system", "message bus as", "handlers subscribed to receive events")))
-A message bus basically says, "When I see this event, I should invoke the following
-handler function." In other words, it's a simple publish-subscribe system.
-Handlers are _subscribed_ to receive events, which we publish to the bus. It
-sounds harder than it is, and we usually implement it with a dict:
+Шина сообщений в основном говорит: "Когда я вижу это событие, я должен вызвать следующую функцию обработчика". Другими словами, это простая система подписки на публикации. Обработчики _подписаны (subscribed)_ на получение событий, которые мы размещаем в шине. Это звучит сложнее, чем есть на самом деле, и мы обычно реализуем это с помощью dict:
 
 [[messagebus]]
 .Simple message bus (src/allocation/service_layer/messagebus.py)
@@ -324,63 +315,38 @@ HANDLERS = {
 ----
 ====
 
-NOTE: Note that the message bus as implemented doesn't give us concurrency because
-    only one handler will run at a time. Our objective isn't to support
-    parallel threads but to separate tasks conceptually, and to keep each UoW
-    as small as possible. This helps us to understand the codebase because the
-    "recipe" for how to run each use case is written in a single place. See the
-    following sidebar.
+NOTE: Обратите внимание, что реализованная шина сообщений не дает нам параллелизма, потому что одновременно будет работать только один обработчик. Наша цель состоит не в том, чтобы поддерживать параллельные потоки, а в том, чтобы концептуально разделить задачи и сделать каждый UoW как можно меньше. Это помогает нам понять кодовую базу, потому что "рецепт" для запуска каждого варианта использования написан в одном месте. См. следующую боковую панель.
     ((("concurrency", "not provided by message bus implementation")))
 
 [role="nobreakinside less_space"]
 [[celery_sidebar]]
-.Is This Like Celery?
+.Это как Celery?
 *******************************************************************************
 ((("message bus", "Celery and")))
-_Celery_ is a popular tool in the Python world for deferring self-contained
-chunks of work to an asynchronous task queue.((("Celery tool"))) The message bus we're
-presenting here is very different, so the short answer to the above question is no; our message bus
-has more in common with an Express.js app, a UI event loop, or an actor framework.
+_Celery_ -- это популярный в мире Python инструмент для переноса автономных фрагментов работы в асинхронную очередь задач.((("Celery tool"))) Шина сообщений, которую мы представляем здесь, очень отличается, поэтому короткий ответ на вышеприведенный вопрос-нет; наша шина сообщений имеет больше общего с Express.js приложение, цикл событий пользовательского интерфейса или структура актера.
 // TODO: this "more in common with" line is not super-helpful atm.  maybe onclick callbacks in js would be a more helpful example
 
 ((("external events")))
-If you do have a requirement for moving work off the main thread, you
-can still use our event-based metaphors, but we suggest you
-use _external events_ for that. There's more discussion in
-<<chapter_11_external_events_tradeoffs>>, but essentially, if you
-implement a way of persisting events to a centralized store, you
-can subscribe other containers or other microservices to them. Then
-that same concept of using events to separate responsibilities
-across units of work within a single process/service can be extended across
-multiple processes--which may be different containers within the same
-service, or totally different microservices.
+Если у вас есть необходимость перенести работу из основного потока, вы все еще можете использовать наши event-based metaphors (метафоры, основанные на событиях), но мы предлагаем вам использовать для этого _external events_. Это более подробно обсуждается в <<chapter_11_external_events_tradeoffs>>, но по сути, если вы реализуете способ сохранения событий в централизованном хранилище, вы можете подписаться на другие контейнеры или другие микросервисы. Затем та же самая концепция использования событий для разделения обязанностей между единицами работы в рамках одного process/service может быть распространена на несколько процессов, которые могут быть различными контейнерами в рамках одной и той же службы или совершенно разными микросервисами.
 
-If you follow us in this approach, your API for distributing tasks
-is your event [.keep-together]##classes—##or a JSON representation of them. This allows
-you a lot of flexibility in who you distribute tasks to; they need not
-necessarily be Python services. Celery's API for distributing tasks is
-essentially "function name plus arguments," which is more restrictive,
-and Python-only.
+Если вы следуете нашему подходу, ваш API для распределения задач-это ваше событие [.keep-together]##классы—##или их JSON-представление. Это дает вам большую гибкость в том, кому вы распределяете задачи; они не обязательно должны быть службами Python. Celery's API для распределения задач -- это, по сути, "имя функции плюс аргументы", что является более ограничительным и только для Python.
 
 *******************************************************************************
 
 
-=== Option 1: The Service Layer Takes Events from the Model and Puts Them on the Message Bus
+=== Вариант 1. Уровень сервиса Принимает События из Модели и Помещает их в Шину сообщений
 
 ((("domain model", "events from, passing to message bus in service layer")))
 ((("message bus", "service layer with explicit message bus")))
 ((("service layer", "taking events from model and putting them on message bus")))
 ((("events and the message bus", "service layer with explicit message bus")))
 ((("publish-subscribe system", "message bus as", "publishing step")))
-Our domain model raises events, and our message bus will call the right
-handlers whenever an event happens. Now all we need is to connect the two. We
-need something to catch events from the model and pass them to the message
-bus--the _publishing_ step.
+Наша доменная модель вызывает события, и наша шина сообщений будет вызывать правые обработчики всякий раз, когда происходит событие. Теперь все, что нам нужно, -- это соединить их. Нам нужно что-то, чтобы перехватить события из модели и передать их в шину сообщений -- этап _publishing_.
 
-The simplest way to do this is by adding some code into our service layer:
+Самый простой способ сделать это -- добавить код в наш сервисный слой:
 
 [[service_talks_to_messagebus]]
-.The service layer with an explicit message bus (src/allocation/service_layer/services.py)
+.Уровень обслуживания с явной шиной сообщений (src/allocation/service_layer/services.py)
 ====
 [source,python]
 [role="non-head"]
@@ -406,27 +372,19 @@ def allocate(
 ----
 ====
 
-<1> We keep the `try/finally` from our ugly earlier implementation (we haven't
-    gotten rid of _all_ exceptions yet, just `OutOfStock`).
+<1> Мы сохраняем `try/finally` из нашей уродливой более ранней реализации (мы еще не избавились от _всех_ исключений, просто `OutOfStock`).
 
-<2> But now, instead of depending directly on an email infrastructure,
-    the service layer is just in charge of passing events from the model
-    up to the message bus.
+<2> Но теперь, вместо того чтобы напрямую зависеть от инфраструктуры электронной почты, уровень сервиса отвечает только за передачу событий от модели до шины сообщений.
 
-That already avoids some of the ugliness that we had in our naive
-implementation, and we have several systems that work like this one, in which the
-service layer explicitly collects events from aggregates and passes them to
-the message bus.
+Это уже позволяет избежать некоторого уродства, которое мы имели в нашей наивной реализации, и у нас есть несколько систем, работающих подобно этой, в которых уровень обслуживания явно собирает события из агрегатов и передает их в шину сообщений.
 
 
-=== Option 2: The Service Layer Raises Its Own Events
+=== Вариант 2: Уровень Сервиса Создает Свои Собственные События
 
 ((("service layer", "raising its own events")))
 ((("events and the message bus", "service layer raising its own events")))
 ((("message bus", "service layer raising events and calling messagebus.handle")))
-Another variant on this that we've used is to have the service layer
-in charge of creating and raising events directly, rather than having them
-raised by the domain model:
+Другой вариант, который мы использовали, - это сделать так, чтобы уровень сервиса отвечал за создание и инициирование событий напрямую, а не за их создание моделью предметной области:
 
 
 [[service_layer_raises_events]]
@@ -453,29 +411,20 @@ def allocate(
 ----
 ====
 
-<1> As before, we commit even if we fail to allocate because the code is simpler this way
-    and it's easier to reason about: we always commit unless something goes
-    wrong. Committing when we haven't changed anything is safe and keeps the
-    code uncluttered.
+<1> Как и раньше, мы коммитим событие, даже если ничего не можем зарезервировать, потому что код таким образом проще и легче понимать: мы всегда фиксируем, если что-то не идет не так. Фиксация, когда мы ничего не изменили, безопасна и сохраняет код незагроможденным.
 
-Again, we have applications in production that implement the pattern in this
-way.  What works for you will depend on the particular trade-offs you face, but
-we'd like to show you what we think is the most elegant solution, in which we
-put the unit of work in charge of collecting and raising events.
+Опять же, у нас есть приложения в производстве (production), которые реализуют шаблон таким образом.  То, что работает для вас, будет зависеть от конкретных компромиссов, с которыми вы столкнётесь, но мы хотели бы показать вам, что мы считаем наиболее элегантным решением, в котором мы помещаем единицу работы, отвечающую за сбор и обработку событий.
 
-
-=== Option 3: The UoW Publishes Events to the Message Bus
+=== Вариант 3: UoW публикует события в шине сообщений
 
 ((("message bus", "Unit of Work publishing events to")))
 ((("events and the message bus", "UoW publishes events to message bus")))
 ((("Unit of Work pattern", "UoW publishing events to message bus")))
-The UoW already has a `try/finally`, and it knows about all the aggregates
-currently in play because it provides access to the repository. So it's
-a good place to spot events and pass them to the message bus:
+У UoW уже есть блок `try/finally`, и он знает обо всех агрегатах, находящихся в данный момент в игре, потому что он предоставляет доступ к репозиторию. Так что это хорошее место для обнаружения событий и передачи их в шину сообщений:
 
 
 [[uow_with_messagebus]]
-.The UoW meets the message bus (src/allocation/service_layer/unit_of_work.py)
+.UoW обеспечивает шину сообщений (src/allocation/service_layer/unit_of_work.py)
 ====
 [source,python]
 ----
@@ -506,26 +455,22 @@ class SqlAlchemyUnitOfWork(AbstractUnitOfWork):
 ----
 ====
 
-<1> We'll change our commit method to require a private `._commit()`
-    method from subclasses.
+<1> Мы изменим наш метод фиксации, чтобы запросить частный метод `._commit()` из подклассов.
 
-<2> After committing, we run through all the objects that our
-    repository has seen and pass their events to the message bus.
+<2> После фиксации мы прогоняем все объекты, которые воспринял наш репозиторий, и передаем их события в шину сообщений.
 
-<3> That relies on the repository keeping track of aggregates that have been loaded
-    using a new attribute, `.seen`, as you'll see in the next listing.
+<3> Это зависит от репозитория, отслеживающего агрегаты, которые были загружены с использованием нового атрибута, `.seen`, как вы увидите в следующем листинге.
     ((("repositories", "repository keeping track of aggregates passing through it")))
     ((("aggregates", "repository keeping track of aggregates passing through it")))
 
-NOTE: Are you wondering what happens if one of the
-    handlers fails?  We'll discuss error handling in detail in <<chapter_10_commands>>.
+NOTE: Вам интересно, что произойдет, если один из обработчиков выйдет из строя? Мы подробно обсудим обработку ошибок в <<chapter_10_commands>>.
 
 
 //IDEA: could change ._commit() to requiring super().commit()
 
 
 [[repository_tracks_seen]]
-.Repository tracks aggregates that pass through it (src/allocation/adapters/repository.py)
+.Репозиторий отслеживает агрегаты, которые проходят через него (src/allocation/adapters/repository.py)
 ====
 [source,python]
 ----
@@ -568,14 +513,10 @@ class SqlAlchemyRepository(AbstractRepository):
 ----
 ====
 
-<1> For the UoW to be able to publish new events, it needs to be able to ask
-    the repository for which `Product` objects have been used during this session.
-    We use a `set` called `.seen` to store them. That means our implementations
-    need to call +++<code>super().__init__()</code>+++.
+<1> Чтобы UoW мог публиковать новые события, он должен иметь возможность запрашивать репозиторий, для каких объектов `Product` использовались во время этого сеанса. Мы используем `set` под названием` .seen` для их хранения. Это означает, что наши реализации должны вызывать +++ <code> super().__ init __() </code> +++.
     ((("super function")))
 
-<2> The parent `add()` method adds things to `.seen`, and now requires subclasses
-    to implement `._add()`.
+<2> Родительский метод `add()` добавляет элементы в `.seen` и теперь требует jn подклассов реализацию `._add()`.
 
 <3> Similarly, `.get()` delegates to a `._get()` function, to be implemented by
     subclasses, in order to capture objects seen.
