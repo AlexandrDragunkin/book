@@ -518,22 +518,16 @@ class SqlAlchemyRepository(AbstractRepository):
 
 <2> Родительский метод `add()` добавляет элементы в `.seen` и теперь требует jn подклассов реализацию `._add()`.
 
-<3> Similarly, `.get()` delegates to a `._get()` function, to be implemented by
-    subclasses, in order to capture objects seen.
+<3> Аналогично, `.get()` делегирует функцию `._get ()`, которая должна быть реализована подклассами, чтобы захватить видимые объекты.
 
 
-NOTE: The use of pass:[<code><em>._underscorey()</em></code>] methods and subclassing is definitely not
-    the only way you could implement these patterns. Have a go at the
-    <<get_rid_of_commit,"Exercise for the Reader">> in this chapter and experiment
-    with some alternatives.
+NOTE: Использование методов pass:[<code><em>._underscorey()</em></code>] и подклассов определенно не является единственным способом реализации этих шаблонов. Попробуйте воспользоваться <<get_rid_of_commit,"Упражнения для читателя">> в этой главе и поэкспериментируйте с некоторыми альтернативами.
 
-After the UoW and repository collaborate in this way to automatically keep
-track of live objects and process their events, the service layer can be
-totally free of event-handling concerns:
+После того, как UoW и репозиторий будут сотрудничать таким образом, чтобы автоматически отслеживать живые объекты и обрабатывать их события, уровень сервиса может быть полностью свободен от проблем с обработкой событий:
 ((("service layer", "totally free of event handling concerns")))
 
 [[services_clean]]
-.Service layer is clean again (src/allocation/service_layer/services.py)
+.Сервисный слой снова чист (src/allocation/service_layer/services.py)
 ====
 [source,python]
 ----
@@ -556,13 +550,11 @@ def allocate(
 ((("service layer", "tweaking fakes in to call super and implement underscorey methods")))
 ((("faking", "tweaking fakes in service layer to call super and implement underscorey methods")))
 ((("underscorey methods", "tweaking fakes in service layer to implement")))
-We do also have to remember to change the fakes in the service layer and make them
-call `super()` in the right places, and to implement underscorey methods, but the
-changes are minimal:
+Мы также должны помнить, что надо изменить фейки в сервисном слое и заставить их вызывать `super()` в нужных местах, а также реализовать методы c двойным подчёркиванием ("__str__","__repr__"), но изменения минимальны:
 
 
 [[services_tests_ugly_fake_messagebus]]
-.Service-layer fakes need tweaking (tests/unit/test_services.py)
+.Фейки сервисного уровня нуждаются в настройке (tests/unit/test_services.py)
 ====
 [source,python]
 ----
@@ -591,21 +583,16 @@ class FakeUnitOfWork(unit_of_work.AbstractUnitOfWork):
 
 [role="nobreakinside less_space"]
 [[get_rid_of_commit]]
-.Exercise for the Reader
+.Упражнения для читателя
 ******************************************************************************
 
 ((("inheritance, avoiding use of with wrapper class")))
 ((("underscorey methods", "avoiding by implementing TrackingRepository wrapper class")))
 ((("composition over inheritance in TrackingRepository wrapper class")))
 ((("repositories", "TrackerRepository wrapper class")))
-Are you finding all those `._add()` and `._commit()` methods "super-gross," in
-the words of our beloved tech reviewer Hynek? Does it "make you want to beat
-Harry around the head with a plushie snake"? Hey, our code listings are
-only meant to be examples, not the perfect solution! Why not go see if you
-can do better?
+Вы находите все эти методы `._add ()` и `._commit()` "супер-навороченными", по словам нашего любимого технического обозревателя Хайнека? Это "возбудит у вас желание шмякнуть Гарри по голове плюшевой змеей"? Эй, наши куски кода предназначены только для примеров, а не для идеального решения! Почему бы не пойти и не глянуть, сможешь ли ты сделать лучше?
 
-One _composition over inheritance_ way to go would be to implement a
-wrapper class:
+Одним из способов _пеподнять композицию над наследованием_ было бы реализовать класс-декоратор:
 
 [[tracking_repo_wrapper]]
 .A wrapper adds functionality and then delegates (src/adapters/repository.py)
