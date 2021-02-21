@@ -1,4 +1,15 @@
 html:
+python c:\VENV37\Lib\site-packages\asciidoc-py3-master\asciidoc.py -a stylesheet=theme/asciidoctor-clean.custom.css \
+		-a source-highlighter=pygments \
+		-a pygments-style=friendly \
+		-a '!example-caption' \
+		-a sectanchors \
+		*_ru.asciidoc
+
+
+
+
+
 	asciidoctor \
 		-a stylesheet=theme/asciidoctor-clean.custom.css \
 		-a source-highlighter=pygments \
