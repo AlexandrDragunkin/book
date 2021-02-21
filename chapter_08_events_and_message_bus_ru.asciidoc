@@ -622,7 +622,7 @@ class TrackingRepository:
 <1> Обернув репозиторий, мы можем вызывать фактические методы `.add ()` и `.get ()`, избегая волшебных методов с двойным подчёркиванием.
 
 ((("Unit of Work pattern", "getting rid of underscorey methods in UoW class")))
-Посмотрите, можете ли вы применить аналогичный шаблон к нашему классу UoW, чтобы избавиться и от тех методов Java-y `_commit ()`. Вы можете найти код наhttps://github.com/cosmicpython/code/tree/chapter_08_events_and_message_bus_exercise[GitHub].
+Посмотрите, можете ли вы применить аналогичный шаблон к нашему классу UoW, чтобы избавиться и от тех Java-подобных методов `_commit()`. Вы можете найти код наhttps://github.com/cosmicpython/code/tree/chapter_08_events_and_message_bus_exercise[GitHub].
 
 ((("abstract base classes (ABCs)", "switching to typing.Protocol")))
 Переключение всех ABC на `typing.Protocol` - хороший способ заставить себя
@@ -631,57 +631,39 @@ class TrackingRepository:
 
 Возможно, вы начинаете беспокоиться о том, что поддержание этих фейков будет бременем для обслуживания. Нет никаких сомнений, что это работа, но по нашему опыту это не так уж много работы. Как только ваш проект  запущен и работает, интерфейс для вашего репозитория и абстракций UoW действительно не сильно меняется. И если вы используете ABC, это поможет вам вспомнить, когда что-то выходит из синхронизации.
 
-=== Wrap-Up
+=== Подведение итогов
 
-Domain events give us a way to handle workflows in our system. We often find,
-listening to our domain experts, that they express requirements in a causal or
-temporal way—for example, "When we try to allocate stock but there's none
-available, then we should send an email to the buying team."
+События домена дают нам возможность управлять рабочими процессами в нашей системе. Мы часто обнаруживаем, слушая наших экспертов в предметной области, что они выражают требования причинным или временным образом - например, «Когда мы пытаемся распределить запасы, но их нет в наличии, мы должны отправить электронное письмо отделу снабжения».
 
-The magic words "When X, then Y" often tell us about an event that we can make
-concrete in our system. Treating events as first-class things in our model helps
-us make our code more testable and observable, and it helps isolate concerns.
+Волшебные слова "When X, then Y" часто говорят нам о событии, которое мы можем сделать конкретным в нашей системе. Рассматривая события как first-class вещи в нашей модели, мы делаем наш код более тестируемым и наблюдаемым, а также изолируем проблемы.
 
 ((("message bus", "pros and cons or trade-offs")))
 ((("events and the message bus", "pros and cons or trade-offs")))
-And <<chapter_08_events_and_message_bus_tradeoffs>> shows the trade-offs as we
-see them.
+И <<chapter_08_events_and_message_bus_tradeoffs>> показывает компромиссы, как мы их видим.
 
 [[chapter_08_events_and_message_bus_tradeoffs]]
 [options="header"]
-.Domain events: the trade-offs
+.Domain events: компромиссы
 |===
-|Pros|Cons
+|Плюсы|Минусы
 a|
-* A message bus gives us a nice way to separate responsibilities when we have
-  to take multiple actions in response to a request.
+* Шина сообщений (message bus) дает нам хороший способ разделить обязанности, когда мы должны предпринять несколько действий в ответ на запрос.
 
-* Event handlers are nicely decoupled from the "core" application logic,
-  making it easy to change their implementation later.
+* Обработчики событий (Event handlers) хорошо отделены от "основной" логики приложения, что позволяет легко изменить их реализацию позже.
 
-* Domain events are a great way to model the real world, and we can use them
-  as part of our business language when modeling with stakeholders.
+* Доменные события (Domain events) -- это отличный способ моделирования реального мира, и мы можем использовать их как часть нашего делового языка при моделировании с заинтересованными сторонами.
 
 a|
 
-* The message bus is an additional thing to wrap your head around; the implementation
-  in which the unit of work raises events for us is _neat_ but also magic. It's not
-  obvious when we call `commit` that we're also going to go and send email to
-  people.
+* Шина сообщений -- это еще одна вещь, которая кружит вам голову. Реализация, в которой единица работы вызывает для нас события, может это  _изящно_  и волшебно. Но, когда мы вызываем `commit`, не очевидно, что мы также собираемся отправить электронное письмо людям.
 
-* What's more, that hidden event-handling code executes _synchronously_,
-  meaning your service-layer function
-  doesn't finish until all the handlers for any events are finished. That
-  could cause unexpected performance problems in your web endpoints
+* Более того, этот скрытый код обработки событий выполняется _synchronously_, что означает, что ваша функция уровня сервиса не завершится до тех пор, пока не будут завершены все обработчики для любых событий. Это может привести к неожиданным проблемам с производительностью в ваших web endpoints
   (adding asynchronous processing is possible but makes things even _more_ confusing).
   ((("synchronous execution of event-handling code")))
 
-* More generally, event-driven workflows can be confusing because after things
-  are split across a chain of multiple handlers, there is no single place
-  in the system where you can understand how a request will be fulfilled.
+* В более общем плане, управляемые событиями рабочие процессы могут сбивать с толку, потому что после того, как вещи разделены по цепочке из нескольких обработчиков, в системе нет единого места, где вы могли бы понять, как будет выполняться запрос.
 
-* You also open yourself up to the possibility of circular dependencies between your
-  event handlers, and infinite loops.
+* Вы также открываете для себя возможность возникновения циклических зависимостей между вашими обработчиками событий и бесконечными циклами.
   ((("dependencies", "circular dependencies between event handlers")))
   ((("events and the message bus", startref="ix_evntMB")))
 
@@ -689,58 +671,35 @@ a|
 |===
 
 ((("aggregates", "changing multiple aggregates in a request")))
-Events are useful for more than just sending email, though. In <<chapter_07_aggregate>> we
-spent a lot of time convincing you that you should define aggregates, or
-boundaries where we guarantee consistency. People often ask, "What
-should I do if I need to change multiple aggregates as part of a request?" Now
-we have the tools we need to answer that question.
+Однако события полезны не только для отправки электронной почты. В <<chapter_07_aggregate>> мы потратили много времени, убеждая вас, что вы должны определить агрегаты или границы, где мы гарантируем согласованность. Люди часто спрашивают: "Что мне делать, если мне нужно изменить несколько агрегатов в рамках запроса?" Теперь у нас есть инструменты, необходимые для ответа на этот вопрос.
 
-If we have two things that can be transactionally isolated (e.g., an order and a
-[.keep-together]#product#), then we can make them _eventually consistent_ by using events. When an
-order is canceled, we should find the products that were allocated to it
-and remove the [.keep-together]#allocations#.
+Если у нас есть две вещи, которые могут быть транзакционно изолированы (например, заказ и [.keep-together]#product#), то мы можем сделать их _eventually consistent_ (в конечном итоге согласованными) с помощью событий. Когда заказ отменяется, мы должны найти продукты, которые были ему назначены, и удалить [.keep-together]#allocations#.
 
 [role="nobreakinside less_space"]
-.Domain Events and the Message Bus Recap
+.Обзор Событий домена и шины сообщений
 *****************************************************************
 ((("events and the message bus", "domain events and message bus recap")))
 ((("message bus", "recap")))
 
-Events can help with the single responsibility principle::
-    Code gets tangled up when we mix multiple concerns in one place. Events can
-    help us to keep things tidy by separating primary use cases from secondary
-    ones.
-    We also use events for communicating between aggregates so that we don't
-    need to run long-running transactions that lock against multiple tables.
+События способствуют реализации принципа единой ответственности:: 
+	Код запутывается, когда мы смешиваем несколько задач в одном месте. События могут помочь нам поддерживать порядок, отделяя основные варианты использования от второстепенных. Мы также используем события для связи между агрегатами, поэтому нам не нужно запускать длительные транзакции, которые блокируются для нескольких таблиц.
 
-A message bus routes messages to handlers::
-    You can think of a message bus as a dict that maps from events to their
-    consumers. It doesn't "know" anything about the meaning of events; it's just
-    a piece of dumb infrastructure for getting messages around the system.
+Шина сообщений направляет сообщения обработчикам::
+    Вы можете думать о шине сообщений как о словаре, который сопоставляет события (events) с их потребителями(consumers). Словарь ничего не "знает" о смысле событий; это просто кусок тупой инфраструктуры для передачи сообщений по всей системе.
 
-Option 1: Service layer raises events and passes them to message bus::
-    The simplest way to start using events in your system is to raise them from
-    handlers by calling `bus.handle(some_new_event)` after you commit your
-    unit of work.
+Вариант 1: Уровень сервиса вызывает события и передает их в шину сообщений::
+    Самый простой способ начать использовать события в вашей системе-это вызвать их из обработчиков, вызвав `bus.handle(some_new_event)` после того, как вы зафиксируете свою единицу работы.
     ((("service layer", "raising events and passing them to message bus")))
 
-Option 2: Domain model raises events, service layer passes them to message bus::
-    The logic about when to raise an event really should live with the model, so
-    we can improve our system's design and testability by raising events from
-    the domain model. It's easy for our handlers to collect events off the model
-    objects after `commit` and pass them to the bus.
+Вариант 2: Доменная модель вызывает события, сервисный уровень передает их в шину сообщений::
+    Логика того, когда поднимать событие, действительно должна жить с моделью, таким образом, мы можем улучшить дизайн и тестируемость нашей системы, подняв события из модели предметной области. Наши обработчики легко собирают события с объектов модели после `commit` "фиксации" и передают их в шину.
     ((("domain model", "raising events and service layer passing them to message bus")))
 
-Option 3: UoW collects events from aggregates and passes them to message bus::
-    Adding `bus.handle(aggregate.events)` to every handler is annoying, so we
-    can tidy up by making our unit of work responsible for raising events that
-    were raised by loaded objects.
-    This is the most complex design and might rely on ORM magic, but it's clean
-    and easy to use once it's set up.
+Вариант 3: UoW собирает события из агрегатов и передает их в шину сообщений::
+    Добавление bus.handle (aggregate.events) к каждому обработчику раздражает, поэтому мы можем прибраться, сделав нашу единицу работы ответственной за создание событий, которые были вызваны загруженными объектами. Это наиболее сложный дизайн, и он может полагаться на магию ORM, но после настройки он понятен и прост в использовании.
     ((("aggregates", "UoW collecting events from and passing them to message bus")))
     ((("Unit of Work pattern", "UoW collecting events from aggregates and passing them to message bus")))
 
 *****************************************************************
 
-In <<chapter_09_all_messagebus>>, we'll look at this idea in more
-detail as we build a more complex workflow with our new message bus.
+В <<chapter_09_all_messagebus>> мы рассмотрим эту идею более подробно при построении более сложного рабочего процесса с нашей новой шиной сообщений.
