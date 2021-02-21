@@ -595,7 +595,7 @@ class FakeUnitOfWork(unit_of_work.AbstractUnitOfWork):
 Одним из способов _пеподнять композицию над наследованием_ было бы реализовать класс-декоратор:
 
 [[tracking_repo_wrapper]]
-.A wrapper adds functionality and then delegates (src/adapters/repository.py)
+.Обертка добавляет функциональность, а затем делегирует (src/adapters/repository.py)
 ====
 [source,python]
 [role="skip"]
@@ -619,24 +619,17 @@ class TrackingRepository:
 ----
 ====
 
-<1> By wrapping the repository, we can call the actual `.add()`
-    and `.get()` methods, avoiding weird underscorey methods.
+<1> Обернув репозиторий, мы можем вызывать фактические методы `.add ()` и `.get ()`, избегая волшебных методов с двойным подчёркиванием.
 
 ((("Unit of Work pattern", "getting rid of underscorey methods in UoW class")))
-See if you can apply a similar pattern to our UoW class in
-order to get rid of those Java-y `_commit()` methods too. You can find the code
-on https://github.com/cosmicpython/code/tree/chapter_08_events_and_message_bus_exercise[GitHub].
+Посмотрите, можете ли вы применить аналогичный шаблон к нашему классу UoW, чтобы избавиться и от тех методов Java-y `_commit ()`. Вы можете найти код наhttps://github.com/cosmicpython/code/tree/chapter_08_events_and_message_bus_exercise[GitHub].
 
 ((("abstract base classes (ABCs)", "switching to typing.Protocol")))
-Switching all the ABCs to `typing.Protocol` is a good way to force yourself to
-avoid using inheritance. Let us know if you come up with something nice!
+Переключение всех ABC на `typing.Protocol` - хороший способ заставить себя
+избегайте использования наследования. Дайте нам знать, если у вас получится что-нибудь приятное!
 ******************************************************************************
 
-You might be starting to worry that maintaining these fakes is going to be a
-maintenance burden. There's no doubt that it is work, but in our experience
-it's not a lot of work. Once your project is up and running, the interface for
-your repository and UoW abstractions really don't change much. And if you're
-using ABCs, they'll help remind you when things get out of sync.
+Возможно, вы начинаете беспокоиться о том, что поддержание этих фейков будет бременем для обслуживания. Нет никаких сомнений, что это работа, но по нашему опыту это не так уж много работы. Как только ваш проект  запущен и работает, интерфейс для вашего репозитория и абстракций UoW действительно не сильно меняется. И если вы используете ABC, это поможет вам вспомнить, когда что-то выходит из синхронизации.
 
 === Wrap-Up
 
