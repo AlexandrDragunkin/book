@@ -182,21 +182,18 @@ TIP: Эмпирическое правило: если вы не можете о
 Во-первых, вместо того, чтобы беспокоиться об электронных письмах, наша модель будет отвечать за регистрацию _events_ (событий) - факты о том, что произошло. Мы будем использовать шину сообщений, чтобы отвечать на события и вызывать новую операцию.
 
 
-==== События - это простые классы данных
+==== События (events) - это простые классы данных
 
 ((("dataclasses", "events")))
 ((("events and the message bus", "events as simple dataclasses")))
-An _event_ is a kind of _value object_. Events don't have any behavior, because
-they're pure data structures. We always name events in the language of the
-domain, and we think of them as part of our domain model.
+_event_-это своего рода _value object_. События не имеют никакого поведения, потому что они являются чистыми структурами данных. Мы всегда называем события на языке домена и думаем о них как о части нашей модели домена.
 
-We could store them in _model.py_, but we may as well keep them in their own file
- (this might be a good time to consider refactoring out a directory called
-_domain_ so that we have _domain/model.py_ and _domain/events.py_):
+Мы могли бы хранить их в _model.py_, но мы также можем хранить их в отдельном файле.
+ (возможно, сейчас самое подходящее время подумать о рефакторинге каталога с именем _domain_, чтобы у нас был _domain/model.py_ и _domain/events.py_):
 
 [role="nobreakinside less_space"]
 [[events_dot_py]]
-.Event classes (src/allocation/domain/events.py)
+.Классы событий (src/allocation/domain/events.py)
 ====
 [source,python]
 ----
@@ -212,27 +209,24 @@ class OutOfStock(Event):  #<2>
 ====
 
 
-<1> Once we have a number of events, we'll find it useful to have a parent
-    class that can store common attributes. It's also useful for type
-    hints in our message bus, as you'll see shortly.
+<1> Как только у нас будет несколько событий, нам будет полезно иметь родительский класс, который может хранить общие атрибуты. Это также полезно для подсказок типа в нашей шине сообщений, как вы вскоре увидите.
 
-<2> `dataclasses` are great for domain events too.
+<2> `dataclasses` отлично подходят и для доменных событий.
 
 
 
-==== The Model Raises Events
+==== Модель вызывает события
 
 ((("events and the message bus", "domain model raising events")))
 ((("domain model", "raising events")))
-When our domain model records a fact that happened, we say it _raises_ an event.
+Когда наша модель домена фиксирует факт, который произошел, мы говорим, что это _raises (поднимает)_ событие.
 
 ((("aggregates", "testing Product object to raise events")))
-Here's what it will look like from the outside; if we ask `Product` to allocate
-but it can't, it should _raise_ an event:
+Вот как это будет выглядеть со стороны; если мы попросим "Product" выделить _allocate_, но он не сможет, он должен _raise (поднять)_ событие:
 
 
 [[test_raising_event]]
-.Test our aggregate to raise events (tests/unit/test_product.py)
+.Протестируйте наш агрегат, чтобы поднять события (tests/unit/test_product.py)
 ====
 [source,python]
 ----
@@ -247,14 +241,13 @@ def test_records_out_of_stock_event_if_cannot_allocate():
 ----
 ====
 
-<1> Our aggregate will expose a new attribute called `.events` that will contain
-    a list of facts about what has happened, in the form of `Event` objects.
+<1> Наш агрегат предоставит новый атрибут под названием `.events`, который будет содержать список фактов о том, что произошло, в форме объектов `Event`.
 
-Here's what the model looks like on the inside:
+Вот как выглядит модель изнутри:
 
 
 [[domain_event]]
-.The model raises a domain event (src/allocation/domain/model.py)
+.Модель вызывает событие предметной области (src/allocation/domain/model.py)
 ====
 [source,python]
 [role="non-head"]
@@ -277,8 +270,7 @@ class Product:
 ----
 ====
 
-<1> Here's our new `.events` attribute in use.
-
+<1> Вот наш новый атрибут `.events`.
 <2> Rather than invoking some email-sending code directly, we record those
     events at the place they occur, using only the language of the domain.
 
