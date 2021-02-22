@@ -40,9 +40,9 @@ git checkout chapter_08_events_and_message_bus
 
 Такое программное обеспечение сложно написать, потому что в реальном мире физических объектов и ненадежных людей постоянно происходят неожиданные вещи. Например:
 
-* Во время инвентаризации мы обнаруживаем, что три позиции:[<код>ПРУЖИННЫЙ МАТРАС</код>]были повреждены водой из-за протекающей крыши.
-* У груза позиций:[<code>RELIABLE-FORK</code>]s отсутствует необходимая документация и он застрял на таможне, где находится уже в течение нескольких недель. Три позиции:[<code>RELIABLE-FORK</code>]s впоследствии не проходят проверку безопасности и уничтожаются.
-* Глобальная нехватка блесток означает, что мы не сможем изготовить следующую партию позиции.:[<code>SPARKLY-BOOKCASE</code>].
+* Во время инвентаризации мы обнаруживаем, что три pass:[<код>ПРУЖИННЫЙ МАТРАС</код>]были повреждены водой из-за протекающей крыши.
+* У груза pass:[<code>RELIABLE-FORK</code>]s отсутствует необходимая документация и он застрял на таможне, где находится уже в течение нескольких недель. Три  pass:[<code>RELIABLE-FORK</code>]s впоследствии не проходят проверку безопасности и уничтожаются.
+* Глобальная нехватка блесток означает, что мы не сможем изготовить следующую партию pass:[<code>SPARKLY-BOOKCASE</code>].
 
 ((("batches", "batch quantities changed means deallocate and reallocate")))
 В таких ситуациях мы узнаем о необходимости изменения количества партий, когда они уже находятся в системе. Может быть, кто-то ошибся номером в декларации, а может быть, какие-то диваны упали с грузовика. После разговора с представителями компанииfootnote:[ Моделирование на основе событий настолько популярно, что для облегчения сбора требований на основе событий и разработки модели предметной области была разработана практика под названием _event storming_.]
@@ -119,7 +119,7 @@ image::images/apwp_0903.png[]
 Мы начинаем с определения двух событий, которые фиксируют наши текущие входные данные API - ++ AllocationRequired ++ и `BatchCreated`:
 
 [[two_new_events]]
-.BatchCreated and AllocationRequired events (src/allocation/domain/events.py)
+.События BatchCreated и AllocationRequired (src/allocation/domain/events.py)
 ====
 [source,python]
 ----
@@ -140,13 +140,11 @@ class AllocationRequired(Event):
 ----
 ====
 
-Then we rename _services.py_ to _handlers.py_; we add the existing message handler
-for `send_out_of_stock_notification`; and most importantly, we change all the
-handlers so that they have the same inputs, an event and a UoW:
+Затем мы переименовываем _services.py_ в _handlers.py_; мы добавляем обработчик текущих сообщений для `send_out_of_stock_notification`; и самое главное, мы меняем все обработчики так, чтобы у них были одинаковые входные данные, событие и UoW:
 
 
 [[services_to_handlers]]
-.Handlers and services are the same thing (src/allocation/service_layer/handlers.py)
+.Обработчики и сервисы - это одно и то же (src/allocation/service_layer/handlers.py)
 ====
 [source,python]
 ----
@@ -176,10 +174,10 @@ def send_out_of_stock_notification(
 ====
 
 
-The change might be clearer as a diff:
+Это изменение станет более ясным если помотреть на различие:
 
 [[services_to_handlers_diff]]
-.Changing from services to handlers (src/allocation/service_layer/handlers.py)
+.Переход от сервисов к обработчикам (src/allocation/service_layer/handlers.py)
 ====
 [source,diff]
 ----
@@ -212,41 +210,24 @@ The change might be clearer as a diff:
 ----
 ====
 
-Along the way, we've made our service-layer's API more structured and more consistent. It was a scattering of
-primitives, and now it uses well-defined objects (see the following sidebar).
+Попутно мы сделали API нашего сервисного уровня более структурированным и последовательным. Это было рассеяние примитивов, и теперь используются четко определенные объекты (см. Следующую главу).
 
 [role="nobreakinside less_space"]
-.From Domain Objects, via Primitive Obsession, to [.keep-together]#Events as an Interface#
+.От Domain Objects через Primitive Obsession к [. keep-together]#событиям в качестве интерфейса#
 *******************************************************************************
 
 ((("service layer", "from domain objects to primitives to events as interface")))
 ((("primitives", "primitive obsession")))
 ((("primitives", "moving from domain objects to, in service layer")))
-Some of you may remember <<primitive_obsession>>, in which we changed our service-layer API
-from being in terms of domain objects to primitives. And now we're moving
-back, but to different objects?  What gives?
+Некоторые из вас, возможно, помнят <<primitive_obsession>>, в котором мы изменили наш API сервисного уровня с точки зрения доменных объектов на примитивы. А теперь мы возвращаемся назад, но к другим объектам?  Что это дает?
 
-In OO circles, people talk about _primitive obsession_ as an antipattern: avoid
-primitives in public APIs, and instead wrap them with custom value classes, they
-would say. In the Python world, a lot of people would be quite skeptical of
-that as a rule of thumb. When mindlessly applied, it's certainly a recipe for
-unnecessary complexity. So that's not what we're doing per se.
+В кругах ОО люди говорят о _primitive obsession_ как об антипаттере: Они скорее всего порекомендовали  бы, избегать примитивов в общедоступных API и вместо этого оборачивать их пользовательскими классами значений. В мире Python многие люди отнесутся к этому весьма скептически. При бездумном применении это, безусловно, рецепт ненужной сложности. Так что, по сути, мы этим не занимаемся.
 
-The move from domain objects to primitives bought us a nice bit of decoupling:
-our client code was no longer coupled directly to the domain, so the service
-layer could present an API that stays the same even if we decide to make changes
-to our model, and vice versa.
+Переход от доменных объектов к примитивам принес нам хорошую развязку: наш клиентский код больше не был связан непосредственно с доменом, поэтому уровень сервиса мог представить API, который остается неизменным, даже если мы решим внести изменения в нашу модель, и наоборот.
 
-So have we gone backward? Well, our core domain model objects are still free to
-vary, but instead we've coupled the external world to our event classes.
-They're part of the domain too, but the hope is that they vary less often, so
-they're a sensible artifact to couple on.
+Итак, мы отступили? Ну, наши основные объекты модели предметной области по-прежнему свободны варьироваться, но вместо этого мы связали внешний мир с нашими классами событий. Они тоже часть домена, но есть надежда, что они меняются реже, так что они разумный артефакт для пары.
 
-And what have we bought ourselves? Now, when invoking a use case in our application,
-we no longer need to remember a particular combination of primitives, but just a single
-event class that represents the input to our application. That's conceptually
-quite nice. On top of that, as you'll see in <<appendix_validation>>, those
-event classes can be a nice place to do some input validation.
+И что мы приобрели? Теперь при вызове варианта использования в нашем приложении нам больше не нужно запоминать конкретную комбинацию примитивов, а только один класс событий, представляющий входные данные для нашего приложения. Это концептуально довольно мило. Кроме того, как вы увидите в <<appendix_validation>>, эти классы событий могут быть хорошим местом для некоторой проверки входных данных.
 *******************************************************************************
 
 
@@ -255,16 +236,11 @@ event classes can be a nice place to do some input validation.
 ((("message bus", "now collecting events from UoW")))
 ((("Unit of Work pattern", "message bus now collecting events from UoW")))
 ((("dependencies", "UoW no longer dependent on message bus")))
-Our event handlers now need a UoW. In addition, as our message bus becomes
-more central to our application, it makes sense to put it explicitly in charge of
-collecting and processing new events. There was a bit of a circular dependency
-between the UoW and message bus until now, so this will make it one-way.  Instead
-of having the UoW _push_ events onto the message bus, we will have the message
-bus _pull_ events from the UoW.
+Наши обработчики событий теперь нуждаются в UoW. Кроме того, поскольку наша шина сообщений становится всё более центральной для нашего приложения, имеет смысл явно возложить на неё ответственность за сбор и обработку новых событий. До сих пор существовала некоторая циклическая зависимость между UoW и шиной сообщений, так что это сделает её односторонней.  Вместо того, чтобы иметь события UoW _push_ на шине сообщений, мы будем иметь события message bus _pull_ из UoW.
 
 
 [[handle_has_uow_and_queue]]
-.Handle takes a UoW and manages a queue (src/allocation/service_layer/messagebus.py)
+.Handle принимает UoW и управляет очередью (src/allocation/service_layer/messagebus.py)
 ====
 [source,python]
 [role="non-head"]
@@ -279,20 +255,17 @@ def handle(event: events.Event, uow: unit_of_work.AbstractUnitOfWork):  #<1>
 ----
 ====
 
-<1> The message bus now gets passed the UoW each time it starts up.
-<2> When we begin handling our first event, we start a queue.
-<3> We pop events from the front of the queue and invoke their handlers (the
-    [.keep-together]#`HANDLERS`# dict hasn't changed; it still maps event types to handler functions).
-<4> The message bus passes the UoW down to each handler.
-<5> After each handler finishes, we collect any new events that have been
-    generated and add them to the queue.
+<1> Шина сообщений теперь проходит UoW при каждом запуске.
+<2> Когда мы начинаем обрабатывать наше первое событие, мы запускаем очередь.
+<3> Мы извлекаем события из передней части очереди и вызываем их обработчики ([. keep-together]#`HANDLERS`# dict не изменился; он по-прежнему сопоставляет типы событий с функциями обработчиков).
+<4> Шина сообщений передает UoW каждому обработчику.
+<5> После завершения каждого обработчика мы собираем все новые сгенерированные события и добавляем их в очередь.
 
-In _unit_of_work.py_, `publish_events()` becomes a less active method,
-`collect_new_events()`:
+В _unit_of_work.py_ 'publish_events()` становится менее активным методом, `collect_new_events()`:
 
 
 [[uow_collect_new_events]]
-.UoW no longer puts events directly on the bus (src/allocation/service_layer/unit_of_work.py)
+.UoW больше не помещает события прямо в шину (src/allocation/service_layer/unit_of_work.py)
 ====
 [source,diff]
 ----
@@ -318,27 +291,24 @@ In _unit_of_work.py_, `publish_events()` becomes a less active method,
 ----
 ====
 
-<1> The `unit_of_work` module now no longer depends on `messagebus`.
-<2> We no longer `publish_events` automatically on commit. The message bus
-    is keeping track of the event queue instead.
-<3> And the UoW no longer actively puts events on the message bus; it
-    just makes them available.
+<1> Модуль `unit_of_work` теперь больше не зависит от `messagebus`.
+<2> Мы больше не выполняем `publish_events` автоматически при фиксации. Вместо этого шина сообщений отслеживает очередь событий.
+<3> И UoW больше не размещает активные события в шину сообщений; он просто делает их доступными.
 
 //IDEA: we can definitely get rid of _commit() now right?
 // (EJ2) at this point _commit() doesn't serve any purpose, so it could be deleted.
 //       unsure if deleting it would be confusing at this point.
 
 [role="pagebreak-before less_space"]
-==== Our Tests Are All Written in Terms of Events Too
+==== Наши тесты тоже написаны в терминах событий
 
 ((("events and the message bus", "transforming our app into message processor", "tests writtern to in terms of events")))
 ((("testing", "tests written in terms of events")))
-Our tests now operate by creating events and putting them on the
-message bus, rather than invoking service-layer functions directly:
+Наши тесты теперь работают, создавая события и помещая их в шину сообщений, а не вызывая функции сервисного уровня напрямую:
 
 
 [[handler_tests]]
-.Handler tests use events (tests/unit/test_handlers.py)
+.Тесты обработчиков используют события (tests/unit/test_handlers.py)
 ====
 [source,diff]
 ----
@@ -373,13 +343,11 @@ class TestAddBatch:
 
 
 [[temporary_ugly_hack]]
-==== A Temporary Ugly Hack: The Message Bus Has to Return Results
+==== Временный Наглый Взлом:  шина сообщений должна возвращать результаты
 
 ((("events and the message bus", "transforming our app into message processor", "temporary hack, message bus returning results")))
 ((("message bus", "returning results in temporary hack")))
-Our API and our service layer currently want to know the allocated batch reference
-when they invoke our `allocate()` handler. This means we need to put in
-a temporary hack on our message bus to let it return events:
+Наш API и наш уровень сервиса в настоящее время хотят узнать выделенную ссылку на пакет, когда они вызывают наш обработчик `allocate()`. Это означает, что нам нужно временно взломать нашу шину сообщений, чтобы она возвращала события:
 
 [[hack_messagebus_results]]
 .Message bus returns results (src/allocation/service_layer/messagebus.py)
@@ -404,14 +372,13 @@ a temporary hack on our message bus to let it return events:
 
 ((("events and the message bus", "transforming our app into message processor", "modifying API to work with events")))
 ((("APIs", "modifying API to work with events")))
-It's because we're mixing the read and write responsibilities in our system.
-We'll come back to fix this wart in <<chapter_12_cqrs>>.
+Это потому, что мы смешиваем обязанности чтения и записи в нашей системе. Мы вернемся, чтобы исправить эту неприятность в <<chapter_12_cqrs>>.
 
 
-==== Modifying Our API to Work with Events
+==== Изменение нашего API для работы с событиями
 
 [[flask_uses_messagebus]]
-.Flask changing to message bus as a diff (src/allocation/entrypoints/flask_app.py)
+.Diff при замене Flask на шину сообщений (src/allocation/entrypoints/flask_app.py)
 ====
 [source,diff]
 ----
@@ -432,43 +399,33 @@ We'll come back to fix this wart in <<chapter_12_cqrs>>.
 ----
 ====
 
-<1> Instead of calling the service layer with a bunch of primitives extracted
-    from the request JSON...
+<1> Вместо вызова уровня сервиса с кучей примитивов, извлеченных из запроса JSON ...
 
-<2> We instantiate an event.
+<2> Создаем событие.
 
-<3> Then we pass it to the message bus.
+<3> Затем передаем его в шину сообщений.
 
-And we should be back to a fully functional application, but one that's now
-fully event-driven:
+И мы должны вернуться к полностью функциональному приложению, но теперь полностью управляемому событиями:
 
-* What used to be service-layer functions are now event handlers.
+* То, что раньше было функциями сервисного уровня, теперь стало обработчиками событий.
 
-* That makes them the same as the functions we invoke for handling internal events raised by
-  our domain model.
+* Это делает их такими же, как функции, которые мы вызываем для обработки внутренних событий, вызванных нашей моделью предметной области.
 
-* We use events as our data structure for capturing inputs to the system,
-  as well as for handing off of internal work packages.
+* Мы используем события в качестве структуры данных для сбора входных данных в систему, а также для передачи внутренних рабочих пакетов.
 
-* The entire app is now best described as a message processor, or an event processor
-  if you prefer.  We'll talk about the distinction in the
-  <<chapter_10_commands, next chapter>>.
+* Теперь все приложение лучше всего описать как процессор сообщений или, если хотите, процессор событий.  Мы поговорим об этом различии в следующей главе<<chapter_10_commands>>.
 
 
 
-=== Implementing Our New Requirement
+=== Реализация нашего нового требования (Requirement)
 
 ((("reallocation", "sequence diagram for flow")))
 ((("events and the message bus", "transforming our app into message processor", "implementing the new requirement", id="ix_evntMBMPreq")))
-We're done with our refactoring phase. Let's see if we really have "made the
-change easy."  Let's implement our new requirement, shown in <<reallocation_sequence_diagram>>: we'll receive as our
-inputs some new `BatchQuantityChanged` events and pass them to a handler, which in
-turn might emit some `AllocationRequired` events, and those in turn will go
-back to our existing handler for reallocation.
+Мы закончили с фазой рефакторинга. Давайте посмотрим, действительно ли мы "сделали изменение легким."  Давайте реализуем наше новое требование, показанное в <<reallocation_sequence_diagram>>: мы получим в качестве входных данных некоторые новые события `BatchQuantityChanged` и передадим их обработчику, который, в свою очередь, может выдать некоторые события `AllocationRequired`, а те, в свою очередь, вернутся к нашему существующему обработчику для перераспределения.
 
 [role="width-75"]
 [[reallocation_sequence_diagram]]
-.Sequence diagram for reallocation flow
+.Диаграмма последовательности для потока перераспределения
 image::images/apwp_0904.png[]
 [role="image-source"]
 ----
@@ -491,26 +448,20 @@ end
 @enduml
 ----
 
-WARNING: When you split things out like this across two units of work,
-    you now have two database transactions, so you are opening yourself up
-    to integrity issues: something could happen that means the first transaction completes
-    but the second one does not. You'll need to think about whether this is acceptable,
-    and whether you need to notice when it happens and do something about it.
-    See <<footguns>> for more discussion.
+WARNING: Когда вы разделяете вещи таким образом на две единицы работы, то у вас получаются две транзакции базы данных, поэтому вы открываете себя для проблем целостности: что-то может произойти, и это означает, что первая транзакция завершается, а вторая-нет. Вам нужно будет подумать о том, приемлемо ли это, и нужно ли вам замечать, когда это происходит, и что-то с этим делать.     См. <<footguns>> для более подробного обсуждения.
     ((("data integrity", "issues arising from splitting operation across two UoWs")))
     ((("Unit of Work pattern", "splitting operations across two UoWs")))
 
 
 
-==== Our New Event
+==== Наше новое событие
 
 ((("BatchQuantityChanged event", "implementing")))
-The event that tells us a batch quantity has changed is simple; it just
-needs a batch reference and a new quantity:
+Событие, которое говорит нам, что количество партии изменилось, простое; ему просто нужна ссылка на партию и новое количество:
 
 
 [[batch_quantity_changed_event]]
-.New event (src/allocation/domain/events.py)
+.Новое событие (src/allocation/domain/events.py)
 ====
 [source,python]
 ----
@@ -522,20 +473,17 @@ class BatchQuantityChanged(Event):
 ====
 
 [[test-driving-ch9]]
-=== Test-Driving a New Handler
+=== Test-Driving нового Handler
 
 ((("testing", "tests written in terms of events", "handler tests for change_batch_quantity")))
 ((("events and the message bus", "transforming our app into message processor", "test driving new handler")))
 ((("events and the message bus", "transforming our app into message processor", "implementing the new requirement", startref="ix_evntMBMPreq")))
 ((("change_batch_quantity", "handler tests for")))
-Following the lessons learned in <<chapter_04_service_layer>>,
-we can operate in "high gear" and write our unit tests at the highest
-possible level of abstraction, in terms of events. Here's what they might
-look like:
+Следуя урокам, извлеченным из <<chapter_04_service_layer>>, мы можем работать на «высокой передаче» и писать наши модульные тесты на максимально возможном уровне абстракции с точки зрения событий. Вот как они могут выглядеть:
 
 
 [[test_change_batch_quantity_handler]]
-.Handler tests for change_batch_quantity (tests/unit/test_handlers.py)
+.Тесты обработчика для change_batch_quantity (tests/unit/test_handlers.py)
 ====
 [source,python]
 ----
@@ -577,22 +525,19 @@ class TestChangeBatchQuantity:
 ----
 ====
 
-<1> The simple case would be trivially easy to implement; we just
-    modify a quantity.
+<1> Простой случай будет тривиально легко реализовать; мы просто модифицируем количество.
 
-<2> But if we try to change the quantity to less than
-    has been allocated, we'll need to deallocate at least one order,
-    and we expect to reallocate it to a new batch.
+<2> Но если мы попытаемся изменить количество на меньшее, чем было выделено, нам нужно будет исключить по крайней мере один заказ, и перераспределить его на новую ожидаемую партию.
 
 
 
-==== Implementation
+==== Реализация
 
 ((("change_batch_quantity", "implementation, handler delegating to model layer")))
-Our new handler is very simple:
+Наш новый обработчик очень прост:
 
 [[change_quantity_handler]]
-.Handler delegates to model layer (src/allocation/service_layer/handlers.py)
+.Обработчик делегирует уровень модели (src/allocation/service_layer/handlers.py)
 ====
 [source,python]
 ----
@@ -610,10 +555,10 @@ def change_batch_quantity(
 
 
 ((("repositories", "new query type on our repository")))
-We realize we'll need a new query type on our repository:
+Мы понимаем, что нам понадобится новый тип запроса в нашем репозитории:
 
 [[get_by_batchref]]
-.A new query type on our repository (src/allocation/adapters/repository.py)
+.Новый тип запроса в нашем репозитории (src/allocation/adapters/repository.py)
 ====
 [source,python,highlight="7,22,32"]
 ----
@@ -657,10 +602,10 @@ class SqlAlchemyRepository(AbstractRepository):
 ====
 
 ((("faking", "FakeRepository", "new query type on")))
-And on our `FakeRepository` too:
+И в нашем FakeRepository:
 
 [[fakerepo_get_by_batchref]]
-.Updating the fake repo too (tests/unit/test_handlers.py)
+.Обновление фейкового репо тоже (tests/unit/test_handlers.py)
 ====
 [source,python]
 [role="non-head"]
@@ -680,26 +625,17 @@ class FakeRepository(repository.AbstractRepository):
 ====
 
 
-NOTE: We're adding a query to our repository to make this use case easier to
-    implement. So long as our query is returning a single aggregate, we're not
-    bending any rules. If you find yourself writing complex queries on your
-    repositories, you might want to consider a different design. Methods like
-    `get_most_popular_products` or `find_products_by_order_id` in particular
-    would definitely trigger our spidey sense. <<chapter_11_external_events>>
-    and the <<epilogue_1_how_to_get_there_from_here, epilogue>> have some tips
-    on managing complex queries.
+NOTE: Мы добавляем запрос в наш репозиторий, чтобы упростить реализацию этого варианта использования. Пока наш запрос возвращает единственную совокупность, мы не нарушаем никаких правил. Если вы обнаружите, что пишете сложные запросы к своим репозиториям, возможно, вам захочется рассмотреть другой дизайн. Такие методы, как `get_most_popular_products` или `find_products_by_order_id`, в частности, определенно вызовут щекотку в области нашего шестого чувства. В <<chapter_11_external_events>> и <<epilogue_1_how_to_get_there_from_here, epilogue>> есть несколько советов по управлению сложными запросами.
     ((("aggregates", "query on repository returning single aggregate")))
 
-==== A New Method on the Domain Model
+==== Новый метод модели предметной области
 
 ((("domain model", "new method on, change_batch_quantity")))
-We add the new method to the model, which does the quantity change and
-deallocation(s) inline and publishes a new event.  We also modify the existing
-allocate function to publish an event:
+Мы добавляем в модель новый метод, который выполняет изменение количества и освобождение(ий) встроенным и публикует новое событие. Мы также модифицируем существующую функцию выделения для публикации события:
 
 
 [[change_batch_model_layer]]
-.Our model evolves to capture the new requirement (src/allocation/domain/model.py)
+.Наша модель развивается в соответствии с новыми требованиями (src/allocation/domain/model.py)
 ====
 [source,python]
 ----
@@ -725,11 +661,11 @@ class Batch:
 ====
 
 ((("message bus", "wiring up new event handlers to")))
-We wire up our new handler:
+Подключаем наш новый обработчик:
 
 
 [[full_messagebus]]
-.The message bus grows (src/allocation/service_layer/messagebus.py)
+.Шина сообщений растет (src/allocation/service_layer/messagebus.py)
 ====
 [source,python]
 ----
@@ -743,33 +679,24 @@ HANDLERS = {
 ----
 ====
 
-And our new requirement is fully implemented.
+И наше новое требование полностью выполнено.
 
 [[fake_message_bus]]
-=== Optionally: Unit Testing Event Handlers in Isolation with a Fake Message Bus
+=== Опционально: Модульное тестирование Event Handlers изолированно с Fake Message Bus
 
 ((("message bus", "unit testing event handlers with fake message bus")))
 ((("testing", "tests written in terms of events", "unit testing event handlers with fake message bus")))
 ((("events and the message bus", "transforming our app into message processor", "unit testing event handlers with fake message bus")))
-Our main test for the reallocation workflow is _edge-to-edge_
-(see the example code in <<test-driving-ch9>>). It uses
-the real message bus, and it tests the whole flow, where the `BatchQuantityChanged`
-event handler triggers deallocation, and emits new `AllocationRequired` events, which in
-turn are handled by their own handlers. One test covers a chain of multiple
-events and handlers.
+Наш основной тест для рабочего процесса перераспределения-это _edge-to-edge_ (см. Пример кода в <<test-driving-ch9>>). Он использует реальную шину сообщений и тестирует весь поток, где обработчик событий `BatchQuantityChanged` запускает освобождение и выдает новые события `AllocationRequired`, которые, в свою очередь, обрабатываются их собственными обработчиками. Один тест охватывает цепочку из нескольких событий и обработчиков.
 
-Depending on the complexity of your chain of events, you may decide that you
-want to test some handlers in isolation from one another. You can do this
-using a "fake" message bus.
+В зависимости от сложности цепочки событий вы можете решить, что хотите протестировать некоторые обработчики отдельно друг от друга. Вы можете сделать это с помощью "поддельной" шины сообщений.
 
 ((("Unit of Work pattern", "fake message bus implemented in UoW")))
-In our case, we actually intervene by modifying the `publish_events()` method
-on `FakeUnitOfWork` and decoupling it from the real message bus, instead making
-it record what events it sees:
+В нашем случае мы фактически вмешиваемся, изменяя метод `publish_events()` в `FakeUnitOfWork` и отделяя его от реальной шины сообщений, вместо этого заставляя его записывать события, которые он видит:
 
 
 [[fake_messagebus]]
-.Fake message bus implemented in UoW (tests/unit/test_handlers.py)
+.Шина фальшивых сообщений реализована в UoW (tests/unit/test_handlers.py)
 ====
 [source,python]
 [role="non-head"]
@@ -788,15 +715,11 @@ class FakeUnitOfWorkWithFakeMessageBus(FakeUnitOfWork):
 ====
 
 ((("reallocation", "testing in isolation using fake message bus")))
-Now when we invoke `messagebus.handle()` using the `FakeUnitOfWorkWithFakeMessageBus`,
-it runs only the handler for that event. So we can write a more isolated unit
-test: instead of checking all the side effects, we just check that
-`BatchQuantityChanged` leads to `AllocationRequired` if the quantity drops
-below the total already allocated:
+Теперь, когда мы вызываем `messagebus.handle()` используя `FakeUnitOfWorkWithFakeMessageBus`, он запускает только обработчик этого события. Таким образом, мы можем написать более изолированный модульный тест: вместо проверки всех побочных эффектов мы просто проверяем, что `BatchQuantityChanged` приводит к `AllocationRequired`, если количество падает ниже уже выделенного общего количества:
 
 [role="nobreakinside less_space"]
 [[test_handler_in_isolation]]
-.Testing reallocation in isolation (tests/unit/test_handlers.py)
+.Тестирование перераспределения в изоляции (tests/unit/test_handlers.py)
 ====
 [source,python]
 [role="non-head"]
@@ -827,28 +750,20 @@ def test_reallocates_if_necessary_isolated():
 ----
 ====
 
-Whether you want to do this or not depends on the complexity of your chain of
-events. We say, start out with edge-to-edge testing, and resort to
-this only if necessary.
+Хотите вы этого или нет, зависит от сложности вашей цепочки событий. Мы говорим: начните с сквозного тестирования и прибегайте к нему только в случае необходимости.
 
 [role="nobreakinside less_space"]
-.Exercise for the Reader
+.Упражнение для читателя
 *******************************************************************************
 
 ((("message bus", "abstract message bus and its real and fake versions")))
-A great way to force yourself to really understand some code is to refactor it.
-In the discussion of testing handlers in isolation, we used something called
-`FakeUnitOfWorkWithFakeMessageBus`, which is unnecessarily complicated and
-violates the SRP.
+Отличный способ заставить себя действительно понять какой-то код-это его рефакторинг. При обсуждении тестирования обработчиков в изоляции мы использовали нечто под названием `FakeUnitOfWorkWithFakeMessageBus`, что является излишне сложным и нарушает SRP.
 
 ((("Singleton pattern, messagebus.py implementing")))
-If we change the message bus to being a class,footnote:[The "simple"
-implementation in this chapter essentially uses the _messagebus.py_ module
-itself to implement the Singleton Pattern.]
-then building a `FakeMessageBus` is more straightforward:
+Если мы изменим шину сообщений на класс,footnote:[«Простая» реализация в этой главе по существу использует сам модуль _messagebus.py_ для реализации шаблона Singleton.] тогда создание `FakeMessageBus` будет более простым:
 
 [[abc_for_fake_messagebus]]
-.An abstract message bus and its real and fake versions
+.Абстрактная шина сообщений и ее реальные и поддельные версии
 ====
 [source,python]
 [role="skip"]
@@ -877,71 +792,47 @@ class FakeMessageBus(messagebus.AbstractMessageBus):
 ----
 ====
 
-So jump into the code on
-https://github.com/cosmicpython/code/tree/chapter_09_all_messagebus[GitHub] and see if you can get a class-based version
-working, and then write a version of `test_reallocates_if_necessary_isolated()`
-from earlier.
+Так что сигайте в код на https://github.com/cosmicpython/code/tree/chapter_09_all_messagebus[GitHub] и посмотрите, сможете ли вы заставить работать версию на основе классов, а затем напишите версию `test_reallocates_if_needed_isolated ()` из более ранней версии.
 
-We use a class-based message bus in <<chapter_13_dependency_injection>>,
-if you need more inspiration.
+Мы используем шину сообщений на основе классов в <<chapter_13_dependency_injection>>, если вам нужно больше вдохновения.
 *******************************************************************************
 
-=== Wrap-Up
+=== Подведём итоги
 
-Let's look back at what we've achieved, and think about why we did it.
+Давайте оглянемся на то, чего мы достигли, и подумаем, "А нафига?".
 
-==== What Have We Achieved?
+==== Чего мы достигли?
 
-Events are simple dataclasses that define the data structures for inputs
-  and internal messages within our system. This is quite powerful from a DDD
-  standpoint, since events often translate really well into business language
+События (Events) - это простые классы данных, которые определяют структуры данных для входных данных. 
+	и внутренние сообщения в нашей системе. Это довольно мощно с точки зрения DDD, поскольку события часто очень хорошо переводятся на деловой язык
   (look up __event storming__ if you haven't already).
 
-Handlers are the way we react to events. They can call down to our
-  model or call out to external services.  We can define multiple
-  handlers for a single event if we want to. Handlers can also raise other
-  events. This allows us to be very granular about what a handler does
-  and really stick to the SRP.
+Обработчики (Handlers) - это то, как мы реагируем на события. Они могут обратиться к нашей модели или обратиться к внешним службам. Мы можем определить несколько обработчиков для одного события, если захотим. Обработчики также могут вызывать другие события. Это позволяет нам быть очень детальными в отношении того, что делает обработчик, и действительно придерживаться SRP.
 
 
-==== Why Have We Achieved?
+==== Почему мы достигли цели?
 
 ((("events and the message bus", "transforming our app into message processor", "whole app as message bus, trade-offs")))
 ((("message bus", "whole app as, trade-offs")))
-Our ongoing objective with these architectural patterns is to try to have
-the complexity of our application grow more slowly than its size.  When we
-go all in on the message bus, as always we pay a price in terms of architectural
-complexity (see <<chapter_09_all_messagebus_tradeoffs>>), but we buy ourselves a
-pattern that can handle almost arbitrarily complex requirements without needing
-any further conceptual or architectural change to the way we do things.
+Наша основная цель в отношении этих структурных моделей заключается в том, чтобы
+	сложность нашего приложения росла медленнее, чем его размер.  Когда мы идем ва-банк на шине сообщений, то как всегда, платим цену с точки зрения архитектурной сложности (См. <<chapter_09_all_messagebus_tradeoffs>>), но мы приобретаем себе паттерн, который может обрабатывать сколь угодно сложные требования, не нуждаясь в дальнейших концептуальных или архитектурных изменениях в том, как мы делаем вещи.
 
-Here we've added quite a complicated use case (change quantity, deallocate,
-start new transaction, reallocate, publish external notification), but
-architecturally, there's been no cost in terms of complexity. We've added new
-events, new handlers, and a new external adapter (for email), all of which are
-existing categories of _things_ in our architecture that we understand and know
-how to reason about, and that are easy to explain to newcomers.  Our moving
-parts each have one job, they're connected to each other in well-defined ways,
-and there are no unexpected side effects.
+Здесь мы добавили довольно сложный вариант использования (изменить количество, освободить место, начать новую транзакцию, перераспределить место, опубликовать внешнее уведомление), но в архитектурном плане сложность не требует затрат. Мы добавили новые события, новые обработчики и новый внешний адаптер (для электронной почты), все из которых являются существующими категориями объектов в нашей архитектуре, которые понятны нам  и это легко объяснимы новичкам.  Каждая из наших подвижных частей выполняет одну задачу, они четко связаны друг с другом, и нет никаких неожиданных побочных эффектов.
 
 [[chapter_09_all_messagebus_tradeoffs]]
 [options="header"]
-.Whole app is a message bus: the trade-offs
+.Все приложение - это шина сообщений: компромиссы
 |===
-|Pros|Cons
+|Плюсы|Минусы
 a|
-* Handlers and services are the same thing, so that's simpler.
-* We have a nice data structure for inputs to the system.
+* Обработчики и сервисы - это одно и то же, так что все проще.
+* У нас есть великолепные структуры данных, чтобы ввести их в систему.
 
 a|
-* A message bus is still a slightly unpredictable way of doing things from
-  a web point of view. You don't know in advance when things are going to end.
-* There will be duplication of fields and structure between model objects and events, which will have a maintenance cost. Adding a field to one usually means adding a field to at least
-  one of the others.
+* Шина сообщений по-прежнему остается несколько непредсказуемым способом делать что-то с веб-точки зрения. Вы не знаете заранее, когда все закончится.
+* Будет происходить дублирование полей и структуры между объектами модели и событиями, что будет иметь затраты на техническое обслуживание. Добавление поля к одному обычно означает добавление поля по крайней мере к одному из других.
 |===
 
 ((("events and the message bus", "transforming our app into message processor", startref="ix_evntMBMP")))
-Now, you may be wondering, where are those `BatchQuantityChanged` events
-going to come from? The answer is revealed in a couple chapters' time.  But
-first, let's talk about <<chapter_10_commands,events versus commands>>.
+Теперь вам может быть интересно, откуда берутся эти события `BatchQuantityChanged`? Ответ станет понятен через пару глав.  Но сначала давайте поговорим о событиях в сравнении с командами <<chapter_10_commands,events versus commands>>.
 
