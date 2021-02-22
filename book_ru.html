@@ -598,6 +598,97 @@ body.manpage div.sectionbody {
 .highlight .il { color: #666666 } /* Literal.Number.Integer.Long */
 
 
+/* Asciidoctor default stylesheet | MIT License | https://asciidoctor.org */
+
+@import url("//fonts.googleapis.com/css?family=Noto+Sans:300,600italic,400,400italic,600,600italic%7CNoto+Serif:400,400italic,700,700italic%7CDroid+Sans+Mono:400,700");
+@import url(//asciidoctor.org/stylesheets/asciidoctor.css); /* Default asciidoc style framework - important */
+
+/* customisations by harry */
+
+h1, h2, h3, h4, h5, h6 {
+    position: relative;
+}
+
+a.anchor {
+    top: 0;
+}
+
+/* hide inline ditaa/plantuml source listings for images */
+.image-source {
+    display: none
+}
+/* make formal codeblocks a bit nicer */
+.exampleblock > .content {
+    padding: 2px;
+    background-color: white;
+    border: 0;
+    margin-bottom: 2em;
+}
+.exampleblock .title {
+    text-align: right;
+}
+
+/* prev/next chapter links at bottom of page */
+.prev_and_next_chapter_links {
+    margin: 10px;
+}
+.prev_chapter_link {
+    float: left;
+}
+.next_chapter_link {
+    float: right;
+}
+
+
+/* a few tweaks to existing styles */
+#toc li {
+    margin-top: 0.5em;
+}
+
+#footnotes hr {
+    width: 100%;
+}
+
+/* end customisations by harry */
+
+
+/* CUSTOMISATIONS */
+
+/* Change the values in root for quick customisation. If you want even more fine grain... venture further. */
+
+:root{
+--maincolor:#FFFFFF;
+--primarycolor:#2c3e50;
+--secondarycolor:#ba3925;
+--tertiarycolor: #186d7a;
+--sidebarbackground:#CCC;
+--linkcolor:#b71c1c;
+--linkcoloralternate:#f44336;
+--white:#FFFFFF;
+--black:#000000;
+}
+
+/* Text styles */
+h1{color:var(--primarycolor) !important;}
+
+h2,h3,h4,h5,h6{color:var(--secondarycolor) !important;}
+
+.title{color:var(--tertiarycolor) !important; font-family:"Noto Sans",sans-serif !important;font-style: normal !important; font-weight: normal !important;}
+p{font-family: "Noto Sans",sans-serif !important}
+
+/* Table styles */
+th{font-family: "Noto Sans",sans-serif !important}
+
+/* Responsiveness fixes */
+video {
+  max-width: 100%;
+}
+
+@media all and (max-width: 600px) {
+table {
+  width: 55vw!important;
+  font-size: 3vw;
+}
 </style>
 <script type="text/javascript">
 /*<![CDATA[*/
@@ -6687,12 +6778,858 @@ cellspacing="0" cellpadding="4">
 </div>
 </div>
 </div>
+<div class="sect1">
+<h2 id="chapter_09_all_messagebus">Едем в город на автобусе сообщений</h2>
+<div class="sectionbody">
+<div class="paragraph"><p>В этой главе мы начнем делать события более фундаментальными для внутренней структуры нашего приложения. Мы перейдем из текущего состояния в <a href="#maps_chapter_08_before">[maps_chapter_08_before]</a>, где события являются необязательным побочным эффектом &#8230;</p></div>
+<div class="imageblock" id="maps_chapter_08_before">
+<div class="content">
+<img src="images/apwp_0901.png" alt="images/apwp_0901.png" />
+</div>
+<div class="title">Figure 31. Раньше: шина сообщений является необязательным дополнением</div>
+</div>
+<div class="paragraph"><p>&#8230;к ситуации в <a href="#map_chapter_08_after">[map_chapter_08_after]</a>, где всё идет по шине сообщений, а наше приложение было принципиально преобразовано в процессор сообщений.</p></div>
+<div class="imageblock" id="map_chapter_08_after">
+<div class="content">
+<img src="images/apwp_0902.png" alt="images/apwp_0902.png" />
+</div>
+<div class="title">Figure 32. Шина сообщений теперь является основной точкой входа на уровень сервиса.</div>
+</div>
+<div class="admonitionblock">
+<table><tr>
+<td class="icon">
+<img src="./images/icons/tip.png" alt="Tip" />
+</td>
+<td class="content">
+<div class="paragraph"><p>Код для этой главы находится в ветке chapter_09_all_messagebus. <a href="https://oreil.ly/oKNkn">на GitHub</a>:</p></div>
+<div class="listingblock">
+<div class="content">
+<pre><code>git clone https://github.com/cosmicpython/code.git
+cd code
+git checkout chapter_09_all_messagebus
+# или, чтобы кодировать вместе, проверьте предыдущую главу:
+git checkout chapter_08_events_and_message_bus</code></pre>
+</div></div>
+</td>
+</tr></table>
+</div>
+<div class="sect2 pagebreak-before less_space">
+<h3 id="_новое_требование_приводит_нас_к_новой_архитектуре">Новое требование приводит нас к новой архитектуре</h3>
+<div class="paragraph"><p>Рич Хикки говорит о <em>situated software</em>, то есть о программном обеспечении, которое работает в течение длительных периодов времени, управляя реальным процессом. Примеры включают системы управления складом, логистические планировщики и системы расчета заработной платы.</p></div>
+<div class="paragraph"><p>Такое программное обеспечение сложно написать, потому что в реальном мире физических объектов и ненадежных людей постоянно происходят неожиданные вещи. Например:</p></div>
+<div class="ulist"><ul>
+<li>
+<p>
+Во время инвентаризации мы обнаруживаем, что три <код>ПРУЖИННЫЙ МАТРАС</код>были повреждены водой из-за протекающей крыши.
+</p>
+</li>
+<li>
+<p>
+У груза <code>RELIABLE-FORK</code>s отсутствует необходимая документация и он застрял на таможне, где находится уже в течение нескольких недель. Три  <code>RELIABLE-FORK</code>s впоследствии не проходят проверку безопасности и уничтожаются.
+</p>
+</li>
+<li>
+<p>
+Глобальная нехватка блесток означает, что мы не сможем изготовить следующую партию <code>SPARKLY-BOOKCASE</code>.
+</p>
+</li>
+</ul></div>
+<div class="paragraph"><p>В таких ситуациях мы узнаем о необходимости изменения количества партий, когда они уже находятся в системе. Может быть, кто-то ошибся номером в декларации, а может быть, какие-то диваны упали с грузовика. После разговора с представителями компании<span class="footnote"><br />[ Моделирование на основе событий настолько популярно, что для облегчения сбора требований на основе событий и разработки модели предметной области была разработана практика под названием <em>event storming</em>.]<br /></span>
+
+мы моделируем ситуацию, как на <a href="#batch_changed_events_flow_diagram">[batch_changed_events_flow_diagram]</a>.</p></div>
+<div class="imageblock" id="batch_changed_events_flow_diagram">
+<div class="content">
+<img src="images/apwp_0903.png" alt="images/apwp_0903.png" />
+</div>
+<div class="title">Figure 33. Изменение количества партии означает освобождение и перераспределение (deallocate and reallocate)</div>
+</div>
+<div class="listingblock image-source">
+<div class="content">
+<pre><code>[ditaa, apwp_0903]
++----------+    /----\      +------------+       +--------------------+
+| Batch    |--&gt; |RULE| --&gt;  | Deallocate | ----&gt; | AllocationRequired |
+| Quantity |    \----/      +------------+-+     +--------------------+-+
+| Changed  |                  | Deallocate | ----&gt; | AllocationRequired |
++----------+                  +------------+-+     +--------------------+-+
+                                | Deallocate | ----&gt; | AllocationRequired |
+                                +------------+       +--------------------+</code></pre>
+</div></div>
+<div class="paragraph"><p>Событие, которое мы назовем <code>BatchQuantityChanged</code>, должно привести нас к изменению количества в партии, да, но также и к применению <em>бизнес правила</em>: если новое количество опускается до меньшего, чем уже распределённое общее количество, нам нужно <em>dealocate</em> освободить места в этих заказы из этой партии. Затем каждый из них потребует нового распределения, которое мы можем зафиксировать как событие под названием <code>AllocationRequired</code> Требуемое распределение.</p></div>
+<div class="paragraph"><p>Возможно, вы уже ожидаете, что наша внутренняя шина сообщений и события помогут реализовать это требование. Мы могли бы определить службу под названием <code>change_batch_quantity</code>, которая знает, как корректировать количество партий, а также как <em>deallocate</em> (освобождать) любые избыточные строки заказа, а затем каждое освобождение может генерировать событие <code>AllocationRequired</code>, которое может быть перенаправлено существующей службе <code>allocate</code> (распределения) в отдельные транзакции. И снова наша шина сообщений помогает нам обеспечивать соблюдение принципа единой ответственности и позволяет нам делать выбор в отношении транзакций и целостности данных.</p></div>
+<div class="sect3">
+<h4 id="_представим_себе_изменение_архитектуры_всё_будет_span_class_keep_together_event_handler_span_обработчик_событий">Представим себе изменение архитектуры: всё будет <span class=".keep-together">event handler</span> Обработчик событий</h4>
+<div class="paragraph"><p>Но прежде чем запрыгнуть в это, подумай, куда мы направляемся.  Существует два вида потоков через нашу систему:</p></div>
+<div class="ulist"><ul>
+<li>
+<p>
+Вызовы API, которые обрабатываются функцией уровня сервиса
+</p>
+</li>
+<li>
+<p>
+Внутренние события (которые могут быть вызваны как побочный эффект функции уровня сервиса) и их обработчики (которые, в свою очередь, вызывают функции уровня сервиса)
+</p>
+</li>
+</ul></div>
+<div class="paragraph"><p>Разве не было бы проще, если бы все было обработчиком событий?  Если мы переосмыслим наши вызовы API как захват событий, функции уровня сервиса также могут быть обработчиками событий, и нам больше не нужно проводить различие между внутренними и внешними обработчиками событий:</p></div>
+<div class="ulist"><ul>
+<li>
+<p>
+<code>services.allocate()</code> может быть обработчиком события <code>AllocationRequired</code> и может выдавать события <code>Allocated</code> в качестве его выходных данных.
+</p>
+</li>
+<li>
+<p>
+<code>services.add_batch()</code> может быть обработчиком события <code>BatchCreated</code>.<span class="footnote"><br />[Если вы немного читали об архитектуре, управляемой событиями, вы можете подумать: "Некоторые из этих событий больше похожи на команды!" Терпение граждане! Мы пытаемся ввести одну концепцию за раз.   В <a href="#chapter_10_commands">следующая глава</a>, мы введем различие между командами и событиями.]<br /></span>
+  
+</p>
+</li>
+</ul></div>
+<div class="paragraph"><p>Наше новое требование будет соответствовать той же схеме:</p></div>
+<div class="ulist"><ul>
+<li>
+<p>
+Событие под названием <code>BatchQuantityChanged</code> может вызывать обработчик под названием <code>change_batch_quantity()</code>.
+  
+</p>
+</li>
+<li>
+<p>
+И новые события <code>AllocationRequired</code>, которые он может вызвать, также могут быть переданы в `services.allocate() `, поэтому нет концептуальной разницы между совершенно новым распределением, исходящим от API, и перераспределением, которое запускается изнутри deallocate.
+  
+</p>
+</li>
+</ul></div>
+<div class="paragraph"><p>Все это звучит как-то чересчур? Давайте работать над всем этим постепенно.  Мы будем следовать за рабочим процессом <a href="https://oreil.ly/W3RZM">Подготовительный рефакторинг</a>, он же гласит "Сделайте изменение легким; затем сделайте легкое изменение":</p></div>
+<div class="olist arabic"><ol class="arabic">
+<li>
+<p>
+Мы рефакторингуем наш уровень обслуживания в обработчики событий. Мы можем привыкнуть к идее о том, что события-это способ описания входов в систему. В частности, существующая функция <code>services.allocate()</code> станет обработчиком события под названием <code>AllocationRequired</code>.
+</p>
+</li>
+<li>
+<p>
+Мы создаем сквозной тест,который помещает события <code>BatchQuantityChanged</code> в систему и принимает выходящие события <code>Allocated</code>.
+</p>
+</li>
+<li>
+<p>
+Наша реализация концептуально будет очень простой: новый обработчик событий <code>BatchQuantityChanged</code>, реализация которого будет выдавать события <code>AllocationRequired</code>, которые, в свою очередь, будут обрабатываться точно таким же обработчиком распределений, который использует API.
+</p>
+</li>
+</ol></div>
+<div class="paragraph"><p>По пути мы сделаем небольшую настройку шины сообщений и UoW, перенеся ответственность за размещение (put) новых событий на шине сообщений в саму шину сообщений.</p></div>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_рефакторинг_сервисных_функций_для_обработчиков_сообщений">Рефакторинг сервисных функций для обработчиков сообщений</h3>
+<div class="paragraph"><p>Мы начинаем с определения двух событий, которые фиксируют наши текущие входные данные API - <code> AllocationRequired </code> и <code>BatchCreated</code>:</p></div>
+<div class="exampleblock" id="two_new_events">
+<div class="title">Example 106. События BatchCreated и AllocationRequired (src/allocation/domain/events.py)</div>
+<div class="content">
+<div class="listingblock">
+<div class="content"><div class="highlight"><pre><span></span><span class="nd">@dataclass</span>
+<span class="k">class</span> <span class="nc">BatchCreated</span><span class="p">(</span><span class="n">Event</span><span class="p">):</span>
+    <span class="n">ref</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">sku</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">qty</span><span class="p">:</span> <span class="nb">int</span>
+    <span class="n">eta</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">date</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+
+<span class="o">...</span>
+
+<span class="nd">@dataclass</span>
+<span class="k">class</span> <span class="nc">AllocationRequired</span><span class="p">(</span><span class="n">Event</span><span class="p">):</span>
+    <span class="n">orderid</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">sku</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">qty</span><span class="p">:</span> <span class="nb">int</span>
+</pre></div></div></div>
+</div></div>
+<div class="paragraph"><p>Затем мы переименовываем <em>services.py</em> в <em>handlers.py</em>; мы добавляем обработчик текущих сообщений для <code>send_out_of_stock_notification</code>; и самое главное, мы меняем все обработчики так, чтобы у них были одинаковые входные данные, событие и UoW:</p></div>
+<div class="exampleblock" id="services_to_handlers">
+<div class="title">Example 107. Обработчики и сервисы - это одно и то же (src/allocation/service_layer/handlers.py)</div>
+<div class="content">
+<div class="listingblock">
+<div class="content"><div class="highlight"><pre><span></span><span class="k">def</span> <span class="nf">add_batch</span><span class="p">(</span>
+        <span class="n">event</span><span class="p">:</span> <span class="n">events</span><span class="o">.</span><span class="n">BatchCreated</span><span class="p">,</span> <span class="n">uow</span><span class="p">:</span> <span class="n">unit_of_work</span><span class="o">.</span><span class="n">AbstractUnitOfWork</span>
+<span class="p">):</span>
+    <span class="k">with</span> <span class="n">uow</span><span class="p">:</span>
+        <span class="n">product</span> <span class="o">=</span> <span class="n">uow</span><span class="o">.</span><span class="n">products</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">sku</span><span class="o">=</span><span class="n">event</span><span class="o">.</span><span class="n">sku</span><span class="p">)</span>
+        <span class="o">...</span>
+
+
+<span class="k">def</span> <span class="nf">allocate</span><span class="p">(</span>
+        <span class="n">event</span><span class="p">:</span> <span class="n">events</span><span class="o">.</span><span class="n">AllocationRequired</span><span class="p">,</span> <span class="n">uow</span><span class="p">:</span> <span class="n">unit_of_work</span><span class="o">.</span><span class="n">AbstractUnitOfWork</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+    <span class="n">line</span> <span class="o">=</span> <span class="n">OrderLine</span><span class="p">(</span><span class="n">event</span><span class="o">.</span><span class="n">orderid</span><span class="p">,</span> <span class="n">event</span><span class="o">.</span><span class="n">sku</span><span class="p">,</span> <span class="n">event</span><span class="o">.</span><span class="n">qty</span><span class="p">)</span>
+    <span class="o">...</span>
+
+
+<span class="k">def</span> <span class="nf">send_out_of_stock_notification</span><span class="p">(</span>
+        <span class="n">event</span><span class="p">:</span> <span class="n">events</span><span class="o">.</span><span class="n">OutOfStock</span><span class="p">,</span> <span class="n">uow</span><span class="p">:</span> <span class="n">unit_of_work</span><span class="o">.</span><span class="n">AbstractUnitOfWork</span><span class="p">,</span>
+<span class="p">):</span>
+    <span class="n">email</span><span class="o">.</span><span class="n">send</span><span class="p">(</span>
+        <span class="s1">&#39;stock@made.com&#39;</span><span class="p">,</span>
+        <span class="sa">f</span><span class="s1">&#39;Out of stock for </span><span class="si">{</span><span class="n">event</span><span class="o">.</span><span class="n">sku</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">,</span>
+    <span class="p">)</span>
+</pre></div></div></div>
+</div></div>
+<div class="paragraph"><p>Это изменение станет более ясным если помотреть на различие:</p></div>
+<div class="exampleblock" id="services_to_handlers_diff">
+<div class="title">Example 108. Переход от сервисов к обработчикам (src/allocation/service_layer/handlers.py)</div>
+<div class="content">
+<div class="listingblock">
+<div class="content"><div class="highlight"><pre><span></span> def add_batch(
+<span class="gd">-        ref: str, sku: str, qty: int, eta: Optional[date],</span>
+<span class="gd">-        uow: unit_of_work.AbstractUnitOfWork</span>
+<span class="gi">+        event: events.BatchCreated, uow: unit_of_work.AbstractUnitOfWork</span>
+ ):
+     with uow:
+<span class="gd">-        product = uow.products.get(sku=sku)</span>
+<span class="gi">+        product = uow.products.get(sku=event.sku)</span>
+     ...
+
+
+ def allocate(
+<span class="gd">-        orderid: str, sku: str, qty: int,</span>
+<span class="gd">-        uow: unit_of_work.AbstractUnitOfWork</span>
+<span class="gi">+        event: events.AllocationRequired, uow: unit_of_work.AbstractUnitOfWork</span>
+ ) -&gt; str:
+<span class="gd">-    line = OrderLine(orderid, sku, qty)</span>
+<span class="gi">+    line = OrderLine(event.orderid, event.sku, event.qty)</span>
+     ...
+
+<span class="gi">+</span>
+<span class="gi">+def send_out_of_stock_notification(</span>
+<span class="gi">+        event: events.OutOfStock, uow: unit_of_work.AbstractUnitOfWork,</span>
+<span class="gi">+):</span>
+<span class="gi">+    email.send(</span>
+     ...
+</pre></div></div></div>
+</div></div>
+<div class="paragraph"><p>Попутно мы сделали API нашего сервисного уровня более структурированным и последовательным. Это было рассеяние примитивов, и теперь используются четко определенные объекты (см. Следующую главу).</p></div>
+<div class="sidebarblock nobreakinside less_space">
+<div class="content">
+<div class="title">От Domain Objects через Primitive Obsession к <span class=". keep-together">событиям в качестве интерфейса</span></div>
+<div class="paragraph"><p>Некоторые из вас, возможно, помнят <a href="#primitive_obsession">[primitive_obsession]</a>, в котором мы изменили наш API сервисного уровня с точки зрения доменных объектов на примитивы. А теперь мы возвращаемся назад, но к другим объектам?  Что это дает?</p></div>
+<div class="paragraph"><p>В кругах ОО люди говорят о <em>primitive obsession</em> как об антипаттере: Они скорее всего порекомендовали  бы, избегать примитивов в общедоступных API и вместо этого оборачивать их пользовательскими классами значений. В мире Python многие люди отнесутся к этому весьма скептически. При бездумном применении это, безусловно, рецепт ненужной сложности. Так что, по сути, мы этим не занимаемся.</p></div>
+<div class="paragraph"><p>Переход от доменных объектов к примитивам принес нам хорошую развязку: наш клиентский код больше не был связан непосредственно с доменом, поэтому уровень сервиса мог представить API, который остается неизменным, даже если мы решим внести изменения в нашу модель, и наоборот.</p></div>
+<div class="paragraph"><p>Итак, мы отступили? Ну, наши основные объекты модели предметной области по-прежнему свободны варьироваться, но вместо этого мы связали внешний мир с нашими классами событий. Они тоже часть домена, но есть надежда, что они меняются реже, так что они разумный артефакт для пары.</p></div>
+<div class="paragraph"><p>И что мы приобрели? Теперь при вызове варианта использования в нашем приложении нам больше не нужно запоминать конкретную комбинацию примитивов, а только один класс событий, представляющий входные данные для нашего приложения. Это концептуально довольно мило. Кроме того, как вы увидите в <a href="#appendix_validation">[appendix_validation]</a>, эти классы событий могут быть хорошим местом для некоторой проверки входных данных.</p></div>
+</div></div>
+<div class="sect3">
+<h4 id="_the_message_bus_now_collects_events_from_the_uow">The Message Bus Now Collects Events from the UoW</h4>
+<div class="paragraph"><p>Наши обработчики событий теперь нуждаются в UoW. Кроме того, поскольку наша шина сообщений становится всё более центральной для нашего приложения, имеет смысл явно возложить на неё ответственность за сбор и обработку новых событий. До сих пор существовала некоторая циклическая зависимость между UoW и шиной сообщений, так что это сделает её односторонней.  Вместо того, чтобы иметь события UoW <em>push</em> на шине сообщений, мы будем иметь события message bus <em>pull</em> из UoW.</p></div>
+<div class="exampleblock" id="handle_has_uow_and_queue">
+<div class="title">Example 109. Handle принимает UoW и управляет очередью (src/allocation/service_layer/messagebus.py)</div>
+<div class="content">
+<div class="listingblock non-head">
+<div class="content"><div class="highlight"><pre><span></span><span class="k">def</span> <span class="nf">handle</span><span class="p">(</span><span class="n">event</span><span class="p">:</span> <span class="n">events</span><span class="o">.</span><span class="n">Event</span><span class="p">,</span> <span class="n">uow</span><span class="p">:</span> <span class="n">unit_of_work</span><span class="o">.</span><span class="n">AbstractUnitOfWork</span><span class="p">):</span>  <span class="c1">#<img src="./images/icons/callouts/1.png" alt="1" /></span>
+    <span class="n">queue</span> <span class="o">=</span> <span class="p">[</span><span class="n">event</span><span class="p">]</span>  <span class="c1">#<img src="./images/icons/callouts/2.png" alt="2" /></span>
+    <span class="k">while</span> <span class="n">queue</span><span class="p">:</span>
+        <span class="n">event</span> <span class="o">=</span> <span class="n">queue</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>  <span class="c1">#<img src="./images/icons/callouts/3.png" alt="3" /></span>
+        <span class="k">for</span> <span class="n">handler</span> <span class="ow">in</span> <span class="n">HANDLERS</span><span class="p">[</span><span class="nb">type</span><span class="p">(</span><span class="n">event</span><span class="p">)]:</span>  <span class="c1">#<img src="./images/icons/callouts/3.png" alt="3" /></span>
+            <span class="n">handler</span><span class="p">(</span><span class="n">event</span><span class="p">,</span> <span class="n">uow</span><span class="o">=</span><span class="n">uow</span><span class="p">)</span>  <span class="c1">#<img src="./images/icons/callouts/4.png" alt="4" /></span>
+            <span class="n">queue</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">uow</span><span class="o">.</span><span class="n">collect_new_events</span><span class="p">())</span>  <span class="c1">#<img src="./images/icons/callouts/5.png" alt="5" /></span>
+</pre></div></div></div>
+</div></div>
+<div class="colist arabic"><table>
+<tr><td><img src="./images/icons/callouts/1.png" alt="1" /></td><td>
+Шина сообщений теперь проходит UoW при каждом запуске.
+</td></tr>
+<tr><td><img src="./images/icons/callouts/2.png" alt="2" /></td><td>
+Когда мы начинаем обрабатывать наше первое событие, мы запускаем очередь.
+</td></tr>
+<tr><td><img src="./images/icons/callouts/3.png" alt="3" /></td><td>
+Мы извлекаем события из передней части очереди и вызываем их обработчики (<span class=". keep-together"><code>HANDLERS</code></span> dict не изменился; он по-прежнему сопоставляет типы событий с функциями обработчиков).
+</td></tr>
+<tr><td><img src="./images/icons/callouts/4.png" alt="4" /></td><td>
+Шина сообщений передает UoW каждому обработчику.
+</td></tr>
+<tr><td><img src="./images/icons/callouts/5.png" alt="5" /></td><td>
+После завершения каждого обработчика мы собираем все новые сгенерированные события и добавляем их в очередь.
+</td></tr>
+</table></div>
+<div class="paragraph"><p>В <em>unit_of_work.py</em> 'publish_events()` становится менее активным методом, <code>collect_new_events()</code>:</p></div>
+<div class="exampleblock" id="uow_collect_new_events">
+<div class="title">Example 110. UoW больше не помещает события прямо в шину (src/allocation/service_layer/unit_of_work.py)</div>
+<div class="content">
+<div class="listingblock">
+<div class="content"><div class="highlight"><pre><span></span><span class="gd">-from . import messagebus  #<img src="./images/icons/callouts/1.png" alt="1" /></span>
+<span class="gd">-</span>
+
+
+ class AbstractUnitOfWork(abc.ABC):
+<span class="gu">@@ -23,13 +21,11 @@ class AbstractUnitOfWork(abc.ABC):</span>
+
+     def commit(self):
+         self._commit()
+<span class="gd">-        self.publish_events()  #<img src="./images/icons/callouts/2.png" alt="2" /></span>
+
+<span class="gd">-    def publish_events(self):</span>
+<span class="gi">+    def collect_new_events(self):</span>
+         for product in self.products.seen:
+             while product.events:
+<span class="gd">-                event = product.events.pop(0)</span>
+<span class="gd">-                messagebus.handle(event)</span>
+<span class="gi">+                yield product.events.pop(0)  #<img src="./images/icons/callouts/3.png" alt="3" /></span>
+</pre></div></div></div>
+</div></div>
+<div class="colist arabic"><table>
+<tr><td><img src="./images/icons/callouts/1.png" alt="1" /></td><td>
+Модуль <code>unit_of_work</code> теперь больше не зависит от <code>messagebus</code>.
+</td></tr>
+<tr><td><img src="./images/icons/callouts/2.png" alt="2" /></td><td>
+Мы больше не выполняем <code>publish_events</code> автоматически при фиксации. Вместо этого шина сообщений отслеживает очередь событий.
+</td></tr>
+<tr><td><img src="./images/icons/callouts/3.png" alt="3" /></td><td>
+И UoW больше не размещает активные события в шину сообщений; он просто делает их доступными.
+</td></tr>
+</table></div>
+</div>
+<div class="sect3 pagebreak-before less_space">
+<h4 id="_наши_тесты_тоже_написаны_в_терминах_событий">Наши тесты тоже написаны в терминах событий</h4>
+<div class="paragraph"><p>Наши тесты теперь работают, создавая события и помещая их в шину сообщений, а не вызывая функции сервисного уровня напрямую:</p></div>
+<div class="exampleblock" id="handler_tests">
+<div class="title">Example 111. Тесты обработчиков используют события (tests/unit/test_handlers.py)</div>
+<div class="content">
+<div class="listingblock">
+<div class="content"><div class="highlight"><pre><span></span>class TestAddBatch:
+
+     def test_for_new_product(self):
+         uow = FakeUnitOfWork()
+<span class="gd">-        services.add_batch(&quot;b1&quot;, &quot;CRUNCHY-ARMCHAIR&quot;, 100, None, uow)</span>
+<span class="gi">+        messagebus.handle(</span>
+<span class="gi">+            events.BatchCreated(&quot;b1&quot;, &quot;CRUNCHY-ARMCHAIR&quot;, 100, None), uow</span>
+<span class="gi">+        )</span>
+         assert uow.products.get(&quot;CRUNCHY-ARMCHAIR&quot;) is not None
+         assert uow.committed
+
+...
+
+ class TestAllocate:
+
+     def test_returns_allocation(self):
+         uow = FakeUnitOfWork()
+<span class="gd">-        services.add_batch(&quot;batch1&quot;, &quot;COMPLICATED-LAMP&quot;, 100, None, uow)</span>
+<span class="gd">-        result = services.allocate(&quot;o1&quot;, &quot;COMPLICATED-LAMP&quot;, 10, uow)</span>
+<span class="gi">+        messagebus.handle(</span>
+<span class="gi">+            events.BatchCreated(&quot;batch1&quot;, &quot;COMPLICATED-LAMP&quot;, 100, None), uow</span>
+<span class="gi">+        )</span>
+<span class="gi">+        result = messagebus.handle(</span>
+<span class="gi">+            events.AllocationRequired(&quot;o1&quot;, &quot;COMPLICATED-LAMP&quot;, 10), uow</span>
+<span class="gi">+        )</span>
+         assert result == &quot;batch1&quot;
+</pre></div></div></div>
+</div></div>
+</div>
+<div class="sect3">
+<h4 id="temporary_ugly_hack">Временный Наглый Взлом:  шина сообщений должна возвращать результаты</h4>
+<div class="paragraph"><p>Наш API и наш уровень сервиса в настоящее время хотят узнать выделенную ссылку на пакет, когда они вызывают наш обработчик <code>allocate()</code>. Это означает, что нам нужно временно взломать нашу шину сообщений, чтобы она возвращала события:</p></div>
+<div class="exampleblock" id="hack_messagebus_results">
+<div class="title">Example 112. Message bus returns results (src/allocation/service_layer/messagebus.py)</div>
+<div class="content">
+<div class="listingblock">
+<div class="content"><div class="highlight"><pre><span></span> def handle(event: events.Event, uow: unit_of_work.AbstractUnitOfWork):
+<span class="gi">+    results = []</span>
+     queue = [event]
+     while queue:
+         event = queue.pop(0)
+         for handler in HANDLERS[type(event)]:
+<span class="gd">-            handler(event, uow=uow)</span>
+<span class="gi">+            results.append(handler(event, uow=uow))</span>
+             queue.extend(uow.collect_new_events())
+<span class="gi">+    return results</span>
+</pre></div></div></div>
+</div></div>
+<div class="paragraph"><p>Это потому, что мы смешиваем обязанности чтения и записи в нашей системе. Мы вернемся, чтобы исправить эту неприятность в <a href="#chapter_12_cqrs">[chapter_12_cqrs]</a>.</p></div>
+</div>
+<div class="sect3">
+<h4 id="_изменение_нашего_api_для_работы_с_событиями">Изменение нашего API для работы с событиями</h4>
+<div class="exampleblock" id="flask_uses_messagebus">
+<div class="title">Example 113. Diff при замене Flask на шину сообщений (src/allocation/entrypoints/flask_app.py)</div>
+<div class="content">
+<div class="listingblock">
+<div class="content"><div class="highlight"><pre><span></span> @app.route(&quot;/allocate&quot;, methods=[&#39;POST&#39;])
+ def allocate_endpoint():
+     try:
+<span class="gd">-        batchref = services.allocate(</span>
+<span class="gd">-            request.json[&#39;orderid&#39;],  #<img src="./images/icons/callouts/1.png" alt="1" /></span>
+<span class="gd">-            request.json[&#39;sku&#39;],</span>
+<span class="gd">-            request.json[&#39;qty&#39;],</span>
+<span class="gd">-            unit_of_work.SqlAlchemyUnitOfWork(),</span>
+<span class="gi">+        event = events.AllocationRequired(  #<img src="./images/icons/callouts/2.png" alt="2" /></span>
+<span class="gi">+            request.json[&#39;orderid&#39;], request.json[&#39;sku&#39;], request.json[&#39;qty&#39;],</span>
+         )
+<span class="gi">+        results = messagebus.handle(event, unit_of_work.SqlAlchemyUnitOfWork())  #<img src="./images/icons/callouts/3.png" alt="3" /></span>
+<span class="gi">+        batchref = results.pop(0)</span>
+     except InvalidSku as e:
+</pre></div></div></div>
+</div></div>
+<div class="colist arabic"><table>
+<tr><td><img src="./images/icons/callouts/1.png" alt="1" /></td><td>
+Вместо вызова уровня сервиса с кучей примитивов, извлеченных из запроса JSON &#8230;
+</td></tr>
+<tr><td><img src="./images/icons/callouts/2.png" alt="2" /></td><td>
+Создаем событие.
+</td></tr>
+<tr><td><img src="./images/icons/callouts/3.png" alt="3" /></td><td>
+Затем передаем его в шину сообщений.
+</td></tr>
+</table></div>
+<div class="paragraph"><p>И мы должны вернуться к полностью функциональному приложению, но теперь полностью управляемому событиями:</p></div>
+<div class="ulist"><ul>
+<li>
+<p>
+То, что раньше было функциями сервисного уровня, теперь стало обработчиками событий.
+</p>
+</li>
+<li>
+<p>
+Это делает их такими же, как функции, которые мы вызываем для обработки внутренних событий, вызванных нашей моделью предметной области.
+</p>
+</li>
+<li>
+<p>
+Мы используем события в качестве структуры данных для сбора входных данных в систему, а также для передачи внутренних рабочих пакетов.
+</p>
+</li>
+<li>
+<p>
+Теперь все приложение лучше всего описать как процессор сообщений или, если хотите, процессор событий.  Мы поговорим об этом различии в следующей главе<a href="#chapter_10_commands">[chapter_10_commands]</a>.
+</p>
+</li>
+</ul></div>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_реализация_нашего_нового_требования_requirement">Реализация нашего нового требования (Requirement)</h3>
+<div class="paragraph"><p>Мы закончили с фазой рефакторинга. Давайте посмотрим, действительно ли мы "сделали изменение легким."  Давайте реализуем наше новое требование, показанное в <a href="#reallocation_sequence_diagram">[reallocation_sequence_diagram]</a>: мы получим в качестве входных данных некоторые новые события <code>BatchQuantityChanged</code> и передадим их обработчику, который, в свою очередь, может выдать некоторые события <code>AllocationRequired</code>, а те, в свою очередь, вернутся к нашему существующему обработчику для перераспределения.</p></div>
+<div class="imageblock width-75" id="reallocation_sequence_diagram">
+<div class="content">
+<img src="images/apwp_0904.png" alt="images/apwp_0904.png" />
+</div>
+<div class="title">Figure 34. Диаграмма последовательности для потока перераспределения</div>
+</div>
+<div class="listingblock image-source">
+<div class="content">
+<pre><code>[plantuml, apwp_0904, config=plantuml.cfg]
+@startuml
+scale 4
+
+API -&gt; MessageBus : BatchQuantityChanged event
+
+group BatchQuantityChanged Handler + Unit of Work 1
+    MessageBus -&gt; Domain_Model : change batch quantity
+    Domain_Model -&gt; MessageBus : emit AllocationRequired event(s)
+end
+
+
+group AllocationRequired Handler + Unit of Work 2 (or more)
+    MessageBus -&gt; Domain_Model : allocate
+end
+
+@enduml</code></pre>
+</div></div>
+<div class="admonitionblock">
+<table><tr>
+<td class="icon">
+<img src="./images/icons/warning.png" alt="Warning" />
+</td>
+<td class="content">Когда вы разделяете вещи таким образом на две единицы работы, то у вас получаются две транзакции базы данных, поэтому вы открываете себя для проблем целостности: что-то может произойти, и это означает, что первая транзакция завершается, а вторая-нет. Вам нужно будет подумать о том, приемлемо ли это, и нужно ли вам замечать, когда это происходит, и что-то с этим делать.     См. <a href="#footguns">[footguns]</a> для более подробного обсуждения.
+    
+    </td>
+</tr></table>
+</div>
+<div class="sect3">
+<h4 id="_наше_новое_событие">Наше новое событие</h4>
+<div class="paragraph"><p>Событие, которое говорит нам, что количество партии изменилось, простое; ему просто нужна ссылка на партию и новое количество:</p></div>
+<div class="exampleblock" id="batch_quantity_changed_event">
+<div class="title">Example 114. Новое событие (src/allocation/domain/events.py)</div>
+<div class="content">
+<div class="listingblock">
+<div class="content"><div class="highlight"><pre><span></span><span class="nd">@dataclass</span>
+<span class="k">class</span> <span class="nc">BatchQuantityChanged</span><span class="p">(</span><span class="n">Event</span><span class="p">):</span>
+    <span class="n">ref</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">qty</span><span class="p">:</span> <span class="nb">int</span>
+</pre></div></div></div>
+</div></div>
+</div>
+</div>
+<div class="sect2">
+<h3 id="test-driving-ch9">Test-Driving нового Handler</h3>
+<div class="paragraph"><p>Следуя урокам, извлеченным из <a href="#chapter_04_service_layer">[chapter_04_service_layer]</a>, мы можем работать на «высокой передаче» и писать наши модульные тесты на максимально возможном уровне абстракции с точки зрения событий. Вот как они могут выглядеть:</p></div>
+<div class="exampleblock" id="test_change_batch_quantity_handler">
+<div class="title">Example 115. Тесты обработчика для change_batch_quantity (tests/unit/test_handlers.py)</div>
+<div class="content">
+<div class="listingblock">
+<div class="content"><div class="highlight"><pre><span></span><span class="k">class</span> <span class="nc">TestChangeBatchQuantity</span><span class="p">:</span>
+
+    <span class="k">def</span> <span class="nf">test_changes_available_quantity</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">uow</span> <span class="o">=</span> <span class="n">FakeUnitOfWork</span><span class="p">()</span>
+        <span class="n">messagebus</span><span class="o">.</span><span class="n">handle</span><span class="p">(</span>
+            <span class="n">events</span><span class="o">.</span><span class="n">BatchCreated</span><span class="p">(</span><span class="s2">&quot;batch1&quot;</span><span class="p">,</span> <span class="s2">&quot;ADORABLE-SETTEE&quot;</span><span class="p">,</span> <span class="mi">100</span><span class="p">,</span> <span class="kc">None</span><span class="p">),</span> <span class="n">uow</span>
+        <span class="p">)</span>
+        <span class="p">[</span><span class="n">batch</span><span class="p">]</span> <span class="o">=</span> <span class="n">uow</span><span class="o">.</span><span class="n">products</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">sku</span><span class="o">=</span><span class="s2">&quot;ADORABLE-SETTEE&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">batches</span>
+        <span class="k">assert</span> <span class="n">batch</span><span class="o">.</span><span class="n">available_quantity</span> <span class="o">==</span> <span class="mi">100</span>  <span class="c1">#<img src="./images/icons/callouts/1.png" alt="1" /></span>
+
+        <span class="n">messagebus</span><span class="o">.</span><span class="n">handle</span><span class="p">(</span><span class="n">events</span><span class="o">.</span><span class="n">BatchQuantityChanged</span><span class="p">(</span><span class="s2">&quot;batch1&quot;</span><span class="p">,</span> <span class="mi">50</span><span class="p">),</span> <span class="n">uow</span><span class="p">)</span>
+
+        <span class="k">assert</span> <span class="n">batch</span><span class="o">.</span><span class="n">available_quantity</span> <span class="o">==</span> <span class="mi">50</span>  <span class="c1">#<img src="./images/icons/callouts/1.png" alt="1" /></span>
+
+
+    <span class="k">def</span> <span class="nf">test_reallocates_if_necessary</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">uow</span> <span class="o">=</span> <span class="n">FakeUnitOfWork</span><span class="p">()</span>
+        <span class="n">event_history</span> <span class="o">=</span> <span class="p">[</span>
+            <span class="n">events</span><span class="o">.</span><span class="n">BatchCreated</span><span class="p">(</span><span class="s2">&quot;batch1&quot;</span><span class="p">,</span> <span class="s2">&quot;INDIFFERENT-TABLE&quot;</span><span class="p">,</span> <span class="mi">50</span><span class="p">,</span> <span class="kc">None</span><span class="p">),</span>
+            <span class="n">events</span><span class="o">.</span><span class="n">BatchCreated</span><span class="p">(</span><span class="s2">&quot;batch2&quot;</span><span class="p">,</span> <span class="s2">&quot;INDIFFERENT-TABLE&quot;</span><span class="p">,</span> <span class="mi">50</span><span class="p">,</span> <span class="n">date</span><span class="o">.</span><span class="n">today</span><span class="p">()),</span>
+            <span class="n">events</span><span class="o">.</span><span class="n">AllocationRequired</span><span class="p">(</span><span class="s2">&quot;order1&quot;</span><span class="p">,</span> <span class="s2">&quot;INDIFFERENT-TABLE&quot;</span><span class="p">,</span> <span class="mi">20</span><span class="p">),</span>
+            <span class="n">events</span><span class="o">.</span><span class="n">AllocationRequired</span><span class="p">(</span><span class="s2">&quot;order2&quot;</span><span class="p">,</span> <span class="s2">&quot;INDIFFERENT-TABLE&quot;</span><span class="p">,</span> <span class="mi">20</span><span class="p">),</span>
+        <span class="p">]</span>
+        <span class="k">for</span> <span class="n">e</span> <span class="ow">in</span> <span class="n">event_history</span><span class="p">:</span>
+            <span class="n">messagebus</span><span class="o">.</span><span class="n">handle</span><span class="p">(</span><span class="n">e</span><span class="p">,</span> <span class="n">uow</span><span class="p">)</span>
+        <span class="p">[</span><span class="n">batch1</span><span class="p">,</span> <span class="n">batch2</span><span class="p">]</span> <span class="o">=</span> <span class="n">uow</span><span class="o">.</span><span class="n">products</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">sku</span><span class="o">=</span><span class="s2">&quot;INDIFFERENT-TABLE&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">batches</span>
+        <span class="k">assert</span> <span class="n">batch1</span><span class="o">.</span><span class="n">available_quantity</span> <span class="o">==</span> <span class="mi">10</span>
+        <span class="k">assert</span> <span class="n">batch2</span><span class="o">.</span><span class="n">available_quantity</span> <span class="o">==</span> <span class="mi">50</span>
+
+        <span class="n">messagebus</span><span class="o">.</span><span class="n">handle</span><span class="p">(</span><span class="n">events</span><span class="o">.</span><span class="n">BatchQuantityChanged</span><span class="p">(</span><span class="s2">&quot;batch1&quot;</span><span class="p">,</span> <span class="mi">25</span><span class="p">),</span> <span class="n">uow</span><span class="p">)</span>
+
+        <span class="c1"># order1 or order2 will be deallocated, so we&#39;ll have 25 - 20</span>
+        <span class="k">assert</span> <span class="n">batch1</span><span class="o">.</span><span class="n">available_quantity</span> <span class="o">==</span> <span class="mi">5</span>  <span class="c1">#<img src="./images/icons/callouts/2.png" alt="2" /></span>
+        <span class="c1"># and 20 will be reallocated to the next batch</span>
+        <span class="k">assert</span> <span class="n">batch2</span><span class="o">.</span><span class="n">available_quantity</span> <span class="o">==</span> <span class="mi">30</span>  <span class="c1">#<img src="./images/icons/callouts/2.png" alt="2" /></span>
+</pre></div></div></div>
+</div></div>
+<div class="colist arabic"><table>
+<tr><td><img src="./images/icons/callouts/1.png" alt="1" /></td><td>
+Простой случай будет тривиально легко реализовать; мы просто модифицируем количество.
+</td></tr>
+<tr><td><img src="./images/icons/callouts/2.png" alt="2" /></td><td>
+Но если мы попытаемся изменить количество на меньшее, чем было выделено, нам нужно будет исключить по крайней мере один заказ, и перераспределить его на новую ожидаемую партию.
+</td></tr>
+</table></div>
+<div class="sect3">
+<h4 id="_реализация">Реализация</h4>
+<div class="paragraph"><p>Наш новый обработчик очень прост:</p></div>
+<div class="exampleblock" id="change_quantity_handler">
+<div class="title">Example 116. Обработчик делегирует уровень модели (src/allocation/service_layer/handlers.py)</div>
+<div class="content">
+<div class="listingblock">
+<div class="content"><div class="highlight"><pre><span></span><span class="k">def</span> <span class="nf">change_batch_quantity</span><span class="p">(</span>
+        <span class="n">event</span><span class="p">:</span> <span class="n">events</span><span class="o">.</span><span class="n">BatchQuantityChanged</span><span class="p">,</span> <span class="n">uow</span><span class="p">:</span> <span class="n">unit_of_work</span><span class="o">.</span><span class="n">AbstractUnitOfWork</span>
+<span class="p">):</span>
+    <span class="k">with</span> <span class="n">uow</span><span class="p">:</span>
+        <span class="n">product</span> <span class="o">=</span> <span class="n">uow</span><span class="o">.</span><span class="n">products</span><span class="o">.</span><span class="n">get_by_batchref</span><span class="p">(</span><span class="n">batchref</span><span class="o">=</span><span class="n">event</span><span class="o">.</span><span class="n">ref</span><span class="p">)</span>
+        <span class="n">product</span><span class="o">.</span><span class="n">change_batch_quantity</span><span class="p">(</span><span class="n">ref</span><span class="o">=</span><span class="n">event</span><span class="o">.</span><span class="n">ref</span><span class="p">,</span> <span class="n">qty</span><span class="o">=</span><span class="n">event</span><span class="o">.</span><span class="n">qty</span><span class="p">)</span>
+        <span class="n">uow</span><span class="o">.</span><span class="n">commit</span><span class="p">()</span>
+</pre></div></div></div>
+</div></div>
+<div class="paragraph"><p>Мы понимаем, что нам понадобится новый тип запроса в нашем репозитории:</p></div>
+<div class="exampleblock" id="get_by_batchref">
+<div class="title">Example 117. Новый тип запроса в нашем репозитории (src/allocation/adapters/repository.py)</div>
+<div class="content">
+<div class="listingblock">
+<div class="content"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span class="normal"> 1</span>
+<span class="normal"> 2</span>
+<span class="normal"> 3</span>
+<span class="normal"> 4</span>
+<span class="normal"> 5</span>
+<span class="normal"> 6</span>
+<span class="normal"> 7</span>
+<span class="normal"> 8</span>
+<span class="normal"> 9</span>
+<span class="normal">10</span>
+<span class="normal">11</span>
+<span class="normal">12</span>
+<span class="normal">13</span>
+<span class="normal">14</span>
+<span class="normal">15</span>
+<span class="normal">16</span>
+<span class="normal">17</span>
+<span class="normal">18</span>
+<span class="normal">19</span>
+<span class="normal">20</span>
+<span class="normal">21</span>
+<span class="normal">22</span>
+<span class="normal">23</span>
+<span class="normal">24</span>
+<span class="normal">25</span>
+<span class="normal">26</span>
+<span class="normal">27</span>
+<span class="normal">28</span>
+<span class="normal">29</span>
+<span class="normal">30</span>
+<span class="normal">31</span>
+<span class="normal">32</span>
+<span class="normal">33</span>
+<span class="normal">34</span>
+<span class="normal">35</span></pre></div></td><td class="code"><div class="highlight"><pre><span></span><span class="k">class</span> <span class="nc">AbstractRepository</span><span class="p">(</span><span class="n">abc</span><span class="o">.</span><span class="n">ABC</span><span class="p">):</span>
+    <span class="o">...</span>
+
+    <span class="k">def</span> <span class="nf">get</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">sku</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">model</span><span class="o">.</span><span class="n">Product</span><span class="p">:</span>
+        <span class="o">...</span>
+
+    <span class="k">def</span> <span class="nf">get_by_batchref</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">batchref</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">model</span><span class="o">.</span><span class="n">Product</span><span class="p">:</span>
+        <span class="n">product</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_by_batchref</span><span class="p">(</span><span class="n">batchref</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">product</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">seen</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">product</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">product</span>
+
+    <span class="nd">@abc</span><span class="o">.</span><span class="n">abstractmethod</span>
+    <span class="k">def</span> <span class="nf">_add</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">product</span><span class="p">:</span> <span class="n">model</span><span class="o">.</span><span class="n">Product</span><span class="p">):</span>
+        <span class="k">raise</span> <span class="ne">NotImplementedError</span>
+
+    <span class="nd">@abc</span><span class="o">.</span><span class="n">abstractmethod</span>
+    <span class="k">def</span> <span class="nf">_get</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">sku</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">model</span><span class="o">.</span><span class="n">Product</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">NotImplementedError</span>
+
+    <span class="nd">@abc</span><span class="o">.</span><span class="n">abstractmethod</span>
+    <span class="k">def</span> <span class="nf">_get_by_batchref</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">batchref</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">model</span><span class="o">.</span><span class="n">Product</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">NotImplementedError</span>
+    <span class="o">...</span>
+
+<span class="k">class</span> <span class="nc">SqlAlchemyRepository</span><span class="p">(</span><span class="n">AbstractRepository</span><span class="p">):</span>
+    <span class="o">...</span>
+
+    <span class="k">def</span> <span class="nf">_get</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">sku</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">session</span><span class="o">.</span><span class="n">query</span><span class="p">(</span><span class="n">model</span><span class="o">.</span><span class="n">Product</span><span class="p">)</span><span class="o">.</span><span class="n">filter_by</span><span class="p">(</span><span class="n">sku</span><span class="o">=</span><span class="n">sku</span><span class="p">)</span><span class="o">.</span><span class="n">first</span><span class="p">()</span>
+
+    <span class="k">def</span> <span class="nf">_get_by_batchref</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">batchref</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">session</span><span class="o">.</span><span class="n">query</span><span class="p">(</span><span class="n">model</span><span class="o">.</span><span class="n">Product</span><span class="p">)</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">model</span><span class="o">.</span><span class="n">Batch</span><span class="p">)</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span>
+            <span class="n">orm</span><span class="o">.</span><span class="n">batches</span><span class="o">.</span><span class="n">c</span><span class="o">.</span><span class="n">reference</span> <span class="o">==</span> <span class="n">batchref</span><span class="p">,</span>
+        <span class="p">)</span><span class="o">.</span><span class="n">first</span><span class="p">()</span>
+</pre></div>
+</td></tr></table></div></div>
+</div></div>
+<div class="paragraph"><p>И в нашем FakeRepository:</p></div>
+<div class="exampleblock" id="fakerepo_get_by_batchref">
+<div class="title">Example 118. Обновление фейкового репо тоже (tests/unit/test_handlers.py)</div>
+<div class="content">
+<div class="listingblock non-head">
+<div class="content"><div class="highlight"><pre><span></span><span class="k">class</span> <span class="nc">FakeRepository</span><span class="p">(</span><span class="n">repository</span><span class="o">.</span><span class="n">AbstractRepository</span><span class="p">):</span>
+    <span class="o">...</span>
+
+    <span class="k">def</span> <span class="nf">_get</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">sku</span><span class="p">):</span>
+        <span class="k">return</span> <span class="nb">next</span><span class="p">((</span><span class="n">p</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_products</span> <span class="k">if</span> <span class="n">p</span><span class="o">.</span><span class="n">sku</span> <span class="o">==</span> <span class="n">sku</span><span class="p">),</span> <span class="kc">None</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">_get_by_batchref</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">batchref</span><span class="p">):</span>
+        <span class="k">return</span> <span class="nb">next</span><span class="p">((</span>
+            <span class="n">p</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_products</span> <span class="k">for</span> <span class="n">b</span> <span class="ow">in</span> <span class="n">p</span><span class="o">.</span><span class="n">batches</span>
+            <span class="k">if</span> <span class="n">b</span><span class="o">.</span><span class="n">reference</span> <span class="o">==</span> <span class="n">batchref</span>
+        <span class="p">),</span> <span class="kc">None</span><span class="p">)</span>
+</pre></div></div></div>
+</div></div>
+<div class="admonitionblock">
+<table><tr>
+<td class="icon">
+<img src="./images/icons/note.png" alt="Note" />
+</td>
+<td class="content">Мы добавляем запрос в наш репозиторий, чтобы упростить реализацию этого варианта использования. Пока наш запрос возвращает единственную совокупность, мы не нарушаем никаких правил. Если вы обнаружите, что пишете сложные запросы к своим репозиториям, возможно, вам захочется рассмотреть другой дизайн. Такие методы, как <code>get_most_popular_products</code> или <code>find_products_by_order_id</code>, в частности, определенно вызовут щекотку в области нашего шестого чувства. В <a href="#chapter_11_external_events">[chapter_11_external_events]</a> и <a href="#epilogue_1_how_to_get_there_from_here">epilogue</a> есть несколько советов по управлению сложными запросами.
+    </td>
+</tr></table>
+</div>
+</div>
+<div class="sect3">
+<h4 id="_новый_метод_модели_предметной_области">Новый метод модели предметной области</h4>
+<div class="paragraph"><p>Мы добавляем в модель новый метод, который выполняет изменение количества и освобождение(ий) встроенным и публикует новое событие. Мы также модифицируем существующую функцию выделения для публикации события:</p></div>
+<div class="exampleblock" id="change_batch_model_layer">
+<div class="title">Example 119. Наша модель развивается в соответствии с новыми требованиями (src/allocation/domain/model.py)</div>
+<div class="content">
+<div class="listingblock">
+<div class="content"><div class="highlight"><pre><span></span><span class="k">class</span> <span class="nc">Product</span><span class="p">:</span>
+    <span class="o">...</span>
+
+    <span class="k">def</span> <span class="nf">change_batch_quantity</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ref</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">qty</span><span class="p">:</span> <span class="nb">int</span><span class="p">):</span>
+        <span class="n">batch</span> <span class="o">=</span> <span class="nb">next</span><span class="p">(</span><span class="n">b</span> <span class="k">for</span> <span class="n">b</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">batches</span> <span class="k">if</span> <span class="n">b</span><span class="o">.</span><span class="n">reference</span> <span class="o">==</span> <span class="n">ref</span><span class="p">)</span>
+        <span class="n">batch</span><span class="o">.</span><span class="n">_purchased_quantity</span> <span class="o">=</span> <span class="n">qty</span>
+        <span class="k">while</span> <span class="n">batch</span><span class="o">.</span><span class="n">available_quantity</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="n">line</span> <span class="o">=</span> <span class="n">batch</span><span class="o">.</span><span class="n">deallocate_one</span><span class="p">()</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">events</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+                <span class="n">events</span><span class="o">.</span><span class="n">AllocationRequired</span><span class="p">(</span><span class="n">line</span><span class="o">.</span><span class="n">orderid</span><span class="p">,</span> <span class="n">line</span><span class="o">.</span><span class="n">sku</span><span class="p">,</span> <span class="n">line</span><span class="o">.</span><span class="n">qty</span><span class="p">)</span>
+            <span class="p">)</span>
+<span class="o">...</span>
+
+<span class="k">class</span> <span class="nc">Batch</span><span class="p">:</span>
+    <span class="o">...</span>
+
+    <span class="k">def</span> <span class="nf">deallocate_one</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">OrderLine</span><span class="p">:</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_allocations</span><span class="o">.</span><span class="n">pop</span><span class="p">()</span>
+</pre></div></div></div>
+</div></div>
+<div class="paragraph"><p>Подключаем наш новый обработчик:</p></div>
+<div class="exampleblock" id="full_messagebus">
+<div class="title">Example 120. Шина сообщений растет (src/allocation/service_layer/messagebus.py)</div>
+<div class="content">
+<div class="listingblock">
+<div class="content"><div class="highlight"><pre><span></span><span class="n">HANDLERS</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="n">events</span><span class="o">.</span><span class="n">BatchCreated</span><span class="p">:</span> <span class="p">[</span><span class="n">handlers</span><span class="o">.</span><span class="n">add_batch</span><span class="p">],</span>
+    <span class="n">events</span><span class="o">.</span><span class="n">BatchQuantityChanged</span><span class="p">:</span> <span class="p">[</span><span class="n">handlers</span><span class="o">.</span><span class="n">change_batch_quantity</span><span class="p">],</span>
+    <span class="n">events</span><span class="o">.</span><span class="n">AllocationRequired</span><span class="p">:</span> <span class="p">[</span><span class="n">handlers</span><span class="o">.</span><span class="n">allocate</span><span class="p">],</span>
+    <span class="n">events</span><span class="o">.</span><span class="n">OutOfStock</span><span class="p">:</span> <span class="p">[</span><span class="n">handlers</span><span class="o">.</span><span class="n">send_out_of_stock_notification</span><span class="p">],</span>
+
+<span class="p">}</span>  <span class="c1"># type: Dict[Type[events.Event], List[Callable]]</span>
+</pre></div></div></div>
+</div></div>
+<div class="paragraph"><p>И наше новое требование полностью выполнено.</p></div>
+</div>
+</div>
+<div class="sect2">
+<h3 id="fake_message_bus">Опционально: Модульное тестирование Event Handlers изолированно с Fake Message Bus</h3>
+<div class="paragraph"><p>Наш основной тест для рабочего процесса перераспределения-это <em>edge-to-edge</em> (см. Пример кода в <a href="#test-driving-ch9">[test-driving-ch9]</a>). Он использует реальную шину сообщений и тестирует весь поток, где обработчик событий <code>BatchQuantityChanged</code> запускает освобождение и выдает новые события <code>AllocationRequired</code>, которые, в свою очередь, обрабатываются их собственными обработчиками. Один тест охватывает цепочку из нескольких событий и обработчиков.</p></div>
+<div class="paragraph"><p>В зависимости от сложности цепочки событий вы можете решить, что хотите протестировать некоторые обработчики отдельно друг от друга. Вы можете сделать это с помощью "поддельной" шины сообщений.</p></div>
+<div class="paragraph"><p>В нашем случае мы фактически вмешиваемся, изменяя метод <code>publish_events()</code> в <code>FakeUnitOfWork</code> и отделяя его от реальной шины сообщений, вместо этого заставляя его записывать события, которые он видит:</p></div>
+<div class="exampleblock" id="fake_messagebus">
+<div class="title">Example 121. Шина фальшивых сообщений реализована в UoW (tests/unit/test_handlers.py)</div>
+<div class="content">
+<div class="listingblock non-head">
+<div class="content"><div class="highlight"><pre><span></span><span class="k">class</span> <span class="nc">FakeUnitOfWorkWithFakeMessageBus</span><span class="p">(</span><span class="n">FakeUnitOfWork</span><span class="p">):</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">events_published</span> <span class="o">=</span> <span class="p">[]</span>  <span class="c1"># type: List[events.Event]</span>
+
+    <span class="k">def</span> <span class="nf">publish_events</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">for</span> <span class="n">product</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">products</span><span class="o">.</span><span class="n">seen</span><span class="p">:</span>
+            <span class="k">while</span> <span class="n">product</span><span class="o">.</span><span class="n">events</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">events_published</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">product</span><span class="o">.</span><span class="n">events</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="mi">0</span><span class="p">))</span>
+</pre></div></div></div>
+</div></div>
+<div class="paragraph"><p>Теперь, когда мы вызываем <code>messagebus.handle()</code> используя <code>FakeUnitOfWorkWithFakeMessageBus</code>, он запускает только обработчик этого события. Таким образом, мы можем написать более изолированный модульный тест: вместо проверки всех побочных эффектов мы просто проверяем, что <code>BatchQuantityChanged</code> приводит к <code>AllocationRequired</code>, если количество падает ниже уже выделенного общего количества:</p></div>
+<div class="exampleblock nobreakinside less_space" id="test_handler_in_isolation">
+<div class="title">Example 122. Тестирование перераспределения в изоляции (tests/unit/test_handlers.py)</div>
+<div class="content">
+<div class="listingblock non-head">
+<div class="content"><div class="highlight"><pre><span></span><span class="k">def</span> <span class="nf">test_reallocates_if_necessary_isolated</span><span class="p">():</span>
+    <span class="n">uow</span> <span class="o">=</span> <span class="n">FakeUnitOfWorkWithFakeMessageBus</span><span class="p">()</span>
+
+    <span class="c1"># test setup as before</span>
+    <span class="n">event_history</span> <span class="o">=</span> <span class="p">[</span>
+        <span class="n">events</span><span class="o">.</span><span class="n">BatchCreated</span><span class="p">(</span><span class="s2">&quot;batch1&quot;</span><span class="p">,</span> <span class="s2">&quot;INDIFFERENT-TABLE&quot;</span><span class="p">,</span> <span class="mi">50</span><span class="p">,</span> <span class="kc">None</span><span class="p">),</span>
+        <span class="n">events</span><span class="o">.</span><span class="n">BatchCreated</span><span class="p">(</span><span class="s2">&quot;batch2&quot;</span><span class="p">,</span> <span class="s2">&quot;INDIFFERENT-TABLE&quot;</span><span class="p">,</span> <span class="mi">50</span><span class="p">,</span> <span class="n">date</span><span class="o">.</span><span class="n">today</span><span class="p">()),</span>
+        <span class="n">events</span><span class="o">.</span><span class="n">AllocationRequired</span><span class="p">(</span><span class="s2">&quot;order1&quot;</span><span class="p">,</span> <span class="s2">&quot;INDIFFERENT-TABLE&quot;</span><span class="p">,</span> <span class="mi">20</span><span class="p">),</span>
+        <span class="n">events</span><span class="o">.</span><span class="n">AllocationRequired</span><span class="p">(</span><span class="s2">&quot;order2&quot;</span><span class="p">,</span> <span class="s2">&quot;INDIFFERENT-TABLE&quot;</span><span class="p">,</span> <span class="mi">20</span><span class="p">),</span>
+    <span class="p">]</span>
+    <span class="k">for</span> <span class="n">e</span> <span class="ow">in</span> <span class="n">event_history</span><span class="p">:</span>
+        <span class="n">messagebus</span><span class="o">.</span><span class="n">handle</span><span class="p">(</span><span class="n">e</span><span class="p">,</span> <span class="n">uow</span><span class="p">)</span>
+    <span class="p">[</span><span class="n">batch1</span><span class="p">,</span> <span class="n">batch2</span><span class="p">]</span> <span class="o">=</span> <span class="n">uow</span><span class="o">.</span><span class="n">products</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">sku</span><span class="o">=</span><span class="s2">&quot;INDIFFERENT-TABLE&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">batches</span>
+    <span class="k">assert</span> <span class="n">batch1</span><span class="o">.</span><span class="n">available_quantity</span> <span class="o">==</span> <span class="mi">10</span>
+    <span class="k">assert</span> <span class="n">batch2</span><span class="o">.</span><span class="n">available_quantity</span> <span class="o">==</span> <span class="mi">50</span>
+
+    <span class="n">messagebus</span><span class="o">.</span><span class="n">handle</span><span class="p">(</span><span class="n">events</span><span class="o">.</span><span class="n">BatchQuantityChanged</span><span class="p">(</span><span class="s2">&quot;batch1&quot;</span><span class="p">,</span> <span class="mi">25</span><span class="p">),</span> <span class="n">uow</span><span class="p">)</span>
+
+    <span class="c1"># assert on new events emitted rather than downstream side-effects</span>
+    <span class="p">[</span><span class="n">reallocation_event</span><span class="p">]</span> <span class="o">=</span> <span class="n">uow</span><span class="o">.</span><span class="n">events_published</span>
+    <span class="k">assert</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">reallocation_event</span><span class="p">,</span> <span class="n">events</span><span class="o">.</span><span class="n">AllocationRequired</span><span class="p">)</span>
+    <span class="k">assert</span> <span class="n">reallocation_event</span><span class="o">.</span><span class="n">orderid</span> <span class="ow">in</span> <span class="p">{</span><span class="s1">&#39;order1&#39;</span><span class="p">,</span> <span class="s1">&#39;order2&#39;</span><span class="p">}</span>
+    <span class="k">assert</span> <span class="n">reallocation_event</span><span class="o">.</span><span class="n">sku</span> <span class="o">==</span> <span class="s1">&#39;INDIFFERENT-TABLE&#39;</span>
+</pre></div></div></div>
+</div></div>
+<div class="paragraph"><p>Хотите вы этого или нет, зависит от сложности вашей цепочки событий. Мы говорим: начните с сквозного тестирования и прибегайте к нему только в случае необходимости.</p></div>
+<div class="sidebarblock nobreakinside less_space">
+<div class="content">
+<div class="title">Упражнение для читателя</div>
+<div class="paragraph"><p>Отличный способ заставить себя действительно понять какой-то код-это его рефакторинг. При обсуждении тестирования обработчиков в изоляции мы использовали нечто под названием <code>FakeUnitOfWorkWithFakeMessageBus</code>, что является излишне сложным и нарушает SRP.</p></div>
+<div class="paragraph"><p>Если мы изменим шину сообщений на класс,<span class="footnote"><br />[«Простая» реализация в этой главе по существу использует сам модуль <em>messagebus.py</em> для реализации шаблона Singleton.]<br /></span> тогда создание <code>FakeMessageBus</code> будет более простым:</p></div>
+<div class="exampleblock" id="abc_for_fake_messagebus">
+<div class="title">Example 123. Абстрактная шина сообщений и ее реальные и поддельные версии</div>
+<div class="content">
+<div class="listingblock skip">
+<div class="content"><div class="highlight"><pre><span></span><span class="k">class</span> <span class="nc">AbstractMessageBus</span><span class="p">:</span>
+    <span class="n">HANDLERS</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="n">Type</span><span class="p">[</span><span class="n">events</span><span class="o">.</span><span class="n">Event</span><span class="p">],</span> <span class="n">List</span><span class="p">[</span><span class="n">Callable</span><span class="p">]]</span>
+
+    <span class="k">def</span> <span class="nf">handle</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">event</span><span class="p">:</span> <span class="n">events</span><span class="o">.</span><span class="n">Event</span><span class="p">):</span>
+        <span class="k">for</span> <span class="n">handler</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">HANDLERS</span><span class="p">[</span><span class="nb">type</span><span class="p">(</span><span class="n">event</span><span class="p">)]:</span>
+            <span class="n">handler</span><span class="p">(</span><span class="n">event</span><span class="p">)</span>
+
+
+<span class="k">class</span> <span class="nc">MessageBus</span><span class="p">(</span><span class="n">AbstractMessageBus</span><span class="p">):</span>
+    <span class="n">HANDLERS</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="n">events</span><span class="o">.</span><span class="n">OutOfStock</span><span class="p">:</span> <span class="p">[</span><span class="n">send_out_of_stock_notification</span><span class="p">],</span>
+
+    <span class="p">}</span>
+
+
+<span class="k">class</span> <span class="nc">FakeMessageBus</span><span class="p">(</span><span class="n">messagebus</span><span class="o">.</span><span class="n">AbstractMessageBus</span><span class="p">):</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">events_published</span> <span class="o">=</span> <span class="p">[]</span>  <span class="c1"># type: List[events.Event]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">HANDLERS</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="n">events</span><span class="o">.</span><span class="n">OutOfStock</span><span class="p">:</span> <span class="p">[</span><span class="k">lambda</span> <span class="n">e</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">events_published</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">e</span><span class="p">)]</span>
+        <span class="p">}</span>
+</pre></div></div></div>
+</div></div>
+<div class="paragraph"><p>Так что сигайте в код на <a href="https://github.com/cosmicpython/code/tree/chapter_09_all_messagebus">GitHub</a> и посмотрите, сможете ли вы заставить работать версию на основе классов, а затем напишите версию <code>test_reallocates_if_needed_isolated ()</code> из более ранней версии.</p></div>
+<div class="paragraph"><p>Мы используем шину сообщений на основе классов в <a href="#chapter_13_dependency_injection">[chapter_13_dependency_injection]</a>, если вам нужно больше вдохновения.</p></div>
+</div></div>
+</div>
+<div class="sect2">
+<h3 id="_подведём_итоги">Подведём итоги</h3>
+<div class="paragraph"><p>Давайте оглянемся на то, чего мы достигли, и подумаем, "А нафига?".</p></div>
+<div class="sect3">
+<h4 id="_чего_мы_достигли">Чего мы достигли?</h4>
+<div class="paragraph"><p>События (Events) - это простые классы данных, которые определяют структуры данных для входных данных.
+        и внутренние сообщения в нашей системе. Это довольно мощно с точки зрения DDD, поскольку события часто очень хорошо переводятся на деловой язык
+  (look up <em>event storming</em> if you haven&#8217;t already).</p></div>
+<div class="paragraph"><p>Обработчики (Handlers) - это то, как мы реагируем на события. Они могут обратиться к нашей модели или обратиться к внешним службам. Мы можем определить несколько обработчиков для одного события, если захотим. Обработчики также могут вызывать другие события. Это позволяет нам быть очень детальными в отношении того, что делает обработчик, и действительно придерживаться SRP.</p></div>
+</div>
+<div class="sect3">
+<h4 id="_почему_мы_достигли_цели">Почему мы достигли цели?</h4>
+<div class="paragraph"><p>Наша основная цель в отношении этих структурных моделей заключается в том, чтобы
+        сложность нашего приложения росла медленнее, чем его размер.  Когда мы идем ва-банк на шине сообщений, то как всегда, платим цену с точки зрения архитектурной сложности (См. <a href="#chapter_09_all_messagebus_tradeoffs">[chapter_09_all_messagebus_tradeoffs]</a>), но мы приобретаем себе паттерн, который может обрабатывать сколь угодно сложные требования, не нуждаясь в дальнейших концептуальных или архитектурных изменениях в том, как мы делаем вещи.</p></div>
+<div class="paragraph"><p>Здесь мы добавили довольно сложный вариант использования (изменить количество, освободить место, начать новую транзакцию, перераспределить место, опубликовать внешнее уведомление), но в архитектурном плане сложность не требует затрат. Мы добавили новые события, новые обработчики и новый внешний адаптер (для электронной почты), все из которых являются существующими категориями объектов в нашей архитектуре, которые понятны нам  и это легко объяснимы новичкам.  Каждая из наших подвижных частей выполняет одну задачу, они четко связаны друг с другом, и нет никаких неожиданных побочных эффектов.</p></div>
+<div class="tableblock" id="chapter_09_all_messagebus_tradeoffs">
+<table rules="all"
+width="100%"
+frame="border"
+cellspacing="0" cellpadding="4">
+<caption class="title">Table 6. Все приложение - это шина сообщений: компромиссы</caption>
+<col width="50%" />
+<col width="50%" />
+<thead>
+<tr>
+<th align="left" valign="top">Плюсы</th>
+<th align="left" valign="top">Минусы</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td align="left" valign="top"><div><div class="ulist"><ul>
+<li>
+<p>
+Обработчики и сервисы - это одно и то же, так что все проще.
+</p>
+</li>
+<li>
+<p>
+У нас есть великолепные структуры данных, чтобы ввести их в систему.
+</p>
+</li>
+</ul></div></div></td>
+<td align="left" valign="top"><div><div class="ulist"><ul>
+<li>
+<p>
+Шина сообщений по-прежнему остается несколько непредсказуемым способом делать что-то с веб-точки зрения. Вы не знаете заранее, когда все закончится.
+</p>
+</li>
+<li>
+<p>
+Будет происходить дублирование полей и структуры между объектами модели и событиями, что будет иметь затраты на техническое обслуживание. Добавление поля к одному обычно означает добавление поля по крайней мере к одному из других.
+</p>
+</li>
+</ul></div></div></td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="paragraph"><p>Теперь вам может быть интересно, откуда берутся эти события <code>BatchQuantityChanged</code>? Ответ станет понятен через пару глав.  Но сначала давайте поговорим о событиях в сравнении с командами <a href="#chapter_10_commands">events versus commands</a>.</p></div>
+</div>
+</div>
+</div>
+</div>
 </div>
 <div id="footnotes"><hr /></div>
 <div id="footer">
 <div id="footer-text">
 Last updated
- 2021-02-20 23:22:49 RTZ 2 (зима)
+ 2021-02-21 21:50:45 RTZ 2 (зима)
 </div>
 </div>
 </body>

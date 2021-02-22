@@ -1,0 +1,1209 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.1//EN"
+    "http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en">
+<head>
+<meta http-equiv="Content-Type" content="application/xhtml+xml; charset=UTF-8" />
+<meta name="generator" content="AsciiDoc 9.0.4" />
+<title></title>
+<style type="text/css">
+/* Shared CSS for AsciiDoc xhtml11 and html5 backends */
+
+/* Default font. */
+body {
+  font-family: Georgia,serif;
+}
+
+/* Title font. */
+h1, h2, h3, h4, h5, h6,
+div.title, caption.title,
+thead, p.table.header,
+#toctitle,
+#author, #revnumber, #revdate, #revremark,
+#footer {
+  font-family: Arial,Helvetica,sans-serif;
+}
+
+body {
+  margin: 1em 5% 1em 5%;
+}
+
+a {
+  color: blue;
+  text-decoration: underline;
+}
+a:visited {
+  color: fuchsia;
+}
+
+em {
+  font-style: italic;
+  color: navy;
+}
+
+strong {
+  font-weight: bold;
+  color: #083194;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  color: #527bbd;
+  margin-top: 1.2em;
+  margin-bottom: 0.5em;
+  line-height: 1.3;
+}
+
+h1, h2, h3 {
+  border-bottom: 2px solid silver;
+}
+h2 {
+  padding-top: 0.5em;
+}
+h3 {
+  float: left;
+}
+h3 + * {
+  clear: left;
+}
+h5 {
+  font-size: 1.0em;
+}
+
+div.sectionbody {
+  margin-left: 0;
+}
+
+hr {
+  border: 1px solid silver;
+}
+
+p {
+  margin-top: 0.5em;
+  margin-bottom: 0.5em;
+}
+
+ul, ol, li > p {
+  margin-top: 0;
+}
+ul > li     { color: #aaa; }
+ul > li > * { color: black; }
+
+.monospaced, code, pre {
+  font-family: "Courier New", Courier, monospace;
+  font-size: inherit;
+  color: navy;
+  padding: 0;
+  margin: 0;
+}
+pre {
+  white-space: pre-wrap;
+}
+
+#author {
+  color: #527bbd;
+  font-weight: bold;
+  font-size: 1.1em;
+}
+#email {
+}
+#revnumber, #revdate, #revremark {
+}
+
+#footer {
+  font-size: small;
+  border-top: 2px solid silver;
+  padding-top: 0.5em;
+  margin-top: 4.0em;
+}
+#footer-text {
+  float: left;
+  padding-bottom: 0.5em;
+}
+#footer-badges {
+  float: right;
+  padding-bottom: 0.5em;
+}
+
+#preamble {
+  margin-top: 1.5em;
+  margin-bottom: 1.5em;
+}
+div.imageblock, div.exampleblock, div.verseblock,
+div.quoteblock, div.literalblock, div.listingblock, div.sidebarblock,
+div.admonitionblock {
+  margin-top: 1.0em;
+  margin-bottom: 1.5em;
+}
+div.admonitionblock {
+  margin-top: 2.0em;
+  margin-bottom: 2.0em;
+  margin-right: 10%;
+  color: #606060;
+}
+
+div.content { /* Block element content. */
+  padding: 0;
+}
+
+/* Block element titles. */
+div.title, caption.title {
+  color: #527bbd;
+  font-weight: bold;
+  text-align: left;
+  margin-top: 1.0em;
+  margin-bottom: 0.5em;
+}
+div.title + * {
+  margin-top: 0;
+}
+
+td div.title:first-child {
+  margin-top: 0.0em;
+}
+div.content div.title:first-child {
+  margin-top: 0.0em;
+}
+div.content + div.title {
+  margin-top: 0.0em;
+}
+
+div.sidebarblock > div.content {
+  background: #ffffee;
+  border: 1px solid #dddddd;
+  border-left: 4px solid #f0f0f0;
+  padding: 0.5em;
+}
+
+div.listingblock > div.content {
+  border: 1px solid #dddddd;
+  border-left: 5px solid #f0f0f0;
+  background: #f8f8f8;
+  padding: 0.5em;
+}
+
+div.quoteblock, div.verseblock {
+  padding-left: 1.0em;
+  margin-left: 1.0em;
+  margin-right: 10%;
+  border-left: 5px solid #f0f0f0;
+  color: #888;
+}
+
+div.quoteblock > div.attribution {
+  padding-top: 0.5em;
+  text-align: right;
+}
+
+div.verseblock > pre.content {
+  font-family: inherit;
+  font-size: inherit;
+}
+div.verseblock > div.attribution {
+  padding-top: 0.75em;
+  text-align: left;
+}
+/* DEPRECATED: Pre version 8.2.7 verse style literal block. */
+div.verseblock + div.attribution {
+  text-align: left;
+}
+
+div.admonitionblock .icon {
+  vertical-align: top;
+  font-size: 1.1em;
+  font-weight: bold;
+  text-decoration: underline;
+  color: #527bbd;
+  padding-right: 0.5em;
+}
+div.admonitionblock td.content {
+  padding-left: 0.5em;
+  border-left: 3px solid #dddddd;
+}
+
+div.exampleblock > div.content {
+  border-left: 3px solid #dddddd;
+  padding-left: 0.5em;
+}
+
+div.imageblock div.content { padding-left: 0; }
+span.image img { border-style: none; vertical-align: text-bottom; }
+a.image:visited { color: white; }
+
+dl {
+  margin-top: 0.8em;
+  margin-bottom: 0.8em;
+}
+dt {
+  margin-top: 0.5em;
+  margin-bottom: 0;
+  font-style: normal;
+  color: navy;
+}
+dd > *:first-child {
+  margin-top: 0.1em;
+}
+
+ul, ol {
+    list-style-position: outside;
+}
+ol.arabic {
+  list-style-type: decimal;
+}
+ol.loweralpha {
+  list-style-type: lower-alpha;
+}
+ol.upperalpha {
+  list-style-type: upper-alpha;
+}
+ol.lowerroman {
+  list-style-type: lower-roman;
+}
+ol.upperroman {
+  list-style-type: upper-roman;
+}
+
+div.compact ul, div.compact ol,
+div.compact p, div.compact p,
+div.compact div, div.compact div {
+  margin-top: 0.1em;
+  margin-bottom: 0.1em;
+}
+
+tfoot {
+  font-weight: bold;
+}
+td > div.verse {
+  white-space: pre;
+}
+
+div.hdlist {
+  margin-top: 0.8em;
+  margin-bottom: 0.8em;
+}
+div.hdlist tr {
+  padding-bottom: 15px;
+}
+dt.hdlist1.strong, td.hdlist1.strong {
+  font-weight: bold;
+}
+td.hdlist1 {
+  vertical-align: top;
+  font-style: normal;
+  padding-right: 0.8em;
+  color: navy;
+}
+td.hdlist2 {
+  vertical-align: top;
+}
+div.hdlist.compact tr {
+  margin: 0;
+  padding-bottom: 0;
+}
+
+.comment {
+  background: yellow;
+}
+
+.footnote, .footnoteref {
+  font-size: 0.8em;
+}
+
+span.footnote, span.footnoteref {
+  vertical-align: super;
+}
+
+#footnotes {
+  margin: 20px 0 20px 0;
+  padding: 7px 0 0 0;
+}
+
+#footnotes div.footnote {
+  margin: 0 0 5px 0;
+}
+
+#footnotes hr {
+  border: none;
+  border-top: 1px solid silver;
+  height: 1px;
+  text-align: left;
+  margin-left: 0;
+  width: 20%;
+  min-width: 100px;
+}
+
+div.colist td {
+  padding-right: 0.5em;
+  padding-bottom: 0.3em;
+  vertical-align: top;
+}
+div.colist td img {
+  margin-top: 0.3em;
+}
+
+@media print {
+  #footer-badges { display: none; }
+}
+
+#toc {
+  margin-bottom: 2.5em;
+}
+
+#toctitle {
+  color: #527bbd;
+  font-size: 1.1em;
+  font-weight: bold;
+  margin-top: 1.0em;
+  margin-bottom: 0.1em;
+}
+
+div.toclevel0, div.toclevel1, div.toclevel2, div.toclevel3, div.toclevel4 {
+  margin-top: 0;
+  margin-bottom: 0;
+}
+div.toclevel2 {
+  margin-left: 2em;
+  font-size: 0.9em;
+}
+div.toclevel3 {
+  margin-left: 4em;
+  font-size: 0.9em;
+}
+div.toclevel4 {
+  margin-left: 6em;
+  font-size: 0.9em;
+}
+
+span.aqua { color: aqua; }
+span.black { color: black; }
+span.blue { color: blue; }
+span.fuchsia { color: fuchsia; }
+span.gray { color: gray; }
+span.green { color: green; }
+span.lime { color: lime; }
+span.maroon { color: maroon; }
+span.navy { color: navy; }
+span.olive { color: olive; }
+span.purple { color: purple; }
+span.red { color: red; }
+span.silver { color: silver; }
+span.teal { color: teal; }
+span.white { color: white; }
+span.yellow { color: yellow; }
+
+span.aqua-background { background: aqua; }
+span.black-background { background: black; }
+span.blue-background { background: blue; }
+span.fuchsia-background { background: fuchsia; }
+span.gray-background { background: gray; }
+span.green-background { background: green; }
+span.lime-background { background: lime; }
+span.maroon-background { background: maroon; }
+span.navy-background { background: navy; }
+span.olive-background { background: olive; }
+span.purple-background { background: purple; }
+span.red-background { background: red; }
+span.silver-background { background: silver; }
+span.teal-background { background: teal; }
+span.white-background { background: white; }
+span.yellow-background { background: yellow; }
+
+span.big { font-size: 2em; }
+span.small { font-size: 0.6em; }
+
+span.underline { text-decoration: underline; }
+span.overline { text-decoration: overline; }
+span.line-through { text-decoration: line-through; }
+
+div.unbreakable { page-break-inside: avoid; }
+
+
+/*
+ * xhtml11 specific
+ *
+ * */
+
+div.tableblock {
+  margin-top: 1.0em;
+  margin-bottom: 1.5em;
+}
+div.tableblock > table {
+  border: 3px solid #527bbd;
+}
+thead, p.table.header {
+  font-weight: bold;
+  color: #527bbd;
+}
+p.table {
+  margin-top: 0;
+}
+/* Because the table frame attribute is overridden by CSS in most browsers. */
+div.tableblock > table[frame="void"] {
+  border-style: none;
+}
+div.tableblock > table[frame="hsides"] {
+  border-left-style: none;
+  border-right-style: none;
+}
+div.tableblock > table[frame="vsides"] {
+  border-top-style: none;
+  border-bottom-style: none;
+}
+
+
+/*
+ * html5 specific
+ *
+ * */
+
+table.tableblock {
+  margin-top: 1.0em;
+  margin-bottom: 1.5em;
+}
+thead, p.tableblock.header {
+  font-weight: bold;
+  color: #527bbd;
+}
+p.tableblock {
+  margin-top: 0;
+}
+table.tableblock {
+  border-width: 3px;
+  border-spacing: 0px;
+  border-style: solid;
+  border-color: #527bbd;
+  border-collapse: collapse;
+}
+th.tableblock, td.tableblock {
+  border-width: 1px;
+  padding: 4px;
+  border-style: solid;
+  border-color: #527bbd;
+}
+
+table.tableblock.frame-topbot {
+  border-left-style: hidden;
+  border-right-style: hidden;
+}
+table.tableblock.frame-sides {
+  border-top-style: hidden;
+  border-bottom-style: hidden;
+}
+table.tableblock.frame-none {
+  border-style: hidden;
+}
+
+th.tableblock.halign-left, td.tableblock.halign-left {
+  text-align: left;
+}
+th.tableblock.halign-center, td.tableblock.halign-center {
+  text-align: center;
+}
+th.tableblock.halign-right, td.tableblock.halign-right {
+  text-align: right;
+}
+
+th.tableblock.valign-top, td.tableblock.valign-top {
+  vertical-align: top;
+}
+th.tableblock.valign-middle, td.tableblock.valign-middle {
+  vertical-align: middle;
+}
+th.tableblock.valign-bottom, td.tableblock.valign-bottom {
+  vertical-align: bottom;
+}
+
+
+/*
+ * manpage specific
+ *
+ * */
+
+body.manpage h1 {
+  padding-top: 0.5em;
+  padding-bottom: 0.5em;
+  border-top: 2px solid silver;
+  border-bottom: 2px solid silver;
+}
+body.manpage h2 {
+  border-style: none;
+}
+body.manpage div.sectionbody {
+  margin-left: 3em;
+}
+
+@media print {
+  body.manpage div#toc { display: none; }
+}
+.highlight .hll { background-color: #ffffcc }
+.highlight  { background: #f8f8f8; }
+.highlight .c { color: #408080; font-style: italic } /* Comment */
+.highlight .err { border: 1px solid #FF0000 } /* Error */
+.highlight .k { color: #008000; font-weight: bold } /* Keyword */
+.highlight .o { color: #666666 } /* Operator */
+.highlight .cm { color: #408080; font-style: italic } /* Comment.Multiline */
+.highlight .cp { color: #BC7A00 } /* Comment.Preproc */
+.highlight .c1 { color: #408080; font-style: italic } /* Comment.Single */
+.highlight .cs { color: #408080; font-style: italic } /* Comment.Special */
+.highlight .gd { color: #A00000 } /* Generic.Deleted */
+.highlight .ge { font-style: italic } /* Generic.Emph */
+.highlight .gr { color: #FF0000 } /* Generic.Error */
+.highlight .gh { color: #000080; font-weight: bold } /* Generic.Heading */
+.highlight .gi { color: #00A000 } /* Generic.Inserted */
+.highlight .go { color: #808080 } /* Generic.Output */
+.highlight .gp { color: #000080; font-weight: bold } /* Generic.Prompt */
+.highlight .gs { font-weight: bold } /* Generic.Strong */
+.highlight .gu { color: #800080; font-weight: bold } /* Generic.Subheading */
+.highlight .gt { color: #0040D0 } /* Generic.Traceback */
+.highlight .kc { color: #008000; font-weight: bold } /* Keyword.Constant */
+.highlight .kd { color: #008000; font-weight: bold } /* Keyword.Declaration */
+.highlight .kn { color: #008000; font-weight: bold } /* Keyword.Namespace */
+.highlight .kp { color: #008000 } /* Keyword.Pseudo */
+.highlight .kr { color: #008000; font-weight: bold } /* Keyword.Reserved */
+.highlight .kt { color: #B00040 } /* Keyword.Type */
+.highlight .m { color: #666666 } /* Literal.Number */
+.highlight .s { color: #BA2121 } /* Literal.String */
+.highlight .na { color: #7D9029 } /* Name.Attribute */
+.highlight .nb { color: #008000 } /* Name.Builtin */
+.highlight .nc { color: #0000FF; font-weight: bold } /* Name.Class */
+.highlight .no { color: #880000 } /* Name.Constant */
+.highlight .nd { color: #AA22FF } /* Name.Decorator */
+.highlight .ni { color: #999999; font-weight: bold } /* Name.Entity */
+.highlight .ne { color: #D2413A; font-weight: bold } /* Name.Exception */
+.highlight .nf { color: #0000FF } /* Name.Function */
+.highlight .nl { color: #A0A000 } /* Name.Label */
+.highlight .nn { color: #0000FF; font-weight: bold } /* Name.Namespace */
+.highlight .nt { color: #008000; font-weight: bold } /* Name.Tag */
+.highlight .nv { color: #19177C } /* Name.Variable */
+.highlight .ow { color: #AA22FF; font-weight: bold } /* Operator.Word */
+.highlight .w { color: #bbbbbb } /* Text.Whitespace */
+.highlight .mf { color: #666666 } /* Literal.Number.Float */
+.highlight .mh { color: #666666 } /* Literal.Number.Hex */
+.highlight .mi { color: #666666 } /* Literal.Number.Integer */
+.highlight .mo { color: #666666 } /* Literal.Number.Oct */
+.highlight .sb { color: #BA2121 } /* Literal.String.Backtick */
+.highlight .sc { color: #BA2121 } /* Literal.String.Char */
+.highlight .sd { color: #BA2121; font-style: italic } /* Literal.String.Doc */
+.highlight .s2 { color: #BA2121 } /* Literal.String.Double */
+.highlight .se { color: #BB6622; font-weight: bold } /* Literal.String.Escape */
+.highlight .sh { color: #BA2121 } /* Literal.String.Heredoc */
+.highlight .si { color: #BB6688; font-weight: bold } /* Literal.String.Interpol */
+.highlight .sx { color: #008000 } /* Literal.String.Other */
+.highlight .sr { color: #BB6688 } /* Literal.String.Regex */
+.highlight .s1 { color: #BA2121 } /* Literal.String.Single */
+.highlight .ss { color: #19177C } /* Literal.String.Symbol */
+.highlight .bp { color: #008000 } /* Name.Builtin.Pseudo */
+.highlight .vc { color: #19177C } /* Name.Variable.Class */
+.highlight .vg { color: #19177C } /* Name.Variable.Global */
+.highlight .vi { color: #19177C } /* Name.Variable.Instance */
+.highlight .il { color: #666666 } /* Literal.Number.Integer.Long */
+
+
+/* Asciidoctor default stylesheet | MIT License | https://asciidoctor.org */
+
+@import url("//fonts.googleapis.com/css?family=Noto+Sans:300,600italic,400,400italic,600,600italic%7CNoto+Serif:400,400italic,700,700italic%7CDroid+Sans+Mono:400,700");
+@import url(//asciidoctor.org/stylesheets/asciidoctor.css); /* Default asciidoc style framework - important */
+
+/* customisations by harry */
+
+h1, h2, h3, h4, h5, h6 {
+    position: relative;
+}
+
+a.anchor {
+    top: 0;
+}
+
+/* hide inline ditaa/plantuml source listings for images */
+.image-source {
+    display: none
+}
+/* make formal codeblocks a bit nicer */
+.exampleblock > .content {
+    padding: 2px;
+    background-color: white;
+    border: 0;
+    margin-bottom: 2em;
+}
+.exampleblock .title {
+    text-align: right;
+}
+
+/* prev/next chapter links at bottom of page */
+.prev_and_next_chapter_links {
+    margin: 10px;
+}
+.prev_chapter_link {
+    float: left;
+}
+.next_chapter_link {
+    float: right;
+}
+
+
+/* a few tweaks to existing styles */
+#toc li {
+    margin-top: 0.5em;
+}
+
+#footnotes hr {
+    width: 100%;
+}
+
+/* end customisations by harry */
+
+
+/* CUSTOMISATIONS */
+
+/* Change the values in root for quick customisation. If you want even more fine grain... venture further. */
+
+:root{
+--maincolor:#FFFFFF;
+--primarycolor:#2c3e50;
+--secondarycolor:#ba3925;
+--tertiarycolor: #186d7a;
+--sidebarbackground:#CCC;
+--linkcolor:#b71c1c;
+--linkcoloralternate:#f44336;
+--white:#FFFFFF;
+--black:#000000;
+}
+
+/* Text styles */
+h1{color:var(--primarycolor) !important;}
+
+h2,h3,h4,h5,h6{color:var(--secondarycolor) !important;}
+
+.title{color:var(--tertiarycolor) !important; font-family:"Noto Sans",sans-serif !important;font-style: normal !important; font-weight: normal !important;}
+p{font-family: "Noto Sans",sans-serif !important}
+
+/* Table styles */
+th{font-family: "Noto Sans",sans-serif !important}
+
+/* Responsiveness fixes */
+video {
+  max-width: 100%;
+}
+
+@media all and (max-width: 600px) {
+table {
+  width: 55vw!important;
+  font-size: 3vw;
+}
+</style>
+<script type="text/javascript">
+/*<![CDATA[*/
+var asciidoc = {  // Namespace.
+
+/////////////////////////////////////////////////////////////////////
+// Table Of Contents generator
+/////////////////////////////////////////////////////////////////////
+
+/* Author: Mihai Bazon, September 2002
+ * http://students.infoiasi.ro/~mishoo
+ *
+ * Table Of Content generator
+ * Version: 0.4
+ *
+ * Feel free to use this script under the terms of the GNU General Public
+ * License, as long as you do not remove or alter this notice.
+ */
+
+ /* modified by Troy D. Hanson, September 2006. License: GPL */
+ /* modified by Stuart Rackham, 2006, 2009. License: GPL */
+
+// toclevels = 1..4.
+toc: function (toclevels) {
+
+  function getText(el) {
+    var text = "";
+    for (var i = el.firstChild; i != null; i = i.nextSibling) {
+      if (i.nodeType == 3 /* Node.TEXT_NODE */) // IE doesn't speak constants.
+        text += i.data;
+      else if (i.firstChild != null)
+        text += getText(i);
+    }
+    return text;
+  }
+
+  function TocEntry(el, text, toclevel) {
+    this.element = el;
+    this.text = text;
+    this.toclevel = toclevel;
+  }
+
+  function tocEntries(el, toclevels) {
+    var result = new Array;
+    var re = new RegExp('[hH]([1-'+(toclevels+1)+'])');
+    // Function that scans the DOM tree for header elements (the DOM2
+    // nodeIterator API would be a better technique but not supported by all
+    // browsers).
+    var iterate = function (el) {
+      for (var i = el.firstChild; i != null; i = i.nextSibling) {
+        if (i.nodeType == 1 /* Node.ELEMENT_NODE */) {
+          var mo = re.exec(i.tagName);
+          if (mo && (i.getAttribute("class") || i.getAttribute("className")) != "float") {
+            result[result.length] = new TocEntry(i, getText(i), mo[1]-1);
+          }
+          iterate(i);
+        }
+      }
+    }
+    iterate(el);
+    return result;
+  }
+
+  var toc = document.getElementById("toc");
+  if (!toc) {
+    return;
+  }
+
+  // Delete existing TOC entries in case we're reloading the TOC.
+  var tocEntriesToRemove = [];
+  var i;
+  for (i = 0; i < toc.childNodes.length; i++) {
+    var entry = toc.childNodes[i];
+    if (entry.nodeName.toLowerCase() == 'div'
+     && entry.getAttribute("class")
+     && entry.getAttribute("class").match(/^toclevel/))
+      tocEntriesToRemove.push(entry);
+  }
+  for (i = 0; i < tocEntriesToRemove.length; i++) {
+    toc.removeChild(tocEntriesToRemove[i]);
+  }
+
+  // Rebuild TOC entries.
+  var entries = tocEntries(document.getElementById("content"), toclevels);
+  for (var i = 0; i < entries.length; ++i) {
+    var entry = entries[i];
+    if (entry.element.id == "")
+      entry.element.id = "_toc_" + i;
+    var a = document.createElement("a");
+    a.href = "#" + entry.element.id;
+    a.appendChild(document.createTextNode(entry.text));
+    var div = document.createElement("div");
+    div.appendChild(a);
+    div.className = "toclevel" + entry.toclevel;
+    toc.appendChild(div);
+  }
+  if (entries.length == 0)
+    toc.parentNode.removeChild(toc);
+},
+
+
+/////////////////////////////////////////////////////////////////////
+// Footnotes generator
+/////////////////////////////////////////////////////////////////////
+
+/* Based on footnote generation code from:
+ * http://www.brandspankingnew.net/archive/2005/07/format_footnote.html
+ */
+
+footnotes: function () {
+  // Delete existing footnote entries in case we're reloading the footnodes.
+  var i;
+  var noteholder = document.getElementById("footnotes");
+  if (!noteholder) {
+    return;
+  }
+  var entriesToRemove = [];
+  for (i = 0; i < noteholder.childNodes.length; i++) {
+    var entry = noteholder.childNodes[i];
+    if (entry.nodeName.toLowerCase() == 'div' && entry.getAttribute("class") == "footnote")
+      entriesToRemove.push(entry);
+  }
+  for (i = 0; i < entriesToRemove.length; i++) {
+    noteholder.removeChild(entriesToRemove[i]);
+  }
+
+  // Rebuild footnote entries.
+  var cont = document.getElementById("content");
+  var spans = cont.getElementsByTagName("span");
+  var refs = {};
+  var n = 0;
+  for (i=0; i<spans.length; i++) {
+    if (spans[i].className == "footnote") {
+      n++;
+      var note = spans[i].getAttribute("data-note");
+      if (!note) {
+        // Use [\s\S] in place of . so multi-line matches work.
+        // Because JavaScript has no s (dotall) regex flag.
+        note = spans[i].innerHTML.match(/\s*\[([\s\S]*)]\s*/)[1];
+        spans[i].innerHTML =
+          "[<a id='_footnoteref_" + n + "' href='#_footnote_" + n +
+          "' title='View footnote' class='footnote'>" + n + "</a>]";
+        spans[i].setAttribute("data-note", note);
+      }
+      noteholder.innerHTML +=
+        "<div class='footnote' id='_footnote_" + n + "'>" +
+        "<a href='#_footnoteref_" + n + "' title='Return to text'>" +
+        n + "</a>. " + note + "</div>";
+      var id =spans[i].getAttribute("id");
+      if (id != null) refs["#"+id] = n;
+    }
+  }
+  if (n == 0)
+    noteholder.parentNode.removeChild(noteholder);
+  else {
+    // Process footnoterefs.
+    for (i=0; i<spans.length; i++) {
+      if (spans[i].className == "footnoteref") {
+        var href = spans[i].getElementsByTagName("a")[0].getAttribute("href");
+        href = href.match(/#.*/)[0];  // Because IE return full URL.
+        n = refs[href];
+        spans[i].innerHTML =
+          "[<a href='#_footnote_" + n +
+          "' title='View footnote' class='footnote'>" + n + "</a>]";
+      }
+    }
+  }
+},
+
+install: function(toclevels) {
+  var timerId;
+
+  function reinstall() {
+    asciidoc.footnotes();
+    if (toclevels) {
+      asciidoc.toc(toclevels);
+    }
+  }
+
+  function reinstallAndRemoveTimer() {
+    clearInterval(timerId);
+    reinstall();
+  }
+
+  timerId = setInterval(reinstall, 500);
+  if (document.addEventListener)
+    document.addEventListener("DOMContentLoaded", reinstallAndRemoveTimer, false);
+  else
+    window.onload = reinstallAndRemoveTimer;
+}
+
+}
+asciidoc.install(1);
+/*]]>*/
+</script>
+</head>
+<body class="book">
+<div id="header">
+<div id="toc">
+  <div id="toctitle">Table of Contents</div>
+  <noscript><p><b>JavaScript must be enabled in your browser to display the table of contents.</b></p></noscript>
+</div>
+</div>
+<div id="content">
+<div class="sect1">
+<h2 id="preface">Предисловие</h2>
+<div class="sectionbody">
+<div class="paragraph"><p>Возможно, вам интересно, кто мы и почему написали эту книгу.</p></div>
+<div class="paragraph"><p>В последнем издании книги
+<a href="http://www.obeythetestinggoat.com"><em>Test-Driven Development with Python</em></a> (O&#8217;Reilly), в конце,
+Гарри поймал себя на мысли, что задает уйму вопросов по архитектуре. Типа, как лучше всего структурировать приложение, чтобы его было легко тестировать? Это вообще, про что? Может это про покрытие модульными тестами вашей основной бизнес-логики и что бы количество необходимых вам интеграционных и сквозных тестов было минимизировано? Он дал расплывчатые ссылки на «Гексагональную архитектуру», «Порты и адаптеры» и "Functional Core, Imperative Shell", но если бы он был честен, ему пришлось бы признать, что это не то, что он действительно до конца понял, принял или применял на практике.</p></div>
+<div class="paragraph"><p>И тут случилось чудо! Ему посчастливилось столкнуться с Бобом, у которого есть ответы на все эти вопросы.</p></div>
+<div class="paragraph"><p>Боб стал архитектором программного обеспечения, потому что никто из его команды этим не занимался. Оказалось, что он неплохо справлялся с этим, но ему посчастливилось столкнуться с Яном Купером, который научил его новым способам написания кода и мышления в этй области.</p></div>
+<div class="sect2">
+<h3 id="_управление_сложностью_решение_бизнес_задач">Управление Сложностью, Решение Бизнес-Задач</h3>
+<div class="paragraph"><p>Мы оба работаем в MADE.com, европейской компании электронной коммерции, которая продает мебель онлайн; там мы применяем методы, описанные в этой книге, для создания распределенных систем, моделирующих реальные бизнес-проблемы. Наш пример домена&#8201;&#8212;&#8201;первая система, созданная Бобом для MADE, и эта книга-попытка записать всё то, чему мы должны научить новых программистов, когда они присоединяются к одной из наших команд.</p></div>
+<div class="paragraph"><p>MADE.com управляет глобальной цепочкой поставок грузов от тоговых партнеров и производителей. В целях сохранения затрат на нзком уровне, мы стараемся оптимизировать доставку запасов на наши склады, чтобы у нас не было непроданных товаров, застрявших на складах.</p></div>
+<div class="paragraph"><p>В идеале диван, который вы хотите купить, прибудет в порт в тот самый день, когда вы решите его купить, и мы отправим его прямо к вам домой, даже не храня. <span class=".keep-together">Получение</span> правильного времени&#8201;&#8212;&#8201;это сложный балансирующий акт, когда товары прибывают на контейнеровозе в течение трех месяцев. По пути вещи ломаются или повреждаются водой, штормы вызывают неожиданные задержки, логистические партнеры неправильно обращаются с товарами, документы пропадают, клиенты меняют свое мнение и изменяют свои заказы и так далее.</p></div>
+<div class="paragraph"><p>Мы решаем эти проблемы, создавая интеллектуальное программное обеспечение, представляющее виды операций, происходящие в реальном мире, чтобы мы могли автоматизировать как можно большую часть бизнеса.</p></div>
+</div>
+<div class="sect2">
+<h3 id="_почему_python">Почему Python?</h3>
+<div class="paragraph"><p>Если вы читаете эту книгу, то вероятно, не нужно убеждать вас в том, что Python великолепен, поэтому реальный вопрос заключается в следующем: "Зачем сообществу <em>Python</em> нужна такая книга?" Ответ заключается в популярности и зрелости Python: хотя Python, вероятно, является самым быстрорастущим языком программирования в мире и приближается к вершине абсолютной таблицы популярности, он только начинает решать те проблемы, над которыми мир C# и Java работал в течение многих лет. Стартапы становятся реальным бизнесом; веб-приложения и скриптовые автоматизации становятся (говорю шепотом) <em>enterprise</em> <span class=".keep-together"><em>software</em></span>.</p></div>
+<div class="paragraph"><p>В мире Python мы часто цитируем Дзен Python: "Должен существовать один и, желательно, только один очевидный способ сделать это."<span class="footnote"><br />[<code>python -c "import this"</code>]<br /></span> К сожалению, по мере роста размера проекта наиболее очевидный способ решения задач не всегда помогает вам управлять сложностью и меняющимися требованиями.</p></div>
+<div class="paragraph"><p>Ни один из методов и шаблонов, которые мы обсуждаем в этой книге, не является новым, но по большей части они являются новыми для мира Python. И эта книга не является заменой классики в этой области, такой как <em>Domain-Driven Design</em> Эрика Эванса или <em>Patterns of Enterprise Application Architecture</em> Мартина Фаулера (оба опубликованы Addison-Wesley <span class=".keep-together">Professional</span>), на которые мы часто ссылаемся и призываем вас пойти и прочитать.</p></div>
+<div class="paragraph"><p>Но все классические примеры кода в литературе, как правило, написаны на Java или <span class="keep-together">C++/#</span>, и если вы человек из рядов Python и не использовали ни один из этих языков в течение длительного времени (или вообще никогда), то эти листинги кода могут быть довольно&#8230;трудными. Видимо это и есть причина, по которой последнее издание другого классического текста, Fowler&#8217;s <em>Refactoring</em> (Addison-Wesley Professional), написано в JavaScript.</p></div>
+</div>
+<div class="sect2 pagebreak-before less_space">
+<h3 id="_tdd_ddd_и_event_driven_architecture">TDD, DDD, и Event-Driven Architecture</h3>
+<div class="paragraph"><p>В порядке популярности назовём три инструмента для управления сложностью:</p></div>
+<div class="olist arabic"><ol class="arabic">
+<li>
+<p>
+<em>Test-driven development</em> (TDD) Разработка на основе тестов. Помогает нам создавать правильный код и проводить рефакторинг или добавлять новые функции, не опасаясь регресса. Но бывает сложно извлечь максимальную пользу из наших тестов: как сделать так, чтобы они выполнялись как можно быстрее? Чтобы мы получили как можно более качественное покрытие и обратную связь от быстрых модульных тестов без зависимостей (dependency-free unit tests) и имели минимальное количество более медленных, нестабильных сквозных (end-to-end) тестов?
+</p>
+</li>
+<li>
+<p>
+<em>Domain-driven design</em> (DDD)  Разработка на основе поведения. Просит нас сосредоточить наши усилия на построении хорошей модели бизнес-сферы, но как мы можем убедиться, чтобы наши модели не были обременены инфраструктурными проблемами и их не было трудно изменить?
+</p>
+</li>
+<li>
+<p>
+<em>Loose coupling</em> Слабосвязанные (микросервисы), интегрированные через сообщения (иногда называемые <em>reactive microservices</em>), являются хорошо зарекомендовавшим себя решением проблемы управления сложностью в нескольких приложениях или бизнес-доменах. Но не всегда очевидно, как сделать так, чтобы они соответствовали широко распространённым инструментам мира Python-Flask, Django, Celery и так далее.
+</p>
+</li>
+</ol></div>
+<div class="admonitionblock">
+<table><tr>
+<td class="icon">
+<img src="./images/icons/note.png" alt="Note" />
+</td>
+<td class="content">Не пугайтесь, если вы не работаете с микросервисами (или не заинтересованы в них).  Подавляющее большинство моделей, которые мы обсудим, включая большую часть материалов событийной архитектуры, абсолютно применимы в монолитной архитектуре.</td>
+</tr></table>
+</div>
+<div class="paragraph"><p>Наша цель в этой книге-представить несколько классических архитектурных моделей и показать, как они поддерживают TDD, DDD и event-driven сервисы.  Мы надеемся, что он послужит ориентиром для их реализации в питоническом ключе, и что люди смогут использовать его в качестве первого шага к дальнейшим исследованиям в этой области.</p></div>
+</div>
+<div class="sect2">
+<h3 id="_кому_следует_прочитать_эту_книгу">Кому следует прочитать эту книгу</h3>
+<div class="paragraph"><p>Вот несколько мыслей, которые мы предполагаем справедливо сказать о тебе, дорогой читатель:</p></div>
+<div class="ulist"><ul>
+<li>
+<p>
+Ты был близок к некоторым достаточно сложным приложениям Python.
+</p>
+</li>
+<li>
+<p>
+Ты видел, а может сам испытал ту боль, которая приходит вместе с попыткой справиться с этой сложностью.
+</p>
+</li>
+<li>
+<p>
+Ты не обязательно знаешь что-либо о DDD или любом из классических шаблонов архитектуры приложений.
+</p>
+</li>
+</ul></div>
+<div class="paragraph"><p>Мы структурируем наши исследования архитектурных паттернов вокруг примера приложения, выстраивая его
+        главу за главой. Мы используем TDD в работе, поэтому обычно сначала показываем списки тестов, а затем их реализацию. Если вы не привыкли работать с тестом, сначала это может показаться немного странным, но мы надеемся, что вы скоро привыкнете видеть код "используемым" (то есть снаружи), прежде чем увидите, как он построен внутри.</p></div>
+<div class="paragraph"><p>Мы используем некоторые специфические фреймворки и технологии Python, включая Flask, SQLAlchemy и
+        pytest, а также Docker и Redis. Если вы уже знакомы с ними, то это не повредит, но вряд ли это необходимо.  Одной из наших главных целей в этой книге является построение архитектуры, для которой конкретные технологические решения становятся второстепенными деталями реализации.</p></div>
+</div>
+<div class="sect2">
+<h3 id="_краткий_обзор_того_что_будет_дальше">Краткий обзор того, что будет дальше</h3>
+<div class="paragraph"><p>Книга разделена на две части; Вот некоторые темы, которые мы рассмотрим, и главы, в которых они живут.</p></div>
+<div class="sect3">
+<h4 id="_a_data_type_xref_data_xrefstyle_chap_num_title_href_part1_часть1_a"><a data-type="xref" data-xrefstyle="chap-num-title" href="#part1">#Часть1</a></h4>
+<div class="dlist"><dl>
+<dt class="hdlist1">
+Domain modeling и DDD (Chapters <a href="#chapter_01_domain_model">1</a>, <a href="#chapter_02_repository">2</a> и <a href="#chapter_07_aggregate">7</a>)
+</dt>
+<dd>
+<p>
+    На каком-то уровне каждый усвоил урок, что сложные бизнес-задачи должны быть отражены в коде, в виде модели предметной области.     Но почему всегда кажется, что это так трудно сделать, не запутавшись в инфраструктурных проблемах, наших веб-фреймворках или чем-то еще?     В первой главе мы даем широкий обзор <em>domain modeling</em> и DDD, а также показываем, как начать работу с моделью, которая не имеет внешних зависимостей и быстрых модульных тестов. Позже мы вернемся к шаблонам DDD, чтобы обсудить, как выбрать правильный агрегат и как этот выбор связан с вопросами целостности данных.
+</p>
+</dd>
+<dt class="hdlist1">
+Repository, Service Layer, и Unit of Work patterns (Chapters <a href="#chapter_02_repository">2</a>, <a href="#chapter_04_service_layer">4</a>, и <a href="#chapter_05_high_gear_low_gear">5</a>)
+</dt>
+<dd>
+<p>
+    В этих трех главах мы представляем три тесно связанных и взаимно усиливающих друг друга паттерна, которые поддерживают наше стремление сохранить модель свободной от посторонних зависимостей.  Мы выстроим слой абстракции вокруг постоянного хранилища, и уровень сервиса, чтобы определить точки входа в нашу систему и захватить основные варианты использования. Мы покажем, как этот слой позволяет легко создавать тонкие точки входа в нашу систему, будь то API Flask или CLI (Command Line Interface - Интерфейс командной строки).
+</p>
+</dd>
+</dl></div>
+<div class="dlist"><dl>
+<dt class="hdlist1">
+Некоторые соображения о тестировании и абстракциях (Chapter <a href="#chapter_03_abstractions">3</a> и <a href="#chapter_05_high_gear_low_gear">5</a>)
+</dt>
+<dd>
+<p>
+    После представления первой абстракции (паттерна Repository) воспользуемся возможностью для общего обсуждения того, как выбирать абстракции и какова их роль в выборе того, как наше программное обеспечение связано друг с другом. После знакомства с шаблоном Service Layer, немного поговорим о построении <em>test pyramid</em> и написании модульных тестов на максимально возможном уровне абстракции.
+</p>
+</dd>
+</dl></div>
+</div>
+<div class="sect3">
+<h4 id="_a_data_type_xref_data_xrefstyle_chap_num_title_href_part2_часть2_a"><a data-type="xref" data-xrefstyle="chap-num-title" href="#part2">#Часть2</a></h4>
+<div class="dlist"><dl>
+<dt class="hdlist1">
+Архитектура, управляемая событиями (Chapters <a href="#chapter_08_events_and_message_bus">8</a>-<a href="#chapter_11_external_events">11</a>)
+</dt>
+<dd>
+<p>
+    Мы вводим еще три взаимно усиливающих шаблона: Domain Events, Message Bus, и Handler patterns. События домена (Domain Events)-это средство передачи идеи о том, что некоторые взаимодействия с системой являются триггерами для других. Мы используем шину сообщений <em>Message Bus</em>, чтобы позволить действиям вызывать события и вызывать соответствующие <em>handlers</em> (обработчики).     Мы переходим к обсуждению того, как события могут быть использованы в качестве шаблона для интеграции между службами в архитектуре микросервисов. Наконец, мы различаем команды и события. Наше приложение теперь по сути является системой обработки сообщений.
+</p>
+</dd>
+<dt class="hdlist1">
+Разделение ответственности по командам и запросам (<a href="#chapter_12_cqrs">[chapter_12_cqrs]</a>)
+</dt>
+<dd>
+<p>
+    Мы приводим пример разделения ответственности команд-запросов с событиями и без событий.
+</p>
+</dd>
+<dt class="hdlist1">
+Инъекция зависимостей (<a href="#chapter_13_dependency_injection">[chapter_13_dependency_injection]</a>)
+</dt>
+<dd>
+<p>
+    Мы приводим в порядок наши явные и неявные зависимости и реализуем простую структуру внедрения зависимостей.
+</p>
+</dd>
+</dl></div>
+</div>
+<div class="sect3">
+<h4 id="_дополнительный_контент">Дополнительный контент</h4>
+<div class="paragraph"><p>Как мне попасть туда отсюда?<span class="footnote"><br />[ Прим. переводчика: Судя по всему, имеется ввиду песня "How do I get there from here" (Disney)
+В исполнении: China Anne McClain:
+Я шагнула в новом направлении
+Сейчас я слушаю своё сердце, а не разум
+Но всё, что я чувствую, я подвергаю сомнениям
+Что если я неправа&#8230; Что же дальше?
+Существует ли иная дорога?]<br /></span> (<a href="#epilogue_1_how_to_get_there_from_here">[epilogue_1_how_to_get_there_from_here]</a>)::
+    Реализация архитектурных шаблонов всегда выглядит легко, когда вы показываете простой пример, начиная с нуля, но многие из вас, вероятно, зададутся вопросом, как применить эти принципы к существующему программному обеспечению. Мы дадим несколько указаний в эпилоге и некоторые ссылки для дальнейшего чтения.</p></div>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_примеры_кода_и_совместное_кодирование">Примеры кода и совместное кодирование</h3>
+<div class="paragraph"><p>Постепенно читая эту книгу вы, вероятно, согласитесь с нами, когда мы скажем, что лучший способ узнать о коде&#8201;&#8212;&#8201;это код.  Большую часть того, что мы знаем, мы узнали из общения с людьми, совместного написания кода с ними и обучения на практике, и мы хотели бы воссоздать этот опыт для вас как можно точнее в этой книге.</p></div>
+<div class="paragraph"><p>В результате мы построили книгу на примере одного проекта (хотя иногда мы приводим и другие примеры). Мы будем развивать этот проект по мере продвижения глав, как если бы вы были в паре с нами, и мы объясняем, что мы делаем и почему на каждом этапе.</p></div>
+<div class="paragraph"><p>Но чтобы по-настоящему разобраться с этими шаблонами, вам нужно повозиться с кодом и почувствовать, как он работает. Вы найдете весь код на GitHub; у каждой главы есть своя ветка. Вы также можете найти <a href="https://github.com/cosmicpython/code/branches/all">список</a> веток на GitHub.</p></div>
+<div class="paragraph pagebreak-before"><p>Вот три способа кодирования вместе с книгой:</p></div>
+<div class="ulist"><ul>
+<li>
+<p>
+Начните свой собственное репозиторий и попробуйте создать приложение, как это делаем мы, следуя примерам из листингов в книге и время от времени заглядывая в наше репо за подсказками. Однако предупреждаю: если вы читали предыдущую книгу Гарри и кодировали вместе с ней, вы обнаружите, что эта книга требует от вас проявить больше самостоятельности; вам, возможно, придется сильно полагаться на рабочие версии на GitHub.
+</p>
+</li>
+<li>
+<p>
+Попробуйте применить каждый шаблон, главу за главой, к вашему собственному (желательно маленькому/игрушечному) проекту и посмотрите, сможете ли вы заставить его работать для вашего варианта использования.  Высокий риск/высокая награда (и, кроме того, достаточные усилия!). Возможно придётся изрядно попотеть, чтобы заставить какие то вещи работать в соответствии со спецификой вашего проекта, но, с другой стороны, вероятно вы, узнаете много полезного.
+</p>
+</li>
+<li>
+<p>
+В каждой главе мы описываем "Упражнение для читателя" и даём ссылки на GitHub, где вы можете скачать частично готовый код для главы с несколькими недостающими частями, чтобы написать его самостоятельно.
+</p>
+</li>
+</ul></div>
+<div class="paragraph"><p>Особенно если вы намереваетесь применить некоторые из этих паттернов в своих собственных проектах, работа с простым примером-отличный способ безопасно практиковаться.</p></div>
+<div class="admonitionblock">
+<table><tr>
+<td class="icon">
+<img src="./images/icons/tip.png" alt="Tip" />
+</td>
+<td class="content">По крайней мере, выполняйте «git checkout» кода из нашего репозитория при чтении каждой главы. Возможность сразу же увидеть код в контексте реального работающего приложения поможет ответить на множество вопросов по ходу дела и сделает все более реальным. Вы найдете инструкции, как это сделать, в начале каждой главы.</td>
+</tr></table>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_лицензия">Лицензия</h3>
+<div class="paragraph"><p>Код (и онлайн-версия книги) находится под лицензией Creative Commons CC BY-NC-ND, что означает, что вы можете свободно копировать и делиться им с кем угодно в некоммерческих целях при условии указания авторства. Если вы хотите повторно использовать какой-либо контент из этой книги и у вас есть какие-либо опасения по поводу лицензии, свяжитесь с O&#8217;Reilly <a class="email"
+href="mailto:permissions@oreilly.com"><em>permissions@oreilly.com</em></a>.</p></div>
+<div class="paragraph"><p>Печатное издание лицензируется по-другому; см. страницу об авторских правах.</p></div>
+</div>
+<div class="sect2">
+<h3 id="_условные_обозначения_используемые_в_этой_книге">Условные обозначения, используемые в этой книге</h3>
+<div class="paragraph"><p>В этой книге используются следующие типографские условные обозначения:</p></div>
+<div class="dlist"><dl>
+<dt class="hdlist1">
+<em>Курсив</em>
+</dt>
+<dd>
+<p>
+Указывает новые термины, URL-адреса, адреса электронной почты, имена файлов и расширения файлов.
+</p>
+</dd>
+<dt class="hdlist1">
+<code>Постоянная ширина</code>
+</dt>
+<dd>
+<p>
+Используется для листинга программ, а также в абзацах для обозначения программных элементов, таких как имена переменных или функций, базы данных, типы данных, переменные среды, операторы и ключевые слова.
+</p>
+</dd>
+<dt class="hdlist1">
+<strong><code>Постоянная ширина жирный шрифт</code></strong>
+</dt>
+<dd>
+<p>
+Показывает команды или другой текст, который должен быть набран буквально пользователем.
+</p>
+</dd>
+<dt class="hdlist1">
+<em><code>Курсив постоянной ширины</code></em>
+</dt>
+<dd>
+<p>
+Показывает текст, который должен быть заменен пользовательскими значениями или значениями, определяемыми контекстом.
+</p>
+</dd>
+</dl></div>
+<div class="admonitionblock">
+<table><tr>
+<td class="icon">
+<img src="./images/icons/tip.png" alt="Tip" />
+</td>
+<td class="content">
+<div class="paragraph"><p>Этот элемент означает подсказку или предложение.</p></div>
+</td>
+</tr></table>
+</div>
+<div class="admonitionblock">
+<table><tr>
+<td class="icon">
+<img src="./images/icons/note.png" alt="Note" />
+</td>
+<td class="content">
+<div class="paragraph"><p>Этот элемент обозначает общее примечание.</p></div>
+</td>
+</tr></table>
+</div>
+<div class="admonitionblock">
+<table><tr>
+<td class="icon">
+<img src="./images/icons/warning.png" alt="Warning" />
+</td>
+<td class="content">
+<div class="paragraph"><p>Этот элемент указывает на предупреждение или предостережение.</p></div>
+</td>
+</tr></table>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_онлайн_обучение_o_8217_reilly">Онлайн-обучение O&#8217;Reilly</h3>
+<div class="admonitionblock ormenabled">
+<table><tr>
+<td class="icon">
+<img src="./images/icons/note.png" alt="Note" />
+</td>
+<td class="content">
+<div class="paragraph"><p>Более 40 лет <a href="http://oreilly.com" class="orm:hideurl"><em class="hyperlink">O’Reilly Media</em></a> предоставляет технологии и бизнес-тренинги, знания и идеи, чтобы помочь компаниям добиться успеха.</p></div>
+</td>
+</tr></table>
+</div>
+<div class="paragraph"><p>Наша уникальная сеть экспертов и новаторов делится своими знаниями и опытом с помощью книг, статей, конференций и нашей онлайн-платформы обучения. Платформа онлайн-обучения O&#8217;Reilly предоставляет вам доступ по требованию к живым учебным курсам, углубленным учебным путям, интерактивным средам кодирования и обширной коллекции текстов и видео от O&#8217;Reilly и более чем 200 других издателей. Для получения дополнительной информации, пожалуйста, посетите сайт <a href="http://oreilly.com" class="orm:hideurl"><em>http://oreilly.com</em></a>.</p></div>
+</div>
+<div class="sect2">
+<h3 id="_как_связаться_с_o_8217_reilly">Как связаться с  O&#8217;Reilly</h3>
+<div class="paragraph"><p>Пожалуйста, направляйте комментарии и вопросы, касающиеся этой книги, издателю:</p></div>
+<ul class="simplelist">
+  <li>O’Reilly Media, Inc.</li>
+  <li>1005 Gravenstein Highway North</li>
+  <li>Sebastopol, CA 95472</li>
+  <li>800-998-9938 (in the United States or Canada)</li>
+  <li>707-829-0515 (international or local)</li>
+  <li>707-829-0104 (fax)</li>
+</ul>
+<div class="paragraph"><p>У нас есть веб-страница для этой книги, где мы перечисляем ошибки, примеры и любую дополнительную информацию. Вы можете получить доступ к этой странице по адресу <a href="https://oreil.ly/architecture-patterns-python">https://oreil.ly/architecture-patterns-python</a>.</p></div>
+<!--Don't forget to update the link above.-->
+<div class="paragraph"><p>Email <a class="email" href="mailto:bookquestions@oreilly.com"><em>bookquestions@oreilly.com</em></a> для  комментариев и технических вопросов по этой книге.</p></div>
+<div class="paragraph"><p>Для получения дополнительной информации о наших книгах, курсах, конференциях и новостях посетите наш веб-сайт по адресу <a href="http://www.oreilly.com">http://www.oreilly.com</a>.</p></div>
+<div class="paragraph"><p>Найдите нас на Facebook: <a href="http://facebook.com/oreilly">http://facebook.com/oreilly</a></p></div>
+<div class="paragraph"><p>Следите за нами в Twitter: <a href="http://twitter.com/oreillymedia">http://twitter.com/oreillymedia</a></p></div>
+<div class="paragraph"><p>Смотрите нас на YouTube: <a href="http://www.youtube.com/oreillymedia">http://www.youtube.com/oreillymedia</a></p></div>
+</div>
+<div class="sect2">
+<h3 id="_благодарности">Благодарности</h3>
+<div class="paragraph"><p>Нашим техническим обозревателям Дэвиду Седдону, Эду Юнгу и Хайнеку Шлаваку: мы абсолютно не заслуживаем вас. Вы все невероятно преданные, добросовестные и строгие. Каждый из вас безмерно умен, и ваши разные точки зрения были полезны и дополняли друг друга. Спасибо вам от всего сердца.</p></div>
+<div class="paragraph"><p>Огромное спасибо всем нашим читателям за их комментарии и
+предложения:
+Йен Купер, Абдулла Арифф, Джонатан Мейер, Гил Гонсалвес, Матье Чоплин, Бен Джадсон, Джеймс Грегори, Лукаш Лехович, Клинтон Рой, Виторино Араужо, Сьюзан Гудбоди, Джош Харвуд, Дэниел Батлер, Лю Хайбин, Джимми Вергиа Игнасиа Игнас Канестрани, Ренне Роча, Педроаби, Ашиа Завадук, Йостейн Лейра, Брэндон Роудс, Язепс Баско, Симкимсия, Адриен Брюнет и многие другие; приносим свои извинения, если мы пропустили Вас в этом списке.</p></div>
+<div class="paragraph"><p>Супер-мега-спасибо нашему редактору Корбину Коллинзу за его нежное щебетание и за то, что он неутомимый защитник читателя. В такой же степени выражаем благодарность производственному персоналу Кэтрин Тозер, Шэрон Уилки, Эллен Траутман-Заиг и Ребекке Демарест за вашу преданность делу, профессионализм и внимание к деталям. Эта книга неизмеримо улучшена благодаря вам.</p></div>
+<div class="paragraph"><p>Любые ошибки, оставшиеся в книге, естественно, являются нашими собственными.</p></div>
+</div>
+</div>
+</div>
+</div>
+<div id="footnotes"><hr /></div>
+<div id="footer">
+<div id="footer-text">
+Last updated
+ 2021-02-23 01:12:04 RTZ 2 (зима)
+</div>
+</div>
+</body>
+</html>
