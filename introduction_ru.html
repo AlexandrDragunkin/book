@@ -1,0 +1,1073 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.1//EN"
+    "http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en">
+<head>
+<meta http-equiv="Content-Type" content="application/xhtml+xml; charset=UTF-8" />
+<meta name="generator" content="AsciiDoc 9.0.4" />
+<title></title>
+<style type="text/css">
+/* Shared CSS for AsciiDoc xhtml11 and html5 backends */
+
+/* Default font. */
+body {
+  font-family: Georgia,serif;
+}
+
+/* Title font. */
+h1, h2, h3, h4, h5, h6,
+div.title, caption.title,
+thead, p.table.header,
+#toctitle,
+#author, #revnumber, #revdate, #revremark,
+#footer {
+  font-family: Arial,Helvetica,sans-serif;
+}
+
+body {
+  margin: 1em 5% 1em 5%;
+}
+
+a {
+  color: blue;
+  text-decoration: underline;
+}
+a:visited {
+  color: fuchsia;
+}
+
+em {
+  font-style: italic;
+  color: navy;
+}
+
+strong {
+  font-weight: bold;
+  color: #083194;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  color: #527bbd;
+  margin-top: 1.2em;
+  margin-bottom: 0.5em;
+  line-height: 1.3;
+}
+
+h1, h2, h3 {
+  border-bottom: 2px solid silver;
+}
+h2 {
+  padding-top: 0.5em;
+}
+h3 {
+  float: left;
+}
+h3 + * {
+  clear: left;
+}
+h5 {
+  font-size: 1.0em;
+}
+
+div.sectionbody {
+  margin-left: 0;
+}
+
+hr {
+  border: 1px solid silver;
+}
+
+p {
+  margin-top: 0.5em;
+  margin-bottom: 0.5em;
+}
+
+ul, ol, li > p {
+  margin-top: 0;
+}
+ul > li     { color: #aaa; }
+ul > li > * { color: black; }
+
+.monospaced, code, pre {
+  font-family: "Courier New", Courier, monospace;
+  font-size: inherit;
+  color: navy;
+  padding: 0;
+  margin: 0;
+}
+pre {
+  white-space: pre-wrap;
+}
+
+#author {
+  color: #527bbd;
+  font-weight: bold;
+  font-size: 1.1em;
+}
+#email {
+}
+#revnumber, #revdate, #revremark {
+}
+
+#footer {
+  font-size: small;
+  border-top: 2px solid silver;
+  padding-top: 0.5em;
+  margin-top: 4.0em;
+}
+#footer-text {
+  float: left;
+  padding-bottom: 0.5em;
+}
+#footer-badges {
+  float: right;
+  padding-bottom: 0.5em;
+}
+
+#preamble {
+  margin-top: 1.5em;
+  margin-bottom: 1.5em;
+}
+div.imageblock, div.exampleblock, div.verseblock,
+div.quoteblock, div.literalblock, div.listingblock, div.sidebarblock,
+div.admonitionblock {
+  margin-top: 1.0em;
+  margin-bottom: 1.5em;
+}
+div.admonitionblock {
+  margin-top: 2.0em;
+  margin-bottom: 2.0em;
+  margin-right: 10%;
+  color: #606060;
+}
+
+div.content { /* Block element content. */
+  padding: 0;
+}
+
+/* Block element titles. */
+div.title, caption.title {
+  color: #527bbd;
+  font-weight: bold;
+  text-align: left;
+  margin-top: 1.0em;
+  margin-bottom: 0.5em;
+}
+div.title + * {
+  margin-top: 0;
+}
+
+td div.title:first-child {
+  margin-top: 0.0em;
+}
+div.content div.title:first-child {
+  margin-top: 0.0em;
+}
+div.content + div.title {
+  margin-top: 0.0em;
+}
+
+div.sidebarblock > div.content {
+  background: #ffffee;
+  border: 1px solid #dddddd;
+  border-left: 4px solid #f0f0f0;
+  padding: 0.5em;
+}
+
+div.listingblock > div.content {
+  border: 1px solid #dddddd;
+  border-left: 5px solid #f0f0f0;
+  background: #f8f8f8;
+  padding: 0.5em;
+}
+
+div.quoteblock, div.verseblock {
+  padding-left: 1.0em;
+  margin-left: 1.0em;
+  margin-right: 10%;
+  border-left: 5px solid #f0f0f0;
+  color: #888;
+}
+
+div.quoteblock > div.attribution {
+  padding-top: 0.5em;
+  text-align: right;
+}
+
+div.verseblock > pre.content {
+  font-family: inherit;
+  font-size: inherit;
+}
+div.verseblock > div.attribution {
+  padding-top: 0.75em;
+  text-align: left;
+}
+/* DEPRECATED: Pre version 8.2.7 verse style literal block. */
+div.verseblock + div.attribution {
+  text-align: left;
+}
+
+div.admonitionblock .icon {
+  vertical-align: top;
+  font-size: 1.1em;
+  font-weight: bold;
+  text-decoration: underline;
+  color: #527bbd;
+  padding-right: 0.5em;
+}
+div.admonitionblock td.content {
+  padding-left: 0.5em;
+  border-left: 3px solid #dddddd;
+}
+
+div.exampleblock > div.content {
+  border-left: 3px solid #dddddd;
+  padding-left: 0.5em;
+}
+
+div.imageblock div.content { padding-left: 0; }
+span.image img { border-style: none; vertical-align: text-bottom; }
+a.image:visited { color: white; }
+
+dl {
+  margin-top: 0.8em;
+  margin-bottom: 0.8em;
+}
+dt {
+  margin-top: 0.5em;
+  margin-bottom: 0;
+  font-style: normal;
+  color: navy;
+}
+dd > *:first-child {
+  margin-top: 0.1em;
+}
+
+ul, ol {
+    list-style-position: outside;
+}
+ol.arabic {
+  list-style-type: decimal;
+}
+ol.loweralpha {
+  list-style-type: lower-alpha;
+}
+ol.upperalpha {
+  list-style-type: upper-alpha;
+}
+ol.lowerroman {
+  list-style-type: lower-roman;
+}
+ol.upperroman {
+  list-style-type: upper-roman;
+}
+
+div.compact ul, div.compact ol,
+div.compact p, div.compact p,
+div.compact div, div.compact div {
+  margin-top: 0.1em;
+  margin-bottom: 0.1em;
+}
+
+tfoot {
+  font-weight: bold;
+}
+td > div.verse {
+  white-space: pre;
+}
+
+div.hdlist {
+  margin-top: 0.8em;
+  margin-bottom: 0.8em;
+}
+div.hdlist tr {
+  padding-bottom: 15px;
+}
+dt.hdlist1.strong, td.hdlist1.strong {
+  font-weight: bold;
+}
+td.hdlist1 {
+  vertical-align: top;
+  font-style: normal;
+  padding-right: 0.8em;
+  color: navy;
+}
+td.hdlist2 {
+  vertical-align: top;
+}
+div.hdlist.compact tr {
+  margin: 0;
+  padding-bottom: 0;
+}
+
+.comment {
+  background: yellow;
+}
+
+.footnote, .footnoteref {
+  font-size: 0.8em;
+}
+
+span.footnote, span.footnoteref {
+  vertical-align: super;
+}
+
+#footnotes {
+  margin: 20px 0 20px 0;
+  padding: 7px 0 0 0;
+}
+
+#footnotes div.footnote {
+  margin: 0 0 5px 0;
+}
+
+#footnotes hr {
+  border: none;
+  border-top: 1px solid silver;
+  height: 1px;
+  text-align: left;
+  margin-left: 0;
+  width: 20%;
+  min-width: 100px;
+}
+
+div.colist td {
+  padding-right: 0.5em;
+  padding-bottom: 0.3em;
+  vertical-align: top;
+}
+div.colist td img {
+  margin-top: 0.3em;
+}
+
+@media print {
+  #footer-badges { display: none; }
+}
+
+#toc {
+  margin-bottom: 2.5em;
+}
+
+#toctitle {
+  color: #527bbd;
+  font-size: 1.1em;
+  font-weight: bold;
+  margin-top: 1.0em;
+  margin-bottom: 0.1em;
+}
+
+div.toclevel0, div.toclevel1, div.toclevel2, div.toclevel3, div.toclevel4 {
+  margin-top: 0;
+  margin-bottom: 0;
+}
+div.toclevel2 {
+  margin-left: 2em;
+  font-size: 0.9em;
+}
+div.toclevel3 {
+  margin-left: 4em;
+  font-size: 0.9em;
+}
+div.toclevel4 {
+  margin-left: 6em;
+  font-size: 0.9em;
+}
+
+span.aqua { color: aqua; }
+span.black { color: black; }
+span.blue { color: blue; }
+span.fuchsia { color: fuchsia; }
+span.gray { color: gray; }
+span.green { color: green; }
+span.lime { color: lime; }
+span.maroon { color: maroon; }
+span.navy { color: navy; }
+span.olive { color: olive; }
+span.purple { color: purple; }
+span.red { color: red; }
+span.silver { color: silver; }
+span.teal { color: teal; }
+span.white { color: white; }
+span.yellow { color: yellow; }
+
+span.aqua-background { background: aqua; }
+span.black-background { background: black; }
+span.blue-background { background: blue; }
+span.fuchsia-background { background: fuchsia; }
+span.gray-background { background: gray; }
+span.green-background { background: green; }
+span.lime-background { background: lime; }
+span.maroon-background { background: maroon; }
+span.navy-background { background: navy; }
+span.olive-background { background: olive; }
+span.purple-background { background: purple; }
+span.red-background { background: red; }
+span.silver-background { background: silver; }
+span.teal-background { background: teal; }
+span.white-background { background: white; }
+span.yellow-background { background: yellow; }
+
+span.big { font-size: 2em; }
+span.small { font-size: 0.6em; }
+
+span.underline { text-decoration: underline; }
+span.overline { text-decoration: overline; }
+span.line-through { text-decoration: line-through; }
+
+div.unbreakable { page-break-inside: avoid; }
+
+
+/*
+ * xhtml11 specific
+ *
+ * */
+
+div.tableblock {
+  margin-top: 1.0em;
+  margin-bottom: 1.5em;
+}
+div.tableblock > table {
+  border: 3px solid #527bbd;
+}
+thead, p.table.header {
+  font-weight: bold;
+  color: #527bbd;
+}
+p.table {
+  margin-top: 0;
+}
+/* Because the table frame attribute is overridden by CSS in most browsers. */
+div.tableblock > table[frame="void"] {
+  border-style: none;
+}
+div.tableblock > table[frame="hsides"] {
+  border-left-style: none;
+  border-right-style: none;
+}
+div.tableblock > table[frame="vsides"] {
+  border-top-style: none;
+  border-bottom-style: none;
+}
+
+
+/*
+ * html5 specific
+ *
+ * */
+
+table.tableblock {
+  margin-top: 1.0em;
+  margin-bottom: 1.5em;
+}
+thead, p.tableblock.header {
+  font-weight: bold;
+  color: #527bbd;
+}
+p.tableblock {
+  margin-top: 0;
+}
+table.tableblock {
+  border-width: 3px;
+  border-spacing: 0px;
+  border-style: solid;
+  border-color: #527bbd;
+  border-collapse: collapse;
+}
+th.tableblock, td.tableblock {
+  border-width: 1px;
+  padding: 4px;
+  border-style: solid;
+  border-color: #527bbd;
+}
+
+table.tableblock.frame-topbot {
+  border-left-style: hidden;
+  border-right-style: hidden;
+}
+table.tableblock.frame-sides {
+  border-top-style: hidden;
+  border-bottom-style: hidden;
+}
+table.tableblock.frame-none {
+  border-style: hidden;
+}
+
+th.tableblock.halign-left, td.tableblock.halign-left {
+  text-align: left;
+}
+th.tableblock.halign-center, td.tableblock.halign-center {
+  text-align: center;
+}
+th.tableblock.halign-right, td.tableblock.halign-right {
+  text-align: right;
+}
+
+th.tableblock.valign-top, td.tableblock.valign-top {
+  vertical-align: top;
+}
+th.tableblock.valign-middle, td.tableblock.valign-middle {
+  vertical-align: middle;
+}
+th.tableblock.valign-bottom, td.tableblock.valign-bottom {
+  vertical-align: bottom;
+}
+
+
+/*
+ * manpage specific
+ *
+ * */
+
+body.manpage h1 {
+  padding-top: 0.5em;
+  padding-bottom: 0.5em;
+  border-top: 2px solid silver;
+  border-bottom: 2px solid silver;
+}
+body.manpage h2 {
+  border-style: none;
+}
+body.manpage div.sectionbody {
+  margin-left: 3em;
+}
+
+@media print {
+  body.manpage div#toc { display: none; }
+}
+.highlight .hll { background-color: #ffffcc }
+.highlight  { background: #f8f8f8; }
+.highlight .c { color: #408080; font-style: italic } /* Comment */
+.highlight .err { border: 1px solid #FF0000 } /* Error */
+.highlight .k { color: #008000; font-weight: bold } /* Keyword */
+.highlight .o { color: #666666 } /* Operator */
+.highlight .cm { color: #408080; font-style: italic } /* Comment.Multiline */
+.highlight .cp { color: #BC7A00 } /* Comment.Preproc */
+.highlight .c1 { color: #408080; font-style: italic } /* Comment.Single */
+.highlight .cs { color: #408080; font-style: italic } /* Comment.Special */
+.highlight .gd { color: #A00000 } /* Generic.Deleted */
+.highlight .ge { font-style: italic } /* Generic.Emph */
+.highlight .gr { color: #FF0000 } /* Generic.Error */
+.highlight .gh { color: #000080; font-weight: bold } /* Generic.Heading */
+.highlight .gi { color: #00A000 } /* Generic.Inserted */
+.highlight .go { color: #808080 } /* Generic.Output */
+.highlight .gp { color: #000080; font-weight: bold } /* Generic.Prompt */
+.highlight .gs { font-weight: bold } /* Generic.Strong */
+.highlight .gu { color: #800080; font-weight: bold } /* Generic.Subheading */
+.highlight .gt { color: #0040D0 } /* Generic.Traceback */
+.highlight .kc { color: #008000; font-weight: bold } /* Keyword.Constant */
+.highlight .kd { color: #008000; font-weight: bold } /* Keyword.Declaration */
+.highlight .kn { color: #008000; font-weight: bold } /* Keyword.Namespace */
+.highlight .kp { color: #008000 } /* Keyword.Pseudo */
+.highlight .kr { color: #008000; font-weight: bold } /* Keyword.Reserved */
+.highlight .kt { color: #B00040 } /* Keyword.Type */
+.highlight .m { color: #666666 } /* Literal.Number */
+.highlight .s { color: #BA2121 } /* Literal.String */
+.highlight .na { color: #7D9029 } /* Name.Attribute */
+.highlight .nb { color: #008000 } /* Name.Builtin */
+.highlight .nc { color: #0000FF; font-weight: bold } /* Name.Class */
+.highlight .no { color: #880000 } /* Name.Constant */
+.highlight .nd { color: #AA22FF } /* Name.Decorator */
+.highlight .ni { color: #999999; font-weight: bold } /* Name.Entity */
+.highlight .ne { color: #D2413A; font-weight: bold } /* Name.Exception */
+.highlight .nf { color: #0000FF } /* Name.Function */
+.highlight .nl { color: #A0A000 } /* Name.Label */
+.highlight .nn { color: #0000FF; font-weight: bold } /* Name.Namespace */
+.highlight .nt { color: #008000; font-weight: bold } /* Name.Tag */
+.highlight .nv { color: #19177C } /* Name.Variable */
+.highlight .ow { color: #AA22FF; font-weight: bold } /* Operator.Word */
+.highlight .w { color: #bbbbbb } /* Text.Whitespace */
+.highlight .mf { color: #666666 } /* Literal.Number.Float */
+.highlight .mh { color: #666666 } /* Literal.Number.Hex */
+.highlight .mi { color: #666666 } /* Literal.Number.Integer */
+.highlight .mo { color: #666666 } /* Literal.Number.Oct */
+.highlight .sb { color: #BA2121 } /* Literal.String.Backtick */
+.highlight .sc { color: #BA2121 } /* Literal.String.Char */
+.highlight .sd { color: #BA2121; font-style: italic } /* Literal.String.Doc */
+.highlight .s2 { color: #BA2121 } /* Literal.String.Double */
+.highlight .se { color: #BB6622; font-weight: bold } /* Literal.String.Escape */
+.highlight .sh { color: #BA2121 } /* Literal.String.Heredoc */
+.highlight .si { color: #BB6688; font-weight: bold } /* Literal.String.Interpol */
+.highlight .sx { color: #008000 } /* Literal.String.Other */
+.highlight .sr { color: #BB6688 } /* Literal.String.Regex */
+.highlight .s1 { color: #BA2121 } /* Literal.String.Single */
+.highlight .ss { color: #19177C } /* Literal.String.Symbol */
+.highlight .bp { color: #008000 } /* Name.Builtin.Pseudo */
+.highlight .vc { color: #19177C } /* Name.Variable.Class */
+.highlight .vg { color: #19177C } /* Name.Variable.Global */
+.highlight .vi { color: #19177C } /* Name.Variable.Instance */
+.highlight .il { color: #666666 } /* Literal.Number.Integer.Long */
+
+
+/* Asciidoctor default stylesheet | MIT License | https://asciidoctor.org */
+
+@import url("//fonts.googleapis.com/css?family=Noto+Sans:300,600italic,400,400italic,600,600italic%7CNoto+Serif:400,400italic,700,700italic%7CDroid+Sans+Mono:400,700");
+@import url(//asciidoctor.org/stylesheets/asciidoctor.css); /* Default asciidoc style framework - important */
+
+/* customisations by harry */
+
+h1, h2, h3, h4, h5, h6 {
+    position: relative;
+}
+
+a.anchor {
+    top: 0;
+}
+
+/* hide inline ditaa/plantuml source listings for images */
+.image-source {
+    display: none
+}
+/* make formal codeblocks a bit nicer */
+.exampleblock > .content {
+    padding: 2px;
+    background-color: white;
+    border: 0;
+    margin-bottom: 2em;
+}
+.exampleblock .title {
+    text-align: right;
+}
+
+/* prev/next chapter links at bottom of page */
+.prev_and_next_chapter_links {
+    margin: 10px;
+}
+.prev_chapter_link {
+    float: left;
+}
+.next_chapter_link {
+    float: right;
+}
+
+
+/* a few tweaks to existing styles */
+#toc li {
+    margin-top: 0.5em;
+}
+
+#footnotes hr {
+    width: 100%;
+}
+
+/* end customisations by harry */
+
+
+/* CUSTOMISATIONS */
+
+/* Change the values in root for quick customisation. If you want even more fine grain... venture further. */
+
+:root{
+--maincolor:#FFFFFF;
+--primarycolor:#2c3e50;
+--secondarycolor:#ba3925;
+--tertiarycolor: #186d7a;
+--sidebarbackground:#CCC;
+--linkcolor:#b71c1c;
+--linkcoloralternate:#f44336;
+--white:#FFFFFF;
+--black:#000000;
+}
+
+/* Text styles */
+h1{color:var(--primarycolor) !important;}
+
+h2,h3,h4,h5,h6{color:var(--secondarycolor) !important;}
+
+.title{color:var(--tertiarycolor) !important; font-family:"Noto Sans",sans-serif !important;font-style: normal !important; font-weight: normal !important;}
+p{font-family: "Noto Sans",sans-serif !important}
+
+/* Table styles */
+th{font-family: "Noto Sans",sans-serif !important}
+
+/* Responsiveness fixes */
+video {
+  max-width: 100%;
+}
+
+@media all and (max-width: 600px) {
+table {
+  width: 55vw!important;
+  font-size: 3vw;
+}
+</style>
+<script type="text/javascript">
+/*<![CDATA[*/
+var asciidoc = {  // Namespace.
+
+/////////////////////////////////////////////////////////////////////
+// Table Of Contents generator
+/////////////////////////////////////////////////////////////////////
+
+/* Author: Mihai Bazon, September 2002
+ * http://students.infoiasi.ro/~mishoo
+ *
+ * Table Of Content generator
+ * Version: 0.4
+ *
+ * Feel free to use this script under the terms of the GNU General Public
+ * License, as long as you do not remove or alter this notice.
+ */
+
+ /* modified by Troy D. Hanson, September 2006. License: GPL */
+ /* modified by Stuart Rackham, 2006, 2009. License: GPL */
+
+// toclevels = 1..4.
+toc: function (toclevels) {
+
+  function getText(el) {
+    var text = "";
+    for (var i = el.firstChild; i != null; i = i.nextSibling) {
+      if (i.nodeType == 3 /* Node.TEXT_NODE */) // IE doesn't speak constants.
+        text += i.data;
+      else if (i.firstChild != null)
+        text += getText(i);
+    }
+    return text;
+  }
+
+  function TocEntry(el, text, toclevel) {
+    this.element = el;
+    this.text = text;
+    this.toclevel = toclevel;
+  }
+
+  function tocEntries(el, toclevels) {
+    var result = new Array;
+    var re = new RegExp('[hH]([1-'+(toclevels+1)+'])');
+    // Function that scans the DOM tree for header elements (the DOM2
+    // nodeIterator API would be a better technique but not supported by all
+    // browsers).
+    var iterate = function (el) {
+      for (var i = el.firstChild; i != null; i = i.nextSibling) {
+        if (i.nodeType == 1 /* Node.ELEMENT_NODE */) {
+          var mo = re.exec(i.tagName);
+          if (mo && (i.getAttribute("class") || i.getAttribute("className")) != "float") {
+            result[result.length] = new TocEntry(i, getText(i), mo[1]-1);
+          }
+          iterate(i);
+        }
+      }
+    }
+    iterate(el);
+    return result;
+  }
+
+  var toc = document.getElementById("toc");
+  if (!toc) {
+    return;
+  }
+
+  // Delete existing TOC entries in case we're reloading the TOC.
+  var tocEntriesToRemove = [];
+  var i;
+  for (i = 0; i < toc.childNodes.length; i++) {
+    var entry = toc.childNodes[i];
+    if (entry.nodeName.toLowerCase() == 'div'
+     && entry.getAttribute("class")
+     && entry.getAttribute("class").match(/^toclevel/))
+      tocEntriesToRemove.push(entry);
+  }
+  for (i = 0; i < tocEntriesToRemove.length; i++) {
+    toc.removeChild(tocEntriesToRemove[i]);
+  }
+
+  // Rebuild TOC entries.
+  var entries = tocEntries(document.getElementById("content"), toclevels);
+  for (var i = 0; i < entries.length; ++i) {
+    var entry = entries[i];
+    if (entry.element.id == "")
+      entry.element.id = "_toc_" + i;
+    var a = document.createElement("a");
+    a.href = "#" + entry.element.id;
+    a.appendChild(document.createTextNode(entry.text));
+    var div = document.createElement("div");
+    div.appendChild(a);
+    div.className = "toclevel" + entry.toclevel;
+    toc.appendChild(div);
+  }
+  if (entries.length == 0)
+    toc.parentNode.removeChild(toc);
+},
+
+
+/////////////////////////////////////////////////////////////////////
+// Footnotes generator
+/////////////////////////////////////////////////////////////////////
+
+/* Based on footnote generation code from:
+ * http://www.brandspankingnew.net/archive/2005/07/format_footnote.html
+ */
+
+footnotes: function () {
+  // Delete existing footnote entries in case we're reloading the footnodes.
+  var i;
+  var noteholder = document.getElementById("footnotes");
+  if (!noteholder) {
+    return;
+  }
+  var entriesToRemove = [];
+  for (i = 0; i < noteholder.childNodes.length; i++) {
+    var entry = noteholder.childNodes[i];
+    if (entry.nodeName.toLowerCase() == 'div' && entry.getAttribute("class") == "footnote")
+      entriesToRemove.push(entry);
+  }
+  for (i = 0; i < entriesToRemove.length; i++) {
+    noteholder.removeChild(entriesToRemove[i]);
+  }
+
+  // Rebuild footnote entries.
+  var cont = document.getElementById("content");
+  var spans = cont.getElementsByTagName("span");
+  var refs = {};
+  var n = 0;
+  for (i=0; i<spans.length; i++) {
+    if (spans[i].className == "footnote") {
+      n++;
+      var note = spans[i].getAttribute("data-note");
+      if (!note) {
+        // Use [\s\S] in place of . so multi-line matches work.
+        // Because JavaScript has no s (dotall) regex flag.
+        note = spans[i].innerHTML.match(/\s*\[([\s\S]*)]\s*/)[1];
+        spans[i].innerHTML =
+          "[<a id='_footnoteref_" + n + "' href='#_footnote_" + n +
+          "' title='View footnote' class='footnote'>" + n + "</a>]";
+        spans[i].setAttribute("data-note", note);
+      }
+      noteholder.innerHTML +=
+        "<div class='footnote' id='_footnote_" + n + "'>" +
+        "<a href='#_footnoteref_" + n + "' title='Return to text'>" +
+        n + "</a>. " + note + "</div>";
+      var id =spans[i].getAttribute("id");
+      if (id != null) refs["#"+id] = n;
+    }
+  }
+  if (n == 0)
+    noteholder.parentNode.removeChild(noteholder);
+  else {
+    // Process footnoterefs.
+    for (i=0; i<spans.length; i++) {
+      if (spans[i].className == "footnoteref") {
+        var href = spans[i].getElementsByTagName("a")[0].getAttribute("href");
+        href = href.match(/#.*/)[0];  // Because IE return full URL.
+        n = refs[href];
+        spans[i].innerHTML =
+          "[<a href='#_footnote_" + n +
+          "' title='View footnote' class='footnote'>" + n + "</a>]";
+      }
+    }
+  }
+},
+
+install: function(toclevels) {
+  var timerId;
+
+  function reinstall() {
+    asciidoc.footnotes();
+    if (toclevels) {
+      asciidoc.toc(toclevels);
+    }
+  }
+
+  function reinstallAndRemoveTimer() {
+    clearInterval(timerId);
+    reinstall();
+  }
+
+  timerId = setInterval(reinstall, 500);
+  if (document.addEventListener)
+    document.addEventListener("DOMContentLoaded", reinstallAndRemoveTimer, false);
+  else
+    window.onload = reinstallAndRemoveTimer;
+}
+
+}
+asciidoc.install(1);
+/*]]>*/
+</script>
+</head>
+<body class="book">
+<div id="header">
+<div id="toc">
+  <div id="toctitle">Table of Contents</div>
+  <noscript><p><b>JavaScript must be enabled in your browser to display the table of contents.</b></p></noscript>
+</div>
+</div>
+<div id="content">
+<div class="sect1">
+<h2 id="introduction">Введение</h2>
+<div class="sectionbody">
+<div class="sect2">
+<h3 id="_почему_наш_дизайн_такой_неудачный">Почему Наш Дизайн Такой НЕУДАЧНЫЙ?</h3>
+<div class="paragraph"><p>Что приходит на ум, когда вы слышите слово <em>хаос</em>? Возможно, вы думаете о шумной фондовой бирже или о своей кухне по утрам&#8201;&#8212;&#8201;все запутано и перемешано. Когда вы думаете о слове <em>порядок</em>, возможно, вы думаете о пустой комнате, безмятежной и спокойной. Однако для ученых хаос характеризуется однородностью (sameness), а порядок&#8201;&#8212;&#8201;сложностью (difference).</p></div>
+<div class="paragraph"><p>Например, ухоженный сад&#8201;&#8212;&#8201;это упорядоченная система. Садоводы определяют границы дорожками и забором, размечают клумбы или грядки. Со временем сад развивается, становясь все богаче и гуще; но без целенаправленных усилий сад разрастётся. Сорняки и травы будут заглушать другие растения, покрывая дорожки, пока в конце концов все их части не станут снова такими же&#8201;&#8212;&#8201;дикими и неуправляемыми.</p></div>
+<div class="paragraph"><p>Программные системы тоже склонны к хаосу. Когда мы впервые начинаем строить новую систему, у нас есть грандиозные идеи, что наш код будет чистым и хорошо упорядоченным, но со временем мы обнаруживаем, что он включает ненужные и оборванные элементы кода и заканчивается запутанной трясиной менеджеров классов и утилитных модулей. Мы обнаруживаем, что наша разумная многослойная архитектура рухнула сама по себе, как какая то безделушка. Хаотические программные системы характеризуются одинаковостью функций: обработчики API, которые знают предметную область и отправляют электронную почту и выполняют регистрацию; классы «бизнес-логики», которые не выполняют вычислений, но выполняют ввод-вывод; и все вместе со всем остальным, так что изменение любой части системы чревато опасностью. Это настолько распространено, что у разработчиков программного обеспечения есть собственный термин для обозначения хаоса: антипаттерн "the Big Ball of Mud" (Большой шар грязи или нелитературно по русски говнокод :) ) (<a href="#bbom_image">[bbom_image]</a>).</p></div>
+<div class="imageblock" id="bbom_image">
+<div class="content">
+<img src="images/apwp_0001.png" alt="images/apwp_0001.png" />
+</div>
+<div class="title">Figure 1. Схема зависимостей из реальной жизни (source: <a href="https://oreil.ly/dbGTW">"Enterprise Dependency: Big Ball of Yarn"</a> by Alex Papadimoulis)</div>
+</div>
+<div class="admonitionblock">
+<table><tr>
+<td class="icon">
+<img src="./images/icons/tip.png" alt="Tip" />
+</td>
+<td class="content">Говнокод&#8201;&#8212;&#8201;естественное состояние программного обеспечения, так же как болезнь&#8201;&#8212;&#8201;естественное состояние вашего сада. Чтобы предотвратить коллапс, нужны энергия и направление.</td>
+</tr></table>
+</div>
+<div class="paragraph"><p>К счастью, методы, позволяющие избежать этого, не сложны.</p></div>
+</div>
+<div class="sect2">
+<h3 id="_инкапсуляции_и_абстракции">Инкапсуляции и абстракции</h3>
+<div class="paragraph"><p>Инкапсуляция и абстракция&#8201;&#8212;&#8201;это инструменты, к которым мы все как программисты инстинктивно стремимся, даже если не все используем именно эти слова. Позвольте нам ненадолго остановиться на них, поскольку они являются постоянной фоновой темой книги.</p></div>
+<div class="paragraph"><p>Термин <em>инкапсуляция</em> охватывает две тесно связанные идеи: упрощение поведения и скрытие данных. В этом обсуждении мы используем первое. Мы инкапсулируем поведение, определяя задачу, которую необходимо выполнить в нашем коде, и передаём эту задачу четко определенному объекту или функции. И называем этот объект или функцию <em>абстракцией</em>.</p></div>
+<div class="paragraph"><p>Взгляните на следующие два фрагмента кода Python:</p></div>
+<div class="exampleblock" id="urllib_example">
+<div class="title">Example 1. Выполним поиск с помощью urllib</div>
+<div class="content">
+<div class="listingblock">
+<div class="content"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">json</span>
+<span class="kn">from</span> <span class="nn">urllib.request</span> <span class="kn">import</span> <span class="n">urlopen</span>
+<span class="kn">from</span> <span class="nn">urllib.parse</span> <span class="kn">import</span> <span class="n">urlencode</span>
+
+<span class="n">params</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">q</span><span class="o">=</span><span class="s1">&#39;Sausages&#39;</span><span class="p">,</span> <span class="nb">format</span><span class="o">=</span><span class="s1">&#39;json&#39;</span><span class="p">)</span>
+<span class="n">handle</span> <span class="o">=</span> <span class="n">urlopen</span><span class="p">(</span><span class="s1">&#39;http://api.duckduckgo.com&#39;</span> <span class="o">+</span> <span class="s1">&#39;?&#39;</span> <span class="o">+</span> <span class="n">urlencode</span><span class="p">(</span><span class="n">params</span><span class="p">))</span>
+<span class="n">raw_text</span> <span class="o">=</span> <span class="n">handle</span><span class="o">.</span><span class="n">read</span><span class="p">()</span><span class="o">.</span><span class="n">decode</span><span class="p">(</span><span class="s1">&#39;utf8&#39;</span><span class="p">)</span>
+<span class="n">parsed</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="n">raw_text</span><span class="p">)</span>
+
+<span class="n">results</span> <span class="o">=</span> <span class="n">parsed</span><span class="p">[</span><span class="s1">&#39;RelatedTopics&#39;</span><span class="p">]</span>
+<span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="n">results</span><span class="p">:</span>
+    <span class="k">if</span> <span class="s1">&#39;Text&#39;</span> <span class="ow">in</span> <span class="n">r</span><span class="p">:</span>
+        <span class="nb">print</span><span class="p">(</span><span class="n">r</span><span class="p">[</span><span class="s1">&#39;FirstURL&#39;</span><span class="p">]</span> <span class="o">+</span> <span class="s1">&#39; - &#39;</span> <span class="o">+</span> <span class="n">r</span><span class="p">[</span><span class="s1">&#39;Text&#39;</span><span class="p">])</span>
+</pre></div></div></div>
+</div></div>
+<div class="exampleblock" id="requests_example">
+<div class="title">Example 2. Сделаем поиск с запросами</div>
+<div class="content">
+<div class="listingblock">
+<div class="content"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">requests</span>
+
+<span class="n">params</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">q</span><span class="o">=</span><span class="s1">&#39;Sausages&#39;</span><span class="p">,</span> <span class="nb">format</span><span class="o">=</span><span class="s1">&#39;json&#39;</span><span class="p">)</span>
+<span class="n">parsed</span> <span class="o">=</span> <span class="n">requests</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;http://api.duckduckgo.com/&#39;</span><span class="p">,</span> <span class="n">params</span><span class="o">=</span><span class="n">params</span><span class="p">)</span><span class="o">.</span><span class="n">json</span><span class="p">()</span>
+
+<span class="n">results</span> <span class="o">=</span> <span class="n">parsed</span><span class="p">[</span><span class="s1">&#39;RelatedTopics&#39;</span><span class="p">]</span>
+<span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="n">results</span><span class="p">:</span>
+    <span class="k">if</span> <span class="s1">&#39;Text&#39;</span> <span class="ow">in</span> <span class="n">r</span><span class="p">:</span>
+        <span class="nb">print</span><span class="p">(</span><span class="n">r</span><span class="p">[</span><span class="s1">&#39;FirstURL&#39;</span><span class="p">]</span> <span class="o">+</span> <span class="s1">&#39; - &#39;</span> <span class="o">+</span> <span class="n">r</span><span class="p">[</span><span class="s1">&#39;Text&#39;</span><span class="p">])</span>
+</pre></div></div></div>
+</div></div>
+<div class="paragraph"><p>Оба кода делают одно и то же: они отправляют закодированные в форме значения на URL-адрес, чтобы использовать API поисковой системы. Но второе проще читать и понимать, потому что оно работает на более высоком уровне абстракции.</p></div>
+<div class="paragraph"><p>Мы можем сделать еще один шаг вперед, определив и назвав задачу, которую нам хотелось бы, чтобы код выполнял для нас, и используем еще более высокоуровневую абстракцию, чтобы сделать ее явной:</p></div>
+<div class="exampleblock" id="ddg_example">
+<div class="title">Example 3. Поиск с помощью клиентской библиотеки duckduckgo</div>
+<div class="content">
+<div class="listingblock">
+<div class="content"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">duckduckpy</span>
+<span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="n">duckduckpy</span><span class="o">.</span><span class="n">query</span><span class="p">(</span><span class="s1">&#39;Sausages&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">related_topics</span><span class="p">:</span>
+    <span class="nb">print</span><span class="p">(</span><span class="n">r</span><span class="o">.</span><span class="n">first_url</span><span class="p">,</span> <span class="s1">&#39; - &#39;</span><span class="p">,</span> <span class="n">r</span><span class="o">.</span><span class="n">text</span><span class="p">)</span>
+</pre></div></div></div>
+</div></div>
+<div class="paragraph"><p>Инкапсуляция поведения с помощью абстракций-это мощный инструмент для того, чтобы сделать код более выразительным, более тестируемым и более простым в обслуживании.</p></div>
+<div class="admonitionblock">
+<table><tr>
+<td class="icon">
+<img src="./images/icons/note.png" alt="Note" />
+</td>
+<td class="content">В литературе, посвященной объектно-ориентированному (ОО) миру, одна из классических характеристик этого подхода называется
+    <a href="http://www.wirfs-brock.com/Design.html"><em>responsibility-driven design</em></a>;
+    в нем используются слова  <em>roles (роли)</em> и <em>responsibilities (обязанности)</em>, а не <em>tasks (задачи)</em>. Главное&#8201;&#8212;&#8201;думать о коде с точки зрения поведения, а не с точки зрения данных или алгоритмов.<span class="footnote"><br />[Если вы сталкивались с карточками class-responsibility-collaborator (CRC), то они основаны на одном и том же: размышления об <em>responsibilities ответственности</em> поможет вам решить, как разделить составляющие на части.]<br /></span></td>
+</tr></table>
+</div>
+<div class="sidebarblock">
+<div class="content">
+<div class="title">Abstractions и ABCs</div>
+<div class="paragraph"><p>В традиционном объектно-ориентированном языке, таком как Java или C\#, вы можете использовать абстрактный базовый класс (ABC) или интерфейс для определения абстракции. В Python вы можете (и мы иногда используем) использовать ABC, но вы также можете положиться на Duck typing  <a href="https://docs-python.ru/tutorial/osnovnye-vstroennye-tipy-python/utinaja-tipizatsija-duck-typing/"><em>(если это похоже на утку и крякает как утка, то это утка)</em></a>.</p></div>
+<div class="paragraph"><p>Абстракция может означать просто «общедоступный API того, что вы используете»&#8201;&#8212;&#8201;например, имя функции плюс некоторые аргументы.</p></div>
+</div></div>
+<div class="paragraph"><p>Большинство шаблонов в этой книге связаны с выбором абстракции, поэтому вы увидите множество примеров в каждой главе. Кроме того,
+<a href="#chapter_03_abstractions">[chapter_03_abstractions]</a>  конкретно обсуждает некоторые общие эвристики для выбора абстракций.</p></div>
+</div>
+<div class="sect2">
+<h3 id="_многоуровневое_представление">Многоуровневое представление</h3>
+<div class="paragraph"><p>Инкапсуляция и абстракция помогают нам скрывать детали и защищать целостность наших данных, но нам также необходимо помнить о взаимодействии между нашими объектами и функциями. Когда одна функция, модуль или объект использует другую, мы говорим, что одна <em>depends on (зависима)</em> от другой. Эти зависимости образуют своего рода сеть или граф.</p></div>
+<div class="paragraph"><p>В большом комке грязи зависимости выходят из-под контроля (как вы видели в
+<a href="#bbom_image">[bbom_image]</a>). Изменение одного узла графа становится затруднительным, поскольку оно может повлиять на многие другие части системы. Слоистые архитектуры являются одним из способов решения этой проблемы. В многоуровневой архитектуре мы разделяем наш код на отдельные категории или роли и вводим правила касающеся того, какие категории кода могут вызывать друг друга.</p></div>
+<div class="paragraph"><p>Одним из наиболее распространенных примеров является трехслойная архитектура, показанная на рис.
+<a href="#layered_architecture1">[layered_architecture1]</a>.</p></div>
+<div class="imageblock width-75" id="layered_architecture1">
+<div class="content">
+<img src="images/apwp_0002.png" alt="images/apwp_0002.png" />
+</div>
+<div class="title">Figure 2. Многоуровневая архитектура</div>
+</div>
+<div class="listingblock image-source">
+<div class="content">
+<pre><code>[ditaa, apwp_0002]
++----------------------------------------------------+
+|                Уровень представления               |
++----------------------------------------------------+
+                          |
+                          V
++----------------------------------------------------+
+|                 Бизнес-логика                      |
++----------------------------------------------------+
+                          |
+                          V
++----------------------------------------------------+
+|                  Уровень базы данных               |
++----------------------------------------------------+</code></pre>
+</div></div>
+<div class="paragraph"><p>Многоуровневая архитектура является, пожалуй, наиболее распространенным шаблоном для построения business software&#8201;&#8212;&#8201;коммерческого ПО. В этой модели у нас есть компоненты пользовательского интерфейса, которые могут быть веб-страницей, API или командной строкой; эти компоненты пользовательского интерфейса взаимодействуют со слоем бизнес-логики, который содержит наши бизнес-правила и наши рабочие процессы; и, наконец, у нас есть уровень базы данных, который отвечает за хранение и извлечение данных.</p></div>
+<div class="paragraph"><p>До конца этой книги мы будем систематически выворачивать эту модель наизнанку, следуя одному простому принципу.</p></div>
+</div>
+<div class="sect2">
+<h3 id="dip">The Dependency Inversion Principle (Принцип инверсии зависимостей)</h3>
+<div class="paragraph"><p>Возможно, вы уже знакомы с <em>принципом инверсии зависимостей</em> (DIP), потому что это <em>D</em> в SOLID. <span class="footnote"><br />[SOLID&#8201;&#8212;&#8201;это аббревиатура от пяти принципов объектно-ориентированного проектирования Роберта К. Мартина: единственная ответственность, открытость для расширения, но закрытость для модификации, подстановка Лискова, сегрегация интерфейсов и инверсия зависимостей. See <a href="https://oreil.ly/UFM7U">"S.O.L.I.D: The First 5 Principles of Object-Oriented Design"</a> by Samuel Oloruntoba.]<br /></span></p></div>
+<div class="paragraph"><p>К сожалению, мы не можем проиллюстрировать DIP, используя три небольших листинга кода, как мы это делали для инкапсуляции. Однако вся <a href="#Часть1">[Часть1]</a> по сути представляет собой отработанный пример реализации DIP во всем приложении, так что вы получите множество конкретных примеров.</p></div>
+<div class="paragraph"><p>А пока можно поговорить о формальном определении DIP:</p></div>
+<div class="olist arabic"><ol class="arabic">
+<li>
+<p>
+Модули высокого уровня не должны зависеть от модулей низкого уровня. И то и другое должно зависеть от абстракций.
+</p>
+</li>
+<li>
+<p>
+Абстракции не должны зависеть от деталей. Вместо этого детали должны зависеть от абстракций.
+</p>
+</li>
+</ol></div>
+<div class="paragraph"><p>Но что это значит? Давайте разберемся по крупицам.</p></div>
+<div class="paragraph"><p><em>Модули высокого уровня</em> это код, который действительно волнует вашу организацию.
+Возможно, вы работаете в фармацевтической компании, и ваши высокоуровневые модули имеют дело с пациентами и испытаниями. Возможно, вы работаете в банке, и ваши высокоуровневые модули управляют сделками и биржами. Высокоуровневые модули программной системы-это функции, классы и пакеты, которые имеют дело с нашими концепциями реального мира.</p></div>
+<div class="paragraph"><p>Напротив, <em>низкоуровневые модули</em>&#8201;&#8212;&#8201;это код, который вашей организации не важен. Маловероятно, что ваш отдел кадров будет в восторге от файловых систем или сетевых сокетов. Нечасто вы обсуждаете SMTP, HTTP или AMQP со своим финансовым отделом. Для наших нетехнических заинтересованных сторон эти низкоуровневые концепции не интересны и не актуальны. Все, что их волнует,&#8201;&#8212;&#8201;это правильность работы высокоуровневых концепций. Если расчет заработной платы выполняется вовремя, вашему бизнесу вряд ли будет важно, выполняется ли это задание cron или временная функция, выполняемая в Kubernetes.</p></div>
+<div class="paragraph"><p><em>Depends on (зависит от)</em> не обязательно означает <em>imports</em> или <em>calls</em>, а скорее несёт более общую идею о том, что один модуль <em>knows about (знает о)</em> или <em>needs (нуждается в)</em> другом модуле.</p></div>
+<div class="paragraph"><p>И мы уже упоминали <em>abstractions</em>: это упрощенные интерфейсы, которые инкапсулируют поведение, подобно тому, как наш модуль duckduckgo инкапсулирует API поисковой системы.</p></div>
+<div class="quoteblock">
+<div class="content">
+<div class="paragraph"><p>Все проблемы в информатике можно решить, добавив еще один косвеный уровень.</p></div>
+</div>
+<div class="attribution">
+&#8212; David Wheeler
+</div></div>
+<div class="paragraph"><p>Итак, первая часть DIP говорит, что наш бизнес и код не должны зависеть от технических деталей; вместо этого оба должны использовать абстракции.</p></div>
+<div class="paragraph"><p>Почему? В широком смысле, потому что мы хотим иметь возможность изменять их независимо друг от друга. Модули высокого уровня должны быть легко изменены в соответствии с потребностями бизнеса. Низкоуровневые модули (детали) часто на практике сложнее изменить: подумайте о рефакторинге для изменения имени функции по сравнению с определением, тестированием и развертыванием миграции базы данных для изменения имени столбца. Мы не хотим, чтобы изменения бизнес-логики замедлялись, потому что они тесно связаны с деталями инфраструктуры низкого уровня. Но точно так же важно иметь возможность изменять детали инфраструктуры, когда это необходимо (например, подумайте о сегментировании базы данных), без необходимости вносить изменения в бизнес-уровень. Добавление абстракции между ними (знаменитый дополнительный слой косвенности) позволяет им изменяться (более) независимо друг от друга.</p></div>
+<div class="paragraph"><p>Вторая часть еще более загадочна. «Абстракции не должны зависеть от деталей» кажется достаточно ясным, но «Детали должны зависеть от абстракций» трудно себе представить. Как мы можем получить абстракцию, которая не зависит от деталей, которые она абстрагирует? К тому времени, когда мы дойдем до <a href="#chapter_04_service_layer">[chapter_04_service_layer]</a>, у нас будет конкретный пример, который должен прояснить все это.</p></div>
+</div>
+<div class="sect2">
+<h3 id="_место_для_всей_нашей_бизнес_логики_модель_предметной_области_the_domain_model">Место для Всей Нашей Бизнес-логики: Модель Предметной Области (The Domain Model)</h3>
+<div class="paragraph"><p>Но прежде чем мы сможем вывернуть нашу трехуровневую архитектуру наизнанку, нам нужно больше поговорить об этом среднем слое: высокоуровневых модулях или бизнес-логике. Одна из наиболее распространенных причин, по которой наши проекты идут "как-то не так", заключается в том, что бизнес-логика распространяется по всем слоям нашего приложения, что затрудняет ее идентификацию, понимание и изменение.</p></div>
+<div class="paragraph"><p><a href="#chapter_01_domain_model">[chapter_01_domain_model]</a> показывает, как построить бизнес-уровень с помощью шаблона <em>Domain Model</em>. Остальные шаблоны в <a href="#part1">[part1]</a> показывают, как мы можем сохранить модель предметной области легко изменяемой и свободной от низкоуровневых проблем, выбирая правильные абстракции и постоянно применяя DIP.</p></div>
+</div>
+</div>
+</div>
+</div>
+<div id="footnotes"><hr /></div>
+<div id="footer">
+<div id="footer-text">
+Last updated
+ 2021-02-23 12:28:06 RTZ 2 (зима)
+</div>
+</div>
+</body>
+</html>

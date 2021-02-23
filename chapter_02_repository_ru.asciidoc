@@ -1,3 +1,9 @@
+:doctype: book
+:source-highlighter: pygments
+:icons: font
+:toc: left
+:toclevels: 1
+
 [[chapter_02_repository]]
 == Repository Pattern
 
