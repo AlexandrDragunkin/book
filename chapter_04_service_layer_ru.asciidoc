@@ -1,3 +1,9 @@
+:doctype: book
+:source-highlighter: pygments
+:icons: font
+:toc: left
+:toclevels: 1
+
 [[chapter_04_service_layer]]
 == Наш первый Use Case или пример использования: [.keep-together]#Flask API и Service Layer#
 
@@ -481,9 +487,9 @@ def allocate_endpoint():
     try:
         batchref = services.allocate(line, repo, session)  #<2>
     except (model.OutOfStock, services.InvalidSku) as e:
-        return jsonify({'message': str(e)}), 400  <3>
+        return jsonify({'message': str(e)}), 400  #<3>
 
-    return jsonify({'batchref': batchref}), 201  <3>
+    return jsonify({'batchref': batchref}), 201  #<3>
 ----
 ====
 

@@ -1,3 +1,8 @@
+:doctype: book
+:source-highlighter: pygments
+:icons: font
+:toc: left
+:toclevels: 2
 [[chapter_09_all_messagebus]]
 == Едем в город на автобусе сообщений
 

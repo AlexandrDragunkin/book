@@ -1,3 +1,9 @@
+:doctype: book
+:source-highlighter: pygments
+:icons: font
+:toc: left
+:toclevels: 2
+
 [[chapter_07_aggregate]]
 == Агрегаты и границы консистентности
 

@@ -1,3 +1,9 @@
+:doctype: book
+:source-highlighter: pygments
+:icons: font
+:toc: left
+:toclevels: 2
+
 [[chapter_05_high_gear_low_gear]]
 == TDD на Высокой и Низкой передаче
 

@@ -1,3 +1,10 @@
+:doctype: book
+:source-highlighter: pygments
+:icons: font
+:toc: left
+:toclevels: 1
+
+
 [[chapter_03_abstractions]]
 == Краткая интерлюдия: О Связях [.keep-together]#и Абстракции#
 
